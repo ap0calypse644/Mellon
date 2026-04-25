@@ -1,0 +1,8 @@
+{
+  "uuid": "mellon@nibir.local",
+  "name": "Mellon",
+  "description": "Experimental GNOME unlock-dialog visual overhaul: starfield password feedback without owning authentication.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "session-modes": ["unlock-dialog"],
+  "url": "https://example.local/mellon"
+}
