@@ -59,3 +59,7 @@ gnome-shell --version
 ## Known rough edges
 
 GNOME Shell's lock screen internals are private APIs. The `_authPrompt`, `_stack`, and unlock finish method names may shift across GNOME versions. This is why the extension has fallbacks and why the first target should be your exact Ubuntu/GNOME version.
+
+## Mellon 2.0 / GNOME 50 lab
+
+An isolated, VM-only prototype lives in [`lab/gnome50-m1/`](lab/gnome50-m1/README.md). It observes changes to GNOME's native password buffer **length**, without global key event capture or replacing authentication. The original extension above is preserved unchanged. The lab README has deployment and rollback commands.

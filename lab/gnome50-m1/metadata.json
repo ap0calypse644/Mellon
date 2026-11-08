@@ -1,0 +1,7 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon 2.0 Lab — M1",
+  "description": "GNOME 50 unlock-dialog prototype: stars react to password character count, not key events.",
+  "shell-version": ["50"],
+  "session-modes": ["unlock-dialog"]
+}
