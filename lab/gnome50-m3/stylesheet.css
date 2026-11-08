@@ -1,0 +1,17 @@
+/* A typographic flight-deck readout, not the old outlined debug rectangle. */
+.mellon-m3-hud {
+    spacing: 10px;
+    padding: 0;
+    background-color: transparent;
+}
+
+.mellon-m3-title {
+    color: rgba(189, 188, 248, 0.91);
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.mellon-m3-status {
+    color: rgba(111, 197, 219, 0.82);
+    font-size: 12px;
+}

@@ -1,0 +1,7 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon 2.0 Lab — M3 Observatory",
+  "description": "VM-only GNOME 50 observatory sky with responsive constellations and untouched native authentication.",
+  "shell-version": ["50"],
+  "session-modes": ["unlock-dialog"]
+}

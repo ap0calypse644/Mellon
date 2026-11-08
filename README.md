@@ -63,3 +63,7 @@ GNOME Shell's lock screen internals are private APIs. The `_authPrompt`, `_stack
 ## Mellon 2.0 / GNOME 50 lab
 
 An isolated, VM-only prototype lives in [`lab/gnome50-m1/`](lab/gnome50-m1/README.md). It observes changes to GNOME's native password buffer **length**, without global key event capture or replacing authentication. The original extension above is preserved unchanged. The lab README has deployment and rollback commands.
+
+### M3: The Observatory (GNOME 50 VM lab)
+
+The first cinematic milestone is under [`lab/gnome50-m3/`](lab/gnome50-m3/README.md): layered deep-space scenery, Orion/Cygnus/Cassiopeia constellation formation and a subtle cockpit readout. It uses GNOME 50's `St.DrawingArea` and the native password buffer's **character count**; GNOME authentication and the original extension stay untouched. **VM-only; runtime validation still required.**
