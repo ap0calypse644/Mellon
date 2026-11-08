@@ -32,7 +32,8 @@ class NightwatchSky {
             speed: 0.4 + Math.random() * 1.3,
         }));
 
-        this.actor = new Clutter.Actor({reactive: false, can_focus: false});
+        // Clutter.Actor has no 'can-focus' property (that belongs to St.Widget).
+        this.actor = new Clutter.Actor({reactive: false});
         this.actor.add_constraint(new Clutter.BindConstraint({
             source: dialog, coordinate: Clutter.BindCoordinate.SIZE,
         }));
@@ -192,14 +193,16 @@ export default class MellonLab extends Extension {
         this._prompt = null;
         this._buffer = null;
         this._signals = [];
+        this._epoch = 0;
         this._reportedError = false;
         this._timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, POLL_MS, () => {
             try {
                 this._tick();
             } catch (error) {
                 if (!this._reportedError) {
-                    console.warn('[Mellon M2] Probe error type: ' +
-                        (error?.name ?? 'unknown'));
+                    console.warn('[Mellon M2] Probe error: ' +
+                        (error?.name ?? 'unknown') + ': ' +
+                        (error?.message ?? 'no details'));
                     this._reportedError = true;
                 }
             }
@@ -208,8 +211,9 @@ export default class MellonLab extends Extension {
         try {
             this._tick();
         } catch (error) {
-            console.warn('[Mellon M2] Initial probe error type: ' +
-                (error?.name ?? 'unknown'));
+            console.warn('[Mellon M2] Initial probe error: ' +
+                (error?.name ?? 'unknown') + ': ' +
+                (error?.message ?? 'no details'));
         }
     }
 
@@ -222,13 +226,11 @@ export default class MellonLab extends Extension {
     }
 
     _disconnect() {
-        for (const [object, id] of this._signals) {
-            try {
-                object.disconnect(id);
-            } catch (_) {
-                // The auth prompt may already have been destroyed.
-            }
-        }
+        // GNOME may have already disposed the prompt between polling ticks.
+        // Calling disconnect() on a disposed GObject prints critical warnings
+        // even inside try/catch. Old callbacks become inert via this epoch;
+        // GObject automatically clears its signals when destroyed.
+        this._epoch++;
         this._signals = [];
         this._prompt = null;
         this._buffer = null;
@@ -252,8 +254,10 @@ export default class MellonLab extends Extension {
     }
 
     _mount(dialog) {
-        this._dialog = dialog;
+        // Only mark the dialog mounted once its scenery was created.
+        // A failed constructor must not permanently block subsequent retries.
         this._sky = new NightwatchSky(dialog);
+        this._dialog = dialog;
         this._panel = new St.BoxLayout({
             style_class: 'mellon-m2-panel',
             orientation: Clutter.Orientation.VERTICAL,
@@ -312,16 +316,24 @@ export default class MellonLab extends Extension {
 
         this._prompt = prompt;
         this._buffer = buffer;
+        const epoch = this._epoch;
+        const current = () => epoch === this._epoch && this._panel !== null;
         this._signals.push([buffer, buffer.connect('notify::length', () => {
+            if (!current())
+                return;
             // Character count only. Do not read or log password contents.
             this._render(buffer.get_length());
         })]);
         this._signals.push([prompt, prompt.connect('next', () => {
+            if (!current())
+                return;
             this._sky?.setState('verifying');
             if (this._status)
                 this._status.text = 'AUTHENTICATION  //  VERIFYING';
         })]);
         this._signals.push([prompt, prompt.connect('failed', () => {
+            if (!current())
+                return;
             this._sky?.setState('denied');
             if (this._status)
                 this._status.text = 'ACCESS DENIED  //  RETRY';

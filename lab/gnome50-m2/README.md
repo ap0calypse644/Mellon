@@ -43,3 +43,7 @@ Log into the guest desktop, then lock it from BlackPearl with:
 ```
 
 The clean guest backup is at `~/VMs/Mellon/checkpoints/MELLON-BASELINE-001/` on BlackPearl. The M1 code is preserved in Git.
+
+## M2.1 — GNOME 50 initialization fix
+
+The first M2 build failed during initialization: `Clutter.Actor` does not expose `can-focus` (it is a `St.Widget` property). M2.1 removes that invalid property, avoids disconnecting already-disposed GNOME authentication objects, invalidates stale callbacks, and logs the exception name and message if setup fails again. Keep the native GNOME password prompt visible for testing. No changes to the host GNOME session.
