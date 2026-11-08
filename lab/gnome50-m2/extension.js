@@ -33,25 +33,27 @@ class NightwatchSky {
         }));
 
         // Clutter.Actor has no 'can-focus' property (that belongs to St.Widget).
-        this.actor = new Clutter.Actor({reactive: false});
-        this.actor.add_constraint(new Clutter.BindConstraint({
+        // Clutter.Canvas is not constructible in GNOME 50.
+        // St.DrawingArea provides Cairo painting inside GNOME Shell.
+        this.area = new St.DrawingArea({reactive: false});
+        this.area.add_constraint(new Clutter.BindConstraint({
             source: dialog, coordinate: Clutter.BindCoordinate.SIZE,
         }));
-        this.canvas = new Clutter.Canvas();
-        this.actor.set_content(this.canvas);
-        this.drawId = this.canvas.connect('draw', (_canvas, cr, w, h) =>
-            this._draw(cr, w, h));
-        this.allocationId = this.actor.connect('notify::allocation', () =>
-            this._syncSize());
+        this.repaintId = this.area.connect('repaint', area => {
+            const [width, height] = area.get_surface_size();
+            const cr = area.get_context();
+            try {
+                this._draw(cr, width, height);
+            } finally {
+                // GJS requires explicit disposal of Cairo contexts.
+                cr.$dispose();
+            }
+        });
 
-        // GNOME 50 dialog child order: background, then native login widgets.
-        dialog.insert_child_above(this.actor, dialog._backgroundGroup);
-        this.width = 0;
-        this.height = 0;
-        this._syncSize();
+        // Keep the native unlock prompt above this visual-only layer.
+        dialog.insert_child_above(this.area, dialog._backgroundGroup);
         this.timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, FRAME_MS, () => {
-            this._syncSize();
-            this.canvas.invalidate();
+            this.area.queue_repaint();
             return GLib.SOURCE_CONTINUE;
         });
     }
@@ -60,26 +62,13 @@ class NightwatchSky {
         this.count = clamp(value, 0, MAX);
         if (this.state === 'denied' && value > 0)
             this.state = 'idle';
-        this.canvas.invalidate();
+        this.area.queue_repaint();
     }
 
     setState(state) {
         this.state = state;
         this.stateAt = GLib.get_monotonic_time() / 1000000;
-        this.canvas.invalidate();
-    }
-
-    _syncSize() {
-        const [w, h] = this.actor.get_size();
-        const width = Math.round(w);
-        const height = Math.round(h);
-        if (width < 1 || height < 1 ||
-            (width === this.width && height === this.height))
-            return;
-        this.width = width;
-        this.height = height;
-        this.canvas.set_size(width, height);
-        this.canvas.invalidate();
+        this.area.queue_repaint();
     }
 
     destroy() {
@@ -87,11 +76,10 @@ class NightwatchSky {
             GLib.source_remove(this.timer);
             this.timer = 0;
         }
-        if (this.allocationId)
-            this.actor.disconnect(this.allocationId);
-        if (this.drawId)
-            this.canvas.disconnect(this.drawId);
-        this.actor.destroy();
+        if (this.area) {
+            this.area.destroy();
+            this.area = null;
+        }
     }
 
     _glow(cr, cx, cy, radius, color, opacity) {

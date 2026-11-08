@@ -47,3 +47,7 @@ The clean guest backup is at `~/VMs/Mellon/checkpoints/MELLON-BASELINE-001/` on 
 ## M2.1 — GNOME 50 initialization fix
 
 The first M2 build failed during initialization: `Clutter.Actor` does not expose `can-focus` (it is a `St.Widget` property). M2.1 removes that invalid property, avoids disconnecting already-disposed GNOME authentication objects, invalidates stale callbacks, and logs the exception name and message if setup fails again. Keep the native GNOME password prompt visible for testing. No changes to the host GNOME session.
+
+## M2.2 — GNOME 50 Cairo rendering compatibility
+
+GNOME 50 does not expose `Clutter.Canvas` as a constructor. M2.2 uses `St.DrawingArea` with its `repaint` signal and `queue_repaint()` API instead. Each Cairo context is explicitly released using `cr.$dispose()`. The painting surface remains below GNOME's native unlock widgets. The original M1 and M2 source history are preserved in Git. This change is not yet runtime-tested in the guest VM.
