@@ -1,0 +1,10 @@
+.mellon-m2-panel {
+    background-color: rgba(9, 10, 31, 0.84);
+    border: 1px solid rgba(131, 104, 213, 0.76);
+    border-radius: 12px;
+    padding: 17px 22px;
+    spacing: 10px;
+}
+.mellon-m2-header { color: #bfb0f7; font-size: 13px; font-weight: bold; }
+.mellon-m2-stars { color: #7edbea; font-size: 16px; }
+.mellon-m2-status { color: #b8b2d4; font-size: 12px; }
