@@ -52,12 +52,35 @@ settings = Gio.Settings.new('org.gnome.shell')
 enabled = list(settings.get_strv('enabled-extensions'))
 if uuid not in enabled:
     enabled.append(uuid)
-    settings.set_strv('enabled-extensions', enabled)
+    if not settings.set_strv('enabled-extensions', enabled):
+        raise SystemExit('FAIL: GSettings rejected the extension list')
+
+# GSettings writes are asynchronous. This standalone Python process exits
+# immediately, so a read on the same Settings object is not proof of persistence.
+Gio.Settings.sync()
 assert uuid in settings.get_strv('enabled-extensions')
-print('Guest enabled-extensions includes:', uuid)
+print('GSettings write flushed for:', uuid)
 PY
+
+    # Verify from a separate process, not the in-memory Settings object.
+    gsettings get org.gnome.shell enabled-extensions |
+        grep -F "'mellon-lab@local'" >/dev/null || {
+            echo 'FAIL: Extension is not persisted in enabled-extensions'
+            exit 1
+        }
+    echo 'PASS: GNOME enabled-extensions persisted'
 )
 GUEST
+
+    # Verify from a second SSH session too; avoid silently reporting a false success.
+    ssh -o BatchMode=yes mellon '
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+        gsettings get org.gnome.shell enabled-extensions
+    ' | grep -F "'mellon-lab@local'" >/dev/null || {
+        echo 'FAIL: Extension enable state did not survive a new SSH session'
+        exit 1
+    }
+    echo 'PASS: Fresh SSH session can read persisted extension state'
 
     echo
     echo 'Source deployed ONLY to the Mellon VM.'
