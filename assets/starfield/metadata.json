@@ -1,0 +1,24 @@
+{
+  "schema": "mellon-starfield-v1",
+  "image_file": "m24-original.jpg",
+  "source_page": "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-24/",
+  "source_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/missions/hubble/stars/star-cloud/Hubble_M24_1_flat_FINAL_A_rot90.jpg?crop=faces%2Cfocalpoint&fit=clip&h=2022&w=3775",
+  "credit": "NASA, ESA, and R. Sahai (Jet Propulsion Laboratory); processing: Gladys Kober (NASA/Catholic University of America)",
+  "usage": "NASA media guidelines; credit NASA/ESA and listed researchers; no endorsement implied",
+  "source_sha256": "282afeb7e2ab5e68710b5e2dbf0404e0f15aa3f5a5b0f77a9db8cf169b53bf59",
+  "width": 3775,
+  "height": 2020,
+  "coordinate_origin": "top-left",
+  "coordinate_convention": "normalized x=px/width, y=py/height before any crop or scaling",
+  "object_definition": "isolated luminous image features; may include nonstellar artifacts",
+  "detection": {
+    "algorithm": "Gaussian difference of blurred luminance + local-maximum + morphology + NMS",
+    "threshold": 5.6,
+    "min_separation_px": 5.0,
+    "limit": 25000,
+    "quality_score": "relative heuristic, NOT statistical probability of being a real star"
+  },
+  "total_points": 20491,
+  "graph_edges": 92734,
+  "generated_utc": "2026-11-09T06:29:33.217410+00:00"
+}
