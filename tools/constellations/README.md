@@ -1,3 +1,5 @@
+> **New: [Mellon v8 — brightness-aware centered constellations](BRIGHT_CENTERED_CONSTELLATIONS_V8.md).** Forks the proven v6 center/art-safe geometry while preferring brighter detected source-image stars during proposal selection, unique assignment, and final ranking. It leaves v6 and GNOME M5.4 untouched. Run the full search with `bash tools/constellations/rebuild_bright_v8.sh`.
+
 > **New: [Mellon v6 — centered, illustration-safe constellations](CENTERED_CONSTELLATIONS_V6.md).** This is the recommended matcher for the eventual single-constellation lock screen: large patterns, close to center, with explicit empty space around the stars for character artwork. v5 is retained for unconstrained benchmark comparison.
 
 > **Single-constellation production direction (v5):** use [large-screen matching](SINGLE_CONSTELLATION_V5.md). Each lock displays **one** constellation, overlap between candidate matches is allowed, and large image-aligned patterns are preferred. The original v3 and v4 methods remain for benchmarks.
