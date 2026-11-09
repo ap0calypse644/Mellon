@@ -336,10 +336,25 @@ export default class MellonMVP extends Extension {
             if (current())
                 this._view.setLength(buffer.get_length());
         });
-        prompt.connect('failed', () => {
-            if (current())
-                this._view.onFailed();
-        });
+        // GNOME 50's AuthPrompt 'failed' fires only when a terminal
+        // verification failure is reset. Ordinary incorrect passwords can
+        // retry internally without emitting it. Observe GNOME's existing
+        // per-attempt verifier signal instead; NEVER change verification.
+        //
+        // The verifier is an EventEmitter (not a GObject); connectObject ties
+        // this listener to the prompt's lifetime. The epoch additionally
+        // invalidates callbacks when GNOME replaces the prompt/buffer.
+        const verifier = prompt._userVerifier;
+        if (!verifier?.connectObject) {
+            // If this GNOME implementation differs, preserve the native UI.
+            this._view?.revealNative();
+            return;
+        }
+        verifier.connectObject('verification-failed',
+            (_verifier, serviceName, _canRetry) => {
+                if (current() && serviceName === 'gdm-password')
+                    this._view.onFailed();
+            }, prompt);
         this._view.setLength(buffer.get_length());
     }
 }
