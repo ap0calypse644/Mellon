@@ -1,12 +1,12 @@
 # Mellon M5 — visual-only hidden-chrome MVP
 
-**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, manual `SHOW LOGIN` recovery, and M5.2 automatic recovery after two wrong attempts. The new M5.3 centered visual alert is **not yet guest-verified**. M4 remains the known-good fallback.
+**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, manual `SHOW LOGIN` recovery, and the M5.2 failed-attempt observer. M5.3's centered glowing alert and M5.4's manual-only recovery behavior still need guest verification. M4 remains a known-good fallback.
 
 ## Scope
 
 M4's actual background, nine star IDs and image coordinates, constellation edges, low-power drawing engine, native password-length observation, and password verification are preserved unchanged. M5 draws the same image/stars *above* GNOME's original clock, avatar and password-field visuals. These are **not removed or hidden**—they remain in the unlock dialog under a non-reactive visual cover. No raw keystrokes, plaintext passwords, PAM changes, or success-animation hooks are introduced.
 
-**Safety mechanisms:** a small visible `SHOW LOGIN` button at the top left reveals the untouched GNOME login screen and calls GNOME's own `UnlockDialog.activate()` to focus the real password entry. After two failed authentications in one lock cycle, the overlay automatically reveals GNOME. The first failure shows a large centered blinking red **UNAUTHORIZED ACCESS** warning and brief red constellation fade (M5.3). On an extension error, M5 tears down the cover; the original prompt can remain usable. Recovery is also available via the guest's SSH, and the deploy script backs up the previous extension before copying files.
+**Safety mechanisms:** the visible `SHOW LOGIN` button at top left manually reveals the untouched GNOME login screen and asks GNOME to focus its native password entry. **Wrong-password attempts never automatically reveal native login** (M5.4). Every detected failed attempt instead shows the large centered blinking red **UNAUTHORIZED ACCESS** warning for about 1.5 seconds. Separately, on an extension error or missing verifier API, Mellon fails open toward the native prompt so the guest cannot be stranded behind an inoperable cover. Emergency recovery also remains available via guest SSH and the M4 backup. Never install this version on the host.
 
 ## Deploy on BlackPearl, targeting only the test VM
 
@@ -77,7 +77,7 @@ password widgets, focus, PAM, or success path.
 If Node is not installed, this optional check can be skipped; the functional
 test is in the VM, not on BlackPearl.
 
-### VM verification after deploying M5.2
+### Historical M5.2 VM verification (superseded by M5.4 for native-UI reveal)
 
 1. Deploy using `bash lab/gnome50-m5/deploy-from-blackpearl.sh`. This checks
    `failure-tracker.js` too. Restart **only the guest** GNOME session.
@@ -104,11 +104,11 @@ This is a **visual-only follow-up** to the user-verified M5.2 authentication flo
   through a GNOME 50 `Clutter.AlignConstraint` with `AlignAxis.BOTH`.
 - Styles the message as a large vivid-red title with soft red
   `text-shadow`, a restrained dark translucent panel, border and glow.
-- On the *first* failed password, blinks for approximately 1.5 seconds
+- On *each* failed password (M5.4), blinks for approximately 1.5 seconds
   using the existing eight-frame-per-second animation timer; does not
   start any new timer or idle animation loop.
-- On the *second* failed password, the **existing immediate automatic
-  native-login recovery takes priority**, unchanged from M5.2.
+- M5.4 removes the earlier two-strikes automatic recovery. **Every** failed attempt
+  keeps the themed lock screen visible until SHOW LOGIN is clicked.
 - The alert actor remains non-reactive, never takes keyboard focus and
   is hidden immediately when Mellon reveals the native login.
 - No background, star coordinates, GNOME authentication, failure-count
@@ -116,9 +116,38 @@ This is a **visual-only follow-up** to the user-verified M5.2 authentication flo
 
 **Guest QA:** Lock the VM; enter one wrong password, inspect the
 large center-screen blinking red message (not the top left); verify the
-alert disappears; enter a second wrong password and confirm that SHOW
-LOGIN is still automatically activated. Then unlock correctly and relock.
+alert disappears; enter a second wrong password and confirm that the
+native login **does not appear**. Then click SHOW LOGIN, unlock correctly
+and relock.
 If any native login difficulty occurs, click SHOW LOGIN or roll back to
 M4. Do not install on the BlackPearl host.
 
 **M5.3 source/syntax verified; live guest visual behavior awaits testing.**
+
+## M5.4: manual-only native login reveal (2026-11-09)
+
+**Requested behavior:** incorrect passwords must **never** trigger the native
+login reveal solely because of how many incorrect attempts have occurred.
+The visually hidden GNOME password entry continues accepting retries under
+the cosmic background, and the centered `UNAUTHORIZED ACCESS` alert flashes
+after **every** failed attempt, including the second and third.
+
+The change removes `MVPScene._failures` and the `>= 2` call to
+`revealNative()`. It **does not change** the working M5.2 read-only
+`FailureTracker`, the M5.3 centered alert, the non-reactive visual cover,
+the visible `SHOW LOGIN` button, native focus or GNOME's own authentication
+failure policy.
+
+**Intentional safety distinction:** user-triggered SHOW LOGIN is the normal
+way to expose the native interface. An extension failure or unsupported
+GNOME verifier API still fails open and can reveal the underlying login UI,
+independent of failed-password counts. This safeguards access when a GNOME
+update breaks the private failure observer.
+
+**VM acceptance check:** lock VM, submit three incorrect passwords, confirm
+the large red alert appears after each and native GNOME UI never appears
+automatically. Click SHOW LOGIN and verify native entry becomes available;
+unlock correctly, relock and confirm the clean cover is restored. Do not
+install on BlackPearl until a future explicit release approval.
+
+**M5.4 syntax/source verified; live guest behavior awaits testing.**
