@@ -222,6 +222,7 @@ def main():
     ap.add_argument('--output',type=Path,required=True)
     ap.add_argument('--slugs',nargs='+',default=DEFAULT_SLUGS)
     ap.add_argument('--preview-count',type=int,default=4)
+    ap.add_argument('--variant',default='v7',help='Suffix for output file names; default preserves original v7 prototype')
     args=ap.parse_args()
     report=json.loads(args.report.read_text())
     if report['schema']!='mellon-centered-constellation-matches-v6':
@@ -230,6 +231,7 @@ def main():
     pts=art_mask(args.art)
     out=args.output; (out/'previews').mkdir(parents=True,exist_ok=True);(out/'qa').mkdir(parents=True,exist_ok=True);(out/'overlays').mkdir(parents=True,exist_ok=True)
     generated=[]
+    suffix='orion-'+args.variant
     for slug in args.slugs[:args.preview_count]:
         data=report['images'][slug]
         candidates=[]
@@ -252,10 +254,10 @@ def main():
         if base.size!=(w,h):raise ValueError('Unexpected background dimensions')
         vector=fitted_overlay(art,match,w,h)
         clean=composition(base,vector,match)
-        clean.convert('RGB').save(out/'previews'/f'{slug}-orion-v7.jpg',quality=94,subsampling=0)
+        clean.convert('RGB').save(out/'previews'/f'{slug}-{suffix}.jpg',quality=94,subsampling=0)
         qa=draw_qa(clean,match,bbox,src,fitted,errors,slug,ident)
-        qa.save(out/'qa'/f'{slug}-orion-v7-QA.jpg',quality=92)
-        (out/'overlays'/f'{slug}-orion-v7-overlay.svg').write_bytes(vector)
+        qa.save(out/'qa'/f'{slug}-{suffix}-QA.jpg',quality=92)
+        (out/'overlays'/f'{slug}-{suffix}-overlay.svg').write_bytes(vector)
         generated.append({'id':ident,'background':slug,'source_image_sha256':meta['source_sha256'],
             'displayed_background_sha256':meta['dimmed_background_sha256'],
             'match_index_zero_based':idx,'match':match,'source_stars':src,
@@ -263,9 +265,10 @@ def main():
             'art_bbox_px_including_glow':list(map(lambda x:round(x,3),bbox)),
             'anchor_errors_px':{name:round(float(x),3) for (name,_),x in zip(ANCHORS,errors)},
             'anchor_rms_px':round(float(np.sqrt(np.mean(errors**2))),3),
-            'art_fit_rank':round(rank,6), 'human_review':'pending'})
+            'art_fit_rank':round(rank,6), 'human_review':'pending',
+            'output_suffix':suffix, 'overlay_sha256':hashlib.sha256(vector).hexdigest()})
         print(f'PASS {slug:<19} idx={idx:3} {ident} span={match["coverage"]["max_span_fraction"]:.3f} angle={match["transform"]["rotation_deg"]:+.1f} RMS={match["rms_error_px"]:.2f} anchor-max={errors.max():.2f}px art-bbox={list(map(int,bbox))}')
-    manifest={'schema':'mellon-orion-art-v7-preview','version':'first-art-direction-prototype',
+    manifest={'schema':'mellon-orion-art-v7-preview','version':('classical-celestial-engraving' if args.variant != 'v7' else 'first-art-direction-prototype'),
               'approval':'pending-human-visual-qa','source_report':str(args.report),
               'art_license':'Original artwork; attribution/provenance in PROVENANCE.md',
               'selection_note':'single Orion per scene; rigid-only art fit; one selected placement per distinct source image',

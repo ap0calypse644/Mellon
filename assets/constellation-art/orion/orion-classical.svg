@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="980" height="1250" viewBox="-490 -620 980 1250" version="1.1" role="img" aria-label="Orion, classical celestial hunter, raised club, animal hide, flowing drapery, engraved in silver-lilac light">
+<title>Orion the Hunter — A classical celestial engraving</title>
+<desc>Original hand-authored SVG vector composition. Orion holds a raised wooden club and an animal hide, with naturalistic classical figure anatomy, windborne chiton and hair. Editable named art layers. The nine reference anchor coordinates remain fixed to the historical nine-star Orion-core geometry, and background star positions are never changed.</desc>
+<defs>
+ <linearGradient id="cloakwash" x1="0" y1="0" x2=".95" y2="1"><stop offset="0" stop-color="#b3b7e7" stop-opacity=".09"/><stop offset=".6" stop-color="#8894df" stop-opacity=".05"/><stop offset="1" stop-color="#6b70b2" stop-opacity=".018"/></linearGradient>
+ <linearGradient id="skinwash" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bbcaf3" stop-opacity=".17"/><stop offset="1" stop-color="#8a91d6" stop-opacity=".025"/></linearGradient>
+ <linearGradient id="furwash" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8c9e3" stop-opacity=".12"/><stop offset="1" stop-color="#8990c3" stop-opacity=".025"/></linearGradient>
+</defs>
+<style>
+ .outer{fill:none;stroke:#b9bde6;stroke-width:3.0;stroke-linecap:round;stroke-linejoin:round;opacity:.90}
+ .contour{fill:none;stroke:#d2d6f4;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;opacity:.87}
+ .fine{fill:none;stroke:#b8b9e7;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+ .whisper{fill:none;stroke:#a3a4db;stroke-width:1.05;stroke-linecap:round;stroke-linejoin:round;opacity:.61}
+ .highlight{fill:none;stroke:#eff1ff;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+ .skin{fill:url(#skinwash);stroke:#c4c9ed;stroke-width:2.65;stroke-linecap:round;stroke-linejoin:round;opacity:.89}
+ .cloth{fill:url(#cloakwash);stroke:#aab5e3;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;opacity:.91}
+ .pelt{fill:url(#furwash);stroke:#b4b8e2;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:.82}
+ .under{fill:none;stroke:#7e8ccf;stroke-width:3.7;stroke-linecap:round;stroke-linejoin:round;opacity:.18}
+ .star{fill:none;stroke:#e0cb9d;stroke-width:1.2;opacity:.65}
+</style>
+<!-- Rear garment is drafted first and never covers the fixed stellar anatomy. -->
+<g id="01-rear-cloak-and-wind" data-reveal="1">
+ <path class="cloth" d="M-88-318 Q-137-312-175-273 C-231-267-256-225-315-215 C-364-206-394-218-422-208 C-387-178-345-175-313-161 C-352-155-379-132-405-101 C-344-119-301-112-259-83 C-318-66-348-26-365 17 Q-304-35-258-12 C-222 4-212 47-210 84 Q-173 66-157 26 C-138-23-95-42-54-55 L41-204 Q-22-274-88-318Z"/>
+ <path class="contour" d="M-113-312 C-160-283-203-253-250-225 Q-315-199-400-207 M-147-267 C-210-199-283-162-356-143 M-153-229 C-206-164-273-108-348-46 M-155-167 C-212-100-242-37-219 62"/>
+ <path class="fine" d="M-172-274 C-243-239-286-221-362-213 M-181-236 Q-251-177-321-153 M-187-206 Q-241-143-301-119 M-190-166 Q-231-98-280-75 M-179-104 Q-213-50-206 13 M-119-228 Q-167-164-181-97"/>
+ <path class="whisper" d="M-320-201 Q-363-190-396-190 M-301-154 Q-354-146-377-125 M-267-88 Q-326-70-350-16 M-211-44 Q-222-1-212 48 M-240-205 Q-270-184-296-174 M-222-150 Q-250-128-274-116"/>
+ <path class="highlight" d="M-408-206 Q-390-193-368-189 M-399-103 Q-367-120-340-119 M-364 17 Q-350-1-336-9"/>
+</g>
+<!-- The club is an ancient gnarled wood weapon, not a spear or a bow. -->
+<g id="02-raised-club" data-reveal="2">
+ <path class="under" d="M-224-538 Q-164-563-79-600"/>
+ <path class="pelt" d="M-232-526 L-105-583 C-88-596-91-602-68-607 C-57-614-46-607-34-609 Q-16-605-17-590 C-8-580-20-568-34-567 Q-42-554-61-557 Q-92-558-113-570 L-239-514Z"/>
+ <path class="contour" d="M-224-521 Q-159-546-97-580 Q-62-601-45-594 M-78-590 Q-65-574-45-572 M-62-602 Q-47-589-26-590"/>
+ <path class="fine" d="M-212-531 Q-153-558-100-578 M-192-517 Q-143-537-112-558 M-82-569 Q-62-574-52-583 M-65-598 Q-55-587-44-579 M-48-599 Q-38-585-29-577"/>
+ <path class="whisper" d="M-135-558 L-144-545 M-127-564 L-134-551 M-115-572 L-123-559 M-55-562 Q-69-558-79-566"/>
+</g>
+<!-- Raised left arm: shoulder to a flexed upper arm, elbow and firmly clasped club. -->
+<g id="03-raised-arm-and-hand" data-reveal="3">
+ <path class="skin" d="M-124-318 C-171-326-195-352-209-400 Q-228-448-220-498 L-235-521 Q-249-533-261-519 L-259-491 Q-254-475-246-466 C-246-419-239-373-230-348 Q-211-288-165-273 Q-144-267-123-281Z"/>
+ <path class="contour" d="M-126-304 Q-174-309-195-348 C-217-389-225-442-230-476 M-163-287 Q-198-295-216-344 M-203-400 Q-205-441-207-474"/>
+ <path class="fine" d="M-191-331 C-205-342-217-370-220-389 M-178-323 Q-187-333-189-349 M-207-394 Q-220-404-223-429 M-226-460 Q-236-469-236-490 M-254-508 L-253-490"/>
+ <path class="whisper" d="M-196-371 Q-211-372-220-381 M-198-384 Q-210-384-221-391 M-210-462 Q-216-474-221-489"/>
+ <path class="skin" d="M-236-526 Q-245-544-246-555 Q-240-565-228-562 L-218-551 Q-206-551-199-546 Q-193-536-199-529 Q-204-522-214-523 Q-209-510-218-505 Q-229-502-238-514Z"/>
+ <path class="contour" d="M-238-547 Q-226-538-214-537 M-236-534 Q-223-528-211-527"/>
+ <path class="fine" d="M-245-550 Q-231-550-224-544 M-243-540 Q-232-543-220-539 M-221-560 Q-213-559-207-552"/>
+</g>
+<!-- The opposing arm presents a hanging lion skin, not a metal shield. -->
+<g id="04-right-arm-and-hunting-pelt" data-reveal="4">
+ <path class="skin" d="M176-358 Q218-399 257-373 Q305-356 319-324 C342-303 360-298 382-300 Q400-308 414-300 Q427-286 419-277 L400-260 Q382-246 365-253 C330-256 303-267 286-290 Q260-311 239-321 L196-305Z"/>
+ <path class="contour" d="M260-362 Q302-344 312-311 M275-349 Q298-321 327-307 Q353-285 377-282 M353-278 Q372-268 395-270"/>
+ <path class="fine" d="M308-323 Q327-313 341-304 M300-303 Q314-290 333-283 M383-289 Q397-288 403-278"/>
+ <path class="skin" d="M389-300 Q403-317 417-311 Q429-305 432-291 L438-278 Q433-267 424-267 Q421-254 411-258 L397-264 Q387-273 389-300Z"/>
+ <path class="fine" d="M406-307 Q418-291 420-274 M417-308 Q427-287 429-272"/>
+ <path class="pelt" d="M421-308 C407-337 393-356 381-358 Q364-355 353-341 Q338-332 333-307 C331-281 332-265 320-247 Q325-236 326-222 Q317-206 325-194 C320-179 316-169 330-159 Q324-143 336-136 Q332-116 346-109 Q346-92 359-90 Q361-72 371-69 Q375-49 390-48 Q398-28 414-33 Q428-7 439-14 C439-38 445-54 435-74 Q445-85 441-97 Q451-112 438-128 Q445-143 432-161 Q439-184 425-199 Q432-219 418-235 Q423-254 420-270 Q429-288 421-308Z"/>
+ <path class="contour" d="M364-348 Q378-337 381-316 Q395-306 416-311 M356-320 Q366-295 361-273 Q357-251 347-228 M387-314 Q393-292 386-267 M399-253 Q416-225 409-202 M370-230 Q383-202 377-173 M398-165 Q417-128 405-105 M370-150 Q390-115 389-82"/>
+ <path class="fine" d="M344-292 Q357-270 346-252 M334-243 Q347-216 333-199 M337-187 Q354-160 342-140 M341-134 Q357-122 354-106 M351-104 Q366-89 365-81 M373-70 Q393-49 401-51 M408-62 Q423-52 433-30 M421-135 Q427-110 438-100 M415-192 Q424-170 432-154"/>
+ <path class="whisper" d="M360-305 Q367-290 364-268 M380-288 Q386-263 377-243 M398-224 Q396-201 389-182 M404-178 Q401-155 390-140 M363-209 Q359-187 350-178 M382-153 Q375-131 373-116 M399-112 L393-89 M428-112 Q423-90 428-77"/>
+ <!-- Subtle lion-face motif on pelt, not stylized techno insignia. -->
+ <path class="fine" d="M350-325 Q359-334 364-321 Q372-335 380-326 M356-316 Q364-314 369-319 Q376-314 382-316 M363-308 Q367-303 371-308 M363-300 Q371-296 378-302"/>
+</g>
+<!-- Long-haired, clean-shaven classical Greek profile, viewed three quarters right. -->
+<g id="05-head-face-and-hair" data-reveal="5">
+ <path class="skin" d="M-48-519 Q-33-550 1-546 C36-549 62-528 64-500 Q67-482 75-469 L89-458 Q91-451 78-449 L69-438 Q73-424 59-416 L48-415 Q42-399 24-397 Q5-399-15-410 Q-31-429-43-453 Q-61-481-48-519Z"/>
+ <path class="contour" d="M62-500 Q65-483 72-469 L85-457 L67-456 M70-439 Q65-433 69-429 Q63-419 48-416 M45-407 Q32-398 22-397"/>
+ <path class="fine" d="M39-484 Q53-489 64-484 M48-477 Q57-475 64-478 M53-460 Q58-458 67-459 M59-445 Q66-446 72-445 M51-430 Q61-426 66-428"/>
+ <path class="highlight" d="M58-479 L64-478 M64-451 L78-452 M51-419 Q58-417 65-421"/>
+ <path class="skin" d="M-17-414 C-11-394-24-369-31-356 Q1-340 27-349 Q36-377 52-405 L27-402Z"/>
+ <path class="fine" d="M-12-408 Q0-386-4-368 M34-390 Q27-369 24-353"/>
+ <path class="pelt" d="M-48-500 Q-69-533-47-561 Q-24-584 10-569 Q31-583 47-560 Q60-555 55-534 C35-536 19-536 9-525 Q-9-511-12-488 L-30-460 Q-45-462-50-478Z"/>
+ <path class="contour" d="M-46-535 Q-30-565-2-561 Q19-565 31-549 M-40-518 Q-34-542-15-554 M-15-528 Q2-549 24-546"/>
+ <!-- Wavy free-flowing locks and strands; many separate vector strokes. -->
+ <path class="outer" d="M-39-553 C-73-552-88-531-87-504 C-103-485-99-467-113-443 Q-120-420-105-404 M-42-539 Q-70-517-66-492 C-76-465-95-451-93-425 M-45-517 Q-65-485-49-467 Q-63-441-78-426 M-23-558 Q-43-550-46-527 M9-565 Q-12-565-18-549 M23-563 Q45-558 50-537"/>
+ <path class="fine" d="M-63-533 Q-83-509-77-486 Q-94-456-96-434 M-55-528 Q-69-499-58-477 Q-68-454-80-438 M-74-490 Q-80-476-91-459 M-36-545 Q-51-519-45-502 M-18-559 Q-34-533-25-517 M5-553 Q18-552 31-538"/>
+ <path class="whisper" d="M-79-498 Q-92-481-89-460 M-71-472 Q-77-450-94-421 M-57-465 Q-62-446-73-435 M-41-552 Q-51-544-54-537 M-35-533 Q-42-522-40-509 M-5-563 Q11-570 26-559"/>
+ <path class="highlight" d="M-42-555 Q-13-578 13-566 M-78-517 Q-82-502-78-488 M-48-501 Q-50-483-46-476"/>
+</g>
+<!-- Body is NOT armor: anatomical pecs, ribs, abdomen, and draped classical shoulder sash. -->
+<g id="06-torso-natural-anatomy" data-reveal="6">
+ <path class="skin" d="M-128-316 Q-103-354-52-359 Q-17-368 26-352 Q75-380 132-374 Q207-391 262-370 Q260-334 230-308 C203-275 175-240 148-203 Q132-147 119-86 Q100-33 105 39 Q48 79-22 54 Q-99 38-112-33 Q-112-123-141-208 Q-155-270-128-316Z"/>
+ <path class="contour" d="M-126-316 Q-91-324-58-300 M-42-354 Q-9-336 24-343 Q50-369 82-360 M105-355 Q150-358 185-341 Q217-334 246-353 M-112-271 Q-90-246-56-242 Q0-236 29-267 Q64-243 117-248 Q172-257 202-296"/>
+ <path class="fine" d="M-98-292 Q-73-285-59-270 M-85-251 Q-43-225 3-236 M54-261 Q99-235 147-256 M191-311 Q179-281 153-267 M-47-204 Q-6-185 23-191 Q57-182 91-201 M-45-170 Q-13-153 12-158 M47-166 Q74-158 98-170 M-36-132 Q-2-120 15-123 M45-126 Q68-115 82-127 M-29-93 Q-6-83 11-91 M39-89 Q55-81 72-92 M-24-51 Q3-43 11-51 M37-50 Q54-42 65-51"/>
+ <path class="whisper" d="M-108-244 Q-86-202-79-158 M-104-194 Q-78-176-72-140 M159-246 Q142-210 142-171 M155-195 Q131-158 132-116 M-55-221 Q-40-202-26-197 M112-218 Q89-203 78-197 M3-194 Q10-173 9-155 M28-182 Q24-160 26-145 M16-127 Q22-101 15-81 M24-84 Q25-64 23-43"/>
+ <path class="highlight" d="M-82-298 Q-57-306-38-303 M93-350 Q131-357 153-351 M-39-241 Q-6-238 14-244 M80-244 Q110-248 131-261"/>
+ <!-- Chiton/sash draped from elevated shoulder diagonally through torso. -->
+ <path class="cloth" d="M184-362 Q200-355 212-340 C187-294 158-261 127-216 Q88-141 64-83 Q47-34 43 50 L6 59 C16-29 20-101 63-186 Q113-281 160-350Z"/>
+ <path class="contour" d="M169-348 C147-283 88-192 60-104 Q36-24 25 48 M188-337 Q147-257 109-187 Q67-100 52-3"/>
+ <path class="fine" d="M177-327 Q139-256 104-200 M159-292 Q110-206 80-144 M65-81 Q47-29 39 39 M139-249 L119-206"/>
+</g>
+<!-- Three-star Orion belt crosses the waist, sword hangs rather than defining a stick leg. -->
+<g id="07-belt-and-sword" data-reveal="7">
+ <path class="cloth" d="M-113-9 Q-65 8-36 22 Q13 49 75 106 Q105 123 128 113 L132 132 Q95 132 63 114 Q8 69-44 41 Q-81 22-118 20Z"/>
+ <path class="contour" d="M-110 1 Q-49 25 0 59 Q64 105 110 119"/>
+ <path class="fine" d="M-99 14 Q-40 34 14 71 Q70 115 120 125 M-68 29 L-60 18 M-34 44 L-26 32 M4 69 L13 55 M44 100 L52 86 M85 123 L92 108"/>
+ <path class="cloth" d="M-44 36 Q10 59 57 93 Q83 143 90 193 Q70 226 32 216 Q-14 189-47 172 Q-51 114-44 36Z"/>
+ <path class="fine" d="M-31 79 Q-6 138 8 192 M-9 88 Q25 146 39 206 M22 117 Q57 172 70 193"/>
+ <!-- Narrow, period-appropriate sheathed hunting blade at Iota Orionis. -->
+ <path class="pelt" d="M-5 140 Q5 155 11 167 L24 300 Q19 321 7 347 Q-5 318-11 294 L-11 168Z"/>
+ <path class="fine" d="M7 158 L7 335 M-12 172 Q9 180 23 170 M-19 146 Q7 135 31 148"/>
+ <path class="contour" d="M-20 145 Q7 137 34 148"/>
+ <path class="star" d="M-45 22 L-36 10 L-27 22 L-36 34Z M8 68 L17 56 L26 68 L17 80Z M66 106 L75 94 L84 106 L75 118Z"/>
+</g>
+<!-- A wind-blown tunic, not rectangular skirt or armor plates. -->
+<g id="08-drapery-and-folds" data-reveal="8">
+ <path class="cloth" d="M-102 33 Q-44 74 24 79 Q93 85 115 58 C137 105 166 152 197 172 Q232 183 256 201 Q224 205 202 192 Q213 228 239 244 Q201 244 178 230 Q180 259 196 282 C157 270 121 244 95 215 Q62 226 16 206 Q-45 236-93 216 Q-61 180-77 147 Q-98 118-102 33Z"/>
+ <path class="contour" d="M-91 63 Q-28 105 34 110 Q101 113 132 90 M-80 105 Q-25 156 25 158 Q94 171 173 213 M-66 183 Q-20 194 29 173 M87 161 Q123 207 179 230 M118 109 Q153 165 225 199"/>
+ <path class="fine" d="M-74 95 Q-43 127-16 143 M-53 108 Q-4 143 51 143 M-27 158 Q25 178 73 177 M-53 184 Q-20 182 8 177 M101 111 Q129 168 157 193 M115 145 Q147 206 197 233 M130 171 Q160 233 190 258 M42 86 Q35 116 39 158 M-18 94 Q-10 132-13 167 M75 109 Q89 167 119 199"/>
+ <path class="whisper" d="M-65 128 Q-50 153-30 171 M-2 133 Q12 151 32 151 M65 135 Q81 171 89 196 M147 184 Q174 209 216 220 M167 221 Q189 233 222 240"/>
+ <path class="highlight" d="M-74 70 Q-30 99 17 104 M195 170 Q218 184 247 200 M-92 213 Q-67 211-53 204"/>
+</g>
+<!-- Two individually sculpted leg silhouettes and feet through real lower stars. -->
+<g id="09-striding-legs-and-feet" data-reveal="9">
+ <!-- The trailing leg runs down-left; a bent knee keeps the pose alive. -->
+ <path class="skin" d="M-72 166 Q-91 195-108 218 Q-142 257-174 290 Q-196 337-220 376 L-255 430 Q-266 441-284 442 Q-308 451-302 463 Q-295 471-277 465 L-241 458 Q-208 446-188 409 Q-158 369-147 331 Q-104 307-63 279 Q-4 245 10 207 Q-26 191-72 166Z"/>
+ <path class="contour" d="M-63 209 Q-90 252-120 269 Q-162 294-175 333 Q-192 384-238 421 M-85 196 Q-116 240-145 269 M-187 401 Q-205 436-245 450"/>
+ <path class="fine" d="M-134 280 Q-156 313-157 330 M-172 297 Q-186 315-194 337 M-163 346 Q-191 370-210 404 M-203 385 Q-221 409-247 428 M-268 444 Q-279 450-288 460 M-241 429 Q-252 446-257 457"/>
+ <path class="whisper" d="M-116 275 Q-129 292-151 303 M-169 357 Q-182 381-197 392 M-225 420 Q-234 436-248 444"/>
+ <!-- Strong leading thigh bends to right, shin drops to the rightmost actual star. -->
+ <path class="skin" d="M80 183 Q128 178 153 201 C192 230 208 258 212 295 Q213 321 191 348 Q191 387 186 435 L192 481 Q200 490 215 493 Q233 497 235 508 Q228 526 206 525 L167 518 Q148 509 147 489 L149 432 Q138 378 148 323 Q136 308 120 286 Q92 247 59 227Z"/>
+ <path class="contour" d="M115 194 Q156 209 185 258 Q201 280 199 309 M148 240 Q161 263 173 278 Q180 291 176 312 M164 338 Q164 395 162 436 Q154 479 161 500 M181 346 Q187 401 176 457 Q177 489 192 505"/>
+ <path class="fine" d="M126 223 Q144 239 153 255 M139 251 Q158 277 167 304 M188 286 Q190 305 180 327 M159 364 Q150 398 156 430 M177 371 Q177 414 168 451 M155 481 Q164 493 175 501 M181 505 Q197 516 216 517"/>
+ <path class="whisper" d="M147 325 Q160 333 182 334 M156 351 Q171 356 188 345 M164 412 Q165 438 156 458 M194 491 Q214 498 228 504"/>
+ <path class="highlight" d="M-299 458 Q-283 464-269 459 M151 496 Q157 509 172 513"/>
+ <!-- Ancient winding straps/soft sandals, not a sci-fi greave. -->
+ <path class="fine" d="M-228 377 Q-215 385-206 400 M-241 394 Q-229 405-215 411 M-251 417 Q-233 418-222 429 M155 375 Q175 380 186 374 M153 397 Q175 405 183 395 M151 427 Q170 436 182 425 M148 455 Q166 464 182 452"/>
+ <path class="whisper" d="M-291 454 Q-279 454-271 460 M167 514 Q169 504 174 499 M181 519 Q183 505 188 502 M196 522 Q197 512 200 507 M211 519 Q215 513 220 510"/>
+</g>
+<!-- Restrained decorative etching gives the illustration the old atlas treatment. -->
+<g id="10-etching-and-illuminated-accents" data-reveal="10">
+ <path class="whisper" d="M-94-280 L-83-272 M-89-289 L-77-280 M-84-298 L-71-288 M-79-307 L-66-296 M-74-315 L-61-304 M115-304 L130-319 M118-295 L134-309 M123-286 L139-300 M129-276 L145-290 M135-267 L151-281"/>
+ <path class="whisper" d="M-84-185 L-69-179 M-81-177 L-66-170 M-78-169 L-63-161 M-75-160 L-60-152 M104-178 L116-187 M101-168 L114-177 M98-158 L111-167 M94-148 L108-157 M-26-54 L-16-49 M-25-46 L-16-41 M55-61 L65-68"/>
+ <path class="whisper" d="M-146 303 L-132 306 M-154 309 L-143 320 M-164 321 L-152 328 M165 351 L175 353 M162 358 L174 361 M159 365 L173 368"/>
+ <path class="highlight" d="M-53-519 Q-47-545-31-554 M34-535 Q54-525 58-505 M-107-314 Q-92-333-64-340 M229-364 Q246-370 258-364 M48-245 Q77-233 94-242 M-30 55 Q-8 72 10 76"/>
+ <!-- Deliberately subtle small art-side registration circles: at the nine template points. -->
+ <circle class="star" cx="4" cy="-500" r="6"/>
+ <circle class="star" cx="258" cy="-370" r="6"/>
+ <circle class="star" cx="-126" cy="-317" r="6"/>
+ <circle class="star" cx="-36" cy="22" r="5"/>
+ <circle class="star" cx="17" cy="68" r="5"/>
+ <circle class="star" cx="75" cy="106" r="5"/>
+ <circle class="star" cx="-259" cy="425" r="5"/>
+ <circle class="star" cx="165" cy="499" r="5"/>
+ <circle class="star" cx="7" cy="308" r="5"/>
+</g>
+</svg>

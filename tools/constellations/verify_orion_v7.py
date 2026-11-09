@@ -62,9 +62,13 @@ def run(report,manifest,corpus,art,output):
             ax,ay=projected(*ART_ANCHORS[i],tr)
             assert math.hypot(ax-px,ay-py)<24, f'unfit anatomical anchor: {slug}/{i}'
         assert match['edges']==original['images'][slug]['matches']['Ori'][scene['match_index_zero_based']]['edges']
-        p=output/'previews'/f'{slug}-orion-v7.jpg';q=output/'qa'/f'{slug}-orion-v7-QA.jpg'
-        v=output/'overlays'/f'{slug}-orion-v7-overlay.svg'
+        suffix=scene.get('output_suffix', 'orion-v7')
+        assert suffix.startswith('orion-'), 'Unexpected output prefix'
+        p=output/'previews'/f'{slug}-{suffix}.jpg';q=output/'qa'/f'{slug}-{suffix}-QA.jpg'
+        v=output/'overlays'/f'{slug}-{suffix}-overlay.svg'
         assert p.is_file() and q.is_file() and v.is_file(),'missing v7 artifact'
+        if 'overlay_sha256' in scene:
+            assert digest(v)==scene['overlay_sha256'], 'overlay differs from selected art placement'
         assert Image.open(p).size==Image.open(q).size==(1920,1080),'output not full resolution'
         painted=Image.open(io.BytesIO(cairosvg.svg2png(url=str(v)))).convert('RGBA')
         alpha=painted.getchannel('A');ext=alpha.getbbox()

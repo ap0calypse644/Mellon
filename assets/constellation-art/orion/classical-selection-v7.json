@@ -1,0 +1,145 @@
+{
+  "schema": "mellon-orion-v7-classical-selected-placements",
+  "source_report_schema": "mellon-centered-constellation-matches-v6",
+  "template": "Ori",
+  "human_review": "pending",
+  "notes": "Immutable source IDs and stable indices from v6; never infer astronomical provenance from image pixels",
+  "placements": [
+    {
+      "background": "blue-gold-nebula",
+      "stable_id": "ori-ca3de851f9ef6d",
+      "v6_match_index": 138,
+      "source_star_ids": [
+        "S001491",
+        "S001964",
+        "S002295",
+        "S003630",
+        "S003790",
+        "S003921",
+        "S005379",
+        "S005613",
+        "S004760"
+      ],
+      "source_sha256": "ac80ecb2c6a760c933d7588088e736b2a1941fdd493ade113c31e474176becee",
+      "background_sha256": "b3e53af6484fd1ecd9dfcefe001cbe9d1356ec9cea182cb2d89646929eb98d0b",
+      "art_sha256": "7f979e154e420a2ff7f6249a70d3e63faca38d29fc6bde505731128605a5671a",
+      "rotation_deg": -3.5,
+      "center_px": [
+        844.7,
+        512.02
+      ],
+      "scale_px": 690.0,
+      "rms_error_px": 3.1217,
+      "anchor_rms_px": 3.106,
+      "star_span": 0.63374,
+      "art_bbox_px_including_glow": [
+        522.226,
+        71.175,
+        1169.619,
+        887.69
+      ]
+    },
+    {
+      "background": "veiled-ring",
+      "stable_id": "ori-1715e433bf0988",
+      "v6_match_index": 127,
+      "source_star_ids": [
+        "S006497",
+        "S005185",
+        "S007157",
+        "S006781",
+        "S006490",
+        "S006180",
+        "S007967",
+        "S005776",
+        "S006606"
+      ],
+      "source_sha256": "e1f7ce33ffa032024f0fcfcf0f2db63ffe5b6aa02e75553c411571dbf2731d86",
+      "background_sha256": "debee2e1daab063d378395f318e3c95b2d3ee9c6ccbdf88ec222cdf9108ce7be",
+      "art_sha256": "7f979e154e420a2ff7f6249a70d3e63faca38d29fc6bde505731128605a5671a",
+      "rotation_deg": 1.48,
+      "center_px": [
+        1021.36,
+        544.57
+      ],
+      "scale_px": 657.56,
+      "rms_error_px": 2.5833,
+      "anchor_rms_px": 2.747,
+      "star_span": 0.61283,
+      "art_bbox_px_including_glow": [
+        724.509,
+        119.856,
+        1338.765,
+        915.957
+      ]
+    },
+    {
+      "background": "dust-cloud",
+      "stable_id": "ori-1fbe455a6a990e",
+      "v6_match_index": 118,
+      "source_star_ids": [
+        "S005398",
+        "S004206",
+        "S006068",
+        "S005596",
+        "S005355",
+        "S005056",
+        "S006678",
+        "S004587",
+        "S005378"
+      ],
+      "source_sha256": "57da8b2279e5e9a723699dc72adcba49347e3a4e3785727d51fd77dc931d5278",
+      "background_sha256": "7e38ec0c4179c1cec39bf73350a20133a5021ac48fb27ef3c9ca982f95bb7409",
+      "art_sha256": "7f979e154e420a2ff7f6249a70d3e63faca38d29fc6bde505731128605a5671a",
+      "rotation_deg": -0.63,
+      "center_px": [
+        1047.39,
+        557.06
+      ],
+      "scale_px": 695.9,
+      "rms_error_px": 3.895,
+      "anchor_rms_px": 3.774,
+      "star_span": 0.64694,
+      "art_bbox_px_including_glow": [
+        729.095,
+        110.247,
+        1379.257,
+        943.52
+      ]
+    },
+    {
+      "background": "cosmic-wings",
+      "stable_id": "ori-3688f9ff3dd79d",
+      "v6_match_index": 152,
+      "source_star_ids": [
+        "S003585",
+        "S004328",
+        "S004752",
+        "S006938",
+        "S007261",
+        "S007521",
+        "S009384",
+        "S009746",
+        "S008774"
+      ],
+      "source_sha256": "4eea76e185451e21bfed10a3fe90ef50dedc04845f99176b06329b93cb9c9535",
+      "background_sha256": "a8c1da1b343db37c03d6db3db2286022503d5130654a3b33a45503c9ca3abb74",
+      "art_sha256": "7f979e154e420a2ff7f6249a70d3e63faca38d29fc6bde505731128605a5671a",
+      "rotation_deg": -1.58,
+      "center_px": [
+        848.89,
+        583.14
+      ],
+      "scale_px": 688.69,
+      "rms_error_px": 3.7238,
+      "anchor_rms_px": 3.96,
+      "star_span": 0.63805,
+      "art_bbox_px_including_glow": [
+        531.372,
+        141.393,
+        1176.203,
+        963.379
+      ]
+    }
+  ]
+}
