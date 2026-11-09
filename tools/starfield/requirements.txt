@@ -1,0 +1,5 @@
+# Pinned for Python 3.12; offline catalogue generation, no GNOME dependency.
+numpy==1.26.4
+opencv-python-headless==4.11.0.86
+Pillow==11.1.0
+scipy==1.15.2
