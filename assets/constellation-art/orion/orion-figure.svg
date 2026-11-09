@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="1250" viewBox="-490 -620 980 1250" version="1.1" role="img" aria-label="Orion, astral hunter: original editable celestial engraving">
+  <title>Orion — The Hunter / Astral Atlas engraving</title>
+  <desc>Original layered line illustration in 1000-unit Orion template coordinates, with a nine-star head, shoulder, belt, leg, and sword alignment. Paths are ordered for later draw-on animation. Not a background image.</desc>
+  <defs>
+    <linearGradient id="nightplate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c1b29" stop-opacity=".60"/>
+      <stop offset=".55" stop-color="#17222f" stop-opacity=".27"/>
+      <stop offset="1" stop-color="#070f1b" stop-opacity=".55"/>
+    </linearGradient>
+    <linearGradient id="silk" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#182c39" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#07111d" stop-opacity=".10"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .edge {fill:none;stroke:#e4bd8e;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;opacity:.90}
+    .fine {fill:none;stroke:#e2c398;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;opacity:.64}
+    .etch {fill:none;stroke:#9eb8c6;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round;opacity:.52}
+    .glint {fill:none;stroke:#a9e7ee;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+    .plate {fill:url(#nightplate);stroke:#d5ae7d;stroke-width:3.2;stroke-linejoin:round;opacity:.88}
+    .cloth {fill:url(#silk);stroke:#c8a77c;stroke-width:2.7;stroke-linejoin:round;opacity:.77}
+    .metal {fill:#273a49;fill-opacity:.32;stroke:#e7c695;stroke-width:2.7;stroke-linejoin:round;opacity:.96}
+    .glyph {fill:#ecd3aa;opacity:.68}
+    .stud {fill:#a9e7ee;stroke:#f0cea0;stroke-width:1.6;opacity:.92}
+  </style>
+
+  <!-- Back fabric, original silhouette, no historical atlas art embedded -->
+  <g id="01-mantle-and-cape" data-reveal="1">
+    <path class="cloth" d="M 143,-340 C 189,-378 228,-369 264,-355 C 300,-287 287,-209 306,-141 C 318,-86 351,-39 337,47 C 323,145 358,241 337,354 C 312,305 282,286 257,319 C 231,340 222,419 196,461 C 195,358 159,333 153,283 C 146,206 155,158 112,102 C 157,-1 159,-102 133,-180 Z"/>
+    <path class="edge" d="M 266,-348 C 272,-263 284,-176 306,-111 C 328,-37 323,54 322,124 C 316,218 322,285 339,348"/>
+    <path class="fine" d="M 241,-335 C 230,-256 242,-198 252,-130 C 261,-31 284,75 263,151 C 246,230 275,278 263,345"/>
+    <path class="etch" d="M 210,-319 C 199,-229 214,-156 223,-105 C 228,-12 230,69 209,144 C 195,213 215,293 195,405"/>
+    <path class="fine" d="M 288,56 C 312,84 318,110 316,151 M 295,176 C 321,193 329,222 332,242 M 227,235 C 257,264 258,290 252,318"/>
+    <path class="etch" d="M 176,-282 C 203,-295 215,-311 241,-326 M 284,288 Q 309,310 334,342"/>
+  </g>
+
+  <!-- Left arm: bent shield-side, structured armor, anatomically connected -->
+  <g id="02-left-arm" data-reveal="2">
+    <path class="plate" d="M -120,-336 C -167,-348 -187,-321 -205,-286 C -220,-249 -249,-206 -271,-163 C -288,-147 -309,-148 -333,-158 L -345,-124 C -316,-102 -270,-109 -248,-127 C -199,-154 -183,-189 -150,-232 L -91,-277 Z"/>
+    <path class="metal" d="M -167,-298 Q -203,-277 -230,-220 L -269,-159 L -235,-145 Q -207,-165 -183,-196 L -141,-263 Z"/>
+    <path class="edge" d="M -184,-266 C -202,-231 -223,-197 -254,-168 M -174,-240 C -198,-211 -209,-178 -237,-157"/>
+    <path class="fine" d="M -193,-273 L -209,-255 M -210,-251 L -225,-234 M -225,-229 L -242,-207 M -243,-205 L -258,-181"/>
+    <path class="metal" d="M -334,-168 Q -362,-168 -373,-146 L -366,-112 Q -343,-105 -326,-122 L -318,-143 Z"/>
+    <path class="fine" d="M -359,-160 L -347,-119 M -346,-164 L -335,-123"/>
+    <!-- Small round shield carries ancient atlas iconography rather than rejected bow -->
+    <path class="cloth" d="M -365,-199 C -397,-176 -425,-105 -422,-31 C -415,30 -389,67 -359,83 C -320,59 -290,14 -293,-50 C -297,-115 -324,-178 -365,-199 Z"/>
+    <path class="edge" d="M -366,-181 Q -402,-138 -403,-53 C -406,5 -382,47 -360,62 Q -326,36 -313,-37 Q -309,-129 -366,-181 Z"/>
+    <path class="fine" d="M -366,-155 L -366,40 M -395,-57 L -333,-57 M -385,-112 Q -356,-133 -331,-112 M -385,0 Q -358,23 -333,0"/>
+    <circle class="metal" cx="-365" cy="-56" r="28"/>
+    <circle class="fine" cx="-365" cy="-56" r="17"/>
+    <path class="glint" d="M -365,-78 L -359,-63 L -344,-57 L -359,-51 L -365,-35 L -371,-51 L -386,-57 L -371,-63 Z"/>
+    <path class="etch" d="M -398,-122 Q -386,-144 -377,-154 M -390,14 Q -379,36 -365,45"/>
+    <circle class="stud" cx="-365" cy="-163" r="3.2"/>
+    <circle class="stud" cx="-365" cy="48" r="3.2"/>
+  </g>
+
+  <!-- Right forearm and slim spear: no oversized bow/club -->
+  <g id="03-spear-and-right-arm" data-reveal="3">
+    <path class="edge" d="M 410,-573 L 388,269"/>
+    <path class="fine" d="M 414,-560 L 392,261"/>
+    <path class="metal" d="M 410,-573 C 401,-558 394,-536 400,-514 L 412,-479 L 423,-515 C 423,-537 417,-557 410,-573 Z"/>
+    <path class="glint" d="M 410,-555 L 410,-500"/>
+    <path class="fine" d="M 394,-339 L 411,-333 M 392,-297 L 409,-290 M 391,-253 L 408,-247"/>
+    <path class="plate" d="M 252,-379 C 288,-385 307,-365 322,-328 C 336,-295 338,-261 356,-241 C 373,-216 392,-227 401,-207 L 398,-171 C 363,-156 338,-179 320,-201 C 282,-235 275,-259 246,-303 Z"/>
+    <path class="metal" d="M 312,-307 C 330,-305 342,-264 358,-237 L 344,-211 Q 307,-244 290,-287 Z"/>
+    <path class="edge" d="M 291,-341 Q 307,-307 317,-288 M 323,-293 Q 335,-249 350,-232"/>
+    <path class="fine" d="M 313,-318 L 332,-321 M 319,-304 L 338,-309 M 325,-290 L 344,-294 M 329,-273 L 348,-277"/>
+    <path class="metal" d="M 370,-224 Q 389,-241 405,-232 L 415,-207 L 409,-178 Q 397,-157 378,-176 L 368,-196 Z"/>
+    <path class="fine" d="M 380,-217 Q 394,-207 391,-183 M 394,-221 L 401,-186"/>
+  </g>
+
+  <!-- Legs: asymmetrical grounded heroic stance; actual stars at both boots -->
+  <g id="04-legs-and-greaves" data-reveal="4">
+    <path class="cloth" d="M -73,101 C -102,127 -135,187 -174,239 L -220,316 L -253,425 Q -229,449 -208,429 L -145,324 L -49,228 L 17,153 Z"/>
+    <path class="cloth" d="M 36,118 C 85,159 116,210 139,273 L 160,360 L 153,485 Q 178,501 202,485 L 226,378 L 209,275 Q 191,173 119,96 Z"/>
+    <path class="plate" d="M -129,228 Q -158,224 -175,253 L -203,306 Q -193,329 -168,326 L -120,269 Z"/>
+    <path class="plate" d="M 139,257 Q 168,240 194,270 L 213,324 Q 188,348 158,331 Z"/>
+    <circle class="metal" cx="-173" cy="278" r="18"/><circle class="metal" cx="177" cy="293" r="19"/>
+    <path class="fine" d="M -176,259 L -163,282 L -180,299 M 173,275 L 191,292 L 173,310"/>
+    <!-- sculpted left greave -->
+    <path class="metal" d="M -206,301 C -215,320 -242,363 -258,408 L -236,438 Q -212,423 -191,382 L -167,324 Q -180,319 -206,301 Z"/>
+    <path class="edge" d="M -201,322 Q -219,352 -239,403 M -171,331 Q -194,373 -220,414"/>
+    <path class="fine" d="M -209,333 L -186,344 M -223,361 L -198,371 M -237,392 L -211,400"/>
+    <path class="etch" d="M -200,355 Q -221,389 -230,421"/>
+    <!-- right greave -->
+    <path class="metal" d="M 157,328 C 150,364 138,419 148,473 L 188,492 Q 211,457 212,410 L 212,326 Q 185,340 157,328 Z"/>
+    <path class="edge" d="M 166,349 Q 153,419 162,474 M 201,348 Q 207,416 193,468"/>
+    <path class="fine" d="M 157,369 L 205,378 M 154,407 L 207,415 M 155,450 L 201,456"/>
+    <path class="etch" d="M 182,339 Q 188,411 180,478"/>
+    <!-- feet with articulated pointed toes -->
+    <path class="plate" d="M -240,414 Q -246,426 -264,431 Q -299,436 -312,453 Q -319,469 -299,471 L -233,471 L -208,449 L -219,426 Z"/>
+    <path class="plate" d="M 156,466 Q 152,484 167,509 Q 183,528 206,524 Q 220,522 228,506 L 218,472 L 190,464 Z"/>
+    <path class="fine" d="M -288,451 L -224,451 M 176,493 Q 200,501 223,497"/>
+    <path class="glint" d="M -260,437 L -276,442 M 171,486 L 188,503"/>
+  </g>
+
+  <!-- Layered leather kilt / ancient astral cuirass -->
+  <g id="05-tunic-and-waist" data-reveal="5">
+    <path class="cloth" d="M -130,-20 C -123,44 -134,99 -106,153 C -83,176 -48,188 -23,179 L 34,160 L 90,174 Q 143,163 152,118 C 134,69 133,17 112,-29 Z"/>
+    <path class="edge" d="M -123,40 Q 1,94 131,56 M -118,100 Q -9,137 144,110"/>
+    <path class="fine" d="M -103,67 C -85,103 -64,135 -67,169 M -69,79 Q -52,133 -40,171 M -29,86 Q -9,139 -11,179 M 15,98 Q 29,141 40,162 M 63,101 Q 76,132 87,168 M 109,90 Q 119,111 129,144"/>
+    <path class="etch" d="M -84,116 L -72,137 M -24,132 L -11,154 M 41,126 L 60,146 M 105,121 L 121,137"/>
+    <path class="plate" d="M -147,-60 C -139,-133 -130,-213 -105,-275 Q -32,-325 63,-309 Q 148,-298 176,-248 C 175,-155 149,-82 127,-18 Q 1,8 -147,-60 Z"/>
+    <path class="edge" d="M -113,-273 Q -110,-209 -122,-165 Q -97,-93 -70,-50 Q 27,-11 119,-39 Q 154,-108 145,-171 Q 153,-221 150,-258"/>
+    <path class="fine" d="M -97,-236 C -81,-170 -80,-125 -53,-82 Q 25,-46 97,-74 C 119,-125 127,-187 120,-250"/>
+    <!-- sculpted chest ridges and breastplate facets -->
+    <path class="fine" d="M -88,-239 Q -24,-213 43,-238 Q 81,-257 128,-243 M -89,-218 Q -23,-188 33,-208 Q 86,-222 128,-209"/>
+    <path class="etch" d="M -96,-182 Q -57,-134 -27,-123 M 127,-172 Q 98,-114 64,-107 M -68,-73 Q -10,-93 35,-75 M 57,-79 L 111,-108"/>
+    <path class="edge" d="M 0,-300 Q 3,-269 31,-243 Q 66,-271 70,-302"/>
+    <path class="metal" d="M -13,-228 Q 25,-248 69,-218 L 78,-159 Q 49,-125 30,-114 Q 12,-129 -14,-158 Z"/>
+    <path class="fine" d="M 26,-228 L 30,-125 M -5,-188 L 68,-186 M 1,-169 L 62,-170"/>
+    <path class="glint" d="M 31,-203 L 39,-188 L 54,-182 L 39,-176 L 31,-160 L 23,-176 L 8,-182 L 23,-188 Z"/>
+    <!-- superimposed diagonal belt, all three real belt stars remain visible -->
+    <path class="metal" d="M -145,-45 Q -30,-2 145,57 L 141,96 Q 1,67 -149,-6 Z"/>
+    <path class="fine" d="M -135,-29 L 139,73 M -135,-13 L 137,91"/>
+    <path class="edge" d="M -124,-27 Q -18,3 124,56"/>
+    <path class="etch" d="M -106,-5 L -95,-25 M -79,7 L -66,-16 M -50,18 L -37,-5 M -12,33 L 1,7 M 27,47 L 40,23 M 64,62 L 77,38 M 100,75 L 111,50"/>
+    <path class="metal" d="M -12,28 L 8,12 L 40,37 L 16,60 Z"/>
+    <path class="glint" d="M 14,23 L 19,40 L 34,44 L 18,49 L 12,63 L 7,46 L -7,40 L 6,35 Z"/>
+  </g>
+
+  <!-- Sculpted pauldron shells (the main upper stars are their jewels) -->
+  <g id="06-shoulder-armor" data-reveal="6">
+    <path class="plate" d="M -90,-290 C -111,-337 -153,-358 -183,-339 C -218,-320 -216,-290 -200,-267 L -139,-232 L -99,-253 Z"/>
+    <path class="edge" d="M -169,-341 Q -195,-308 -182,-276 Q -149,-264 -126,-253"/>
+    <path class="fine" d="M -195,-313 Q -154,-315 -113,-280 M -194,-293 Q -157,-294 -120,-267"/>
+    <path class="etch" d="M -182,-328 Q -158,-330 -134,-307"/>
+    <path class="plate" d="M 147,-314 Q 200,-389 261,-388 C 298,-381 314,-350 304,-321 Q 283,-287 221,-285 L 180,-269 Z"/>
+    <path class="edge" d="M 182,-329 Q 243,-374 280,-353 M 192,-309 Q 260,-351 299,-330"/>
+    <path class="fine" d="M 210,-292 Q 270,-308 299,-316 M 185,-337 Q 214,-366 252,-377"/>
+    <path class="etch" d="M 207,-348 Q 237,-355 263,-354"/>
+    <circle class="stud" cx="-126" cy="-317" r="9"/>
+    <circle class="stud" cx="258" cy="-370" r="9"/>
+    <circle class="fine" cx="-126" cy="-317" r="17"/>
+    <circle class="fine" cx="258" cy="-370" r="18"/>
+    <path class="glint" d="M -126,-329 L -121,-317 L -126,-305 L -131,-317 Z M 258,-384 L 263,-370 L 258,-356 L 253,-370 Z"/>
+  </g>
+
+  <!-- Individual helmet portrait with nose, brow, cheek, neck and crest -->
+  <g id="07-orion-portrait" data-reveal="7">
+    <path class="cloth" d="M -50,-422 Q -49,-393 -75,-376 Q -61,-359 -37,-360 L -17,-390 Q 7,-394 37,-384 Q 58,-393 72,-405 L 46,-431 Z"/>
+    <path class="plate" d="M -68,-507 C -71,-547 -43,-573 5,-571 C 42,-576 66,-551 67,-503 L 57,-447 Q 33,-424 -2,-420 Q -44,-430 -62,-454 Z"/>
+    <!-- hair plume and helmet crest (within 9% figure room) -->
+    <path class="cloth" d="M 10,-566 Q 6,-595 -8,-603 C 16,-598 35,-590 37,-571 Q 72,-580 78,-568 Q 55,-549 30,-545 Z"/>
+    <path class="fine" d="M 2,-591 Q 28,-591 32,-568 M 27,-572 Q 53,-567 64,-571"/>
+    <path class="edge" d="M -60,-503 Q -17,-515 59,-503 M -53,-515 Q -14,-535 51,-523"/>
+    <path class="metal" d="M -45,-510 Q -19,-529 17,-521 L 59,-501 L 52,-481 Q 23,-477 -7,-481 L -35,-476 Z"/>
+    <path class="fine" d="M -33,-490 Q -12,-498 4,-494 M 20,-493 L 45,-495"/>
+    <path class="glint" d="M -23,-488 L -6,-488 M 21,-488 L 38,-490"/>
+    <path class="edge" d="M 2,-476 L -2,-449 L 16,-446 M -18,-432 Q 3,-426 27,-433"/>
+    <path class="fine" d="M -36,-463 Q -44,-446 -26,-431 M 42,-458 Q 45,-438 34,-430"/>
+    <path class="metal" d="M -64,-502 Q -75,-476 -60,-442 L -47,-428 L -37,-455 L -48,-489 Z"/>
+    <path class="metal" d="M 57,-500 Q 73,-486 66,-451 L 49,-437 L 41,-459 L 50,-490 Z"/>
+    <path class="etch" d="M -60,-477 L -49,-449 M 61,-474 L 53,-457"/>
+    <path class="fine" d="M -17,-558 Q 8,-563 29,-556 M -24,-545 Q 7,-550 35,-543"/>
+    <!-- head star -->
+    <circle class="stud" cx="4" cy="-500" r="7"/>
+    <circle class="fine" cx="4" cy="-500" r="13"/>
+  </g>
+
+  <!-- The suspended constellation sword follows Iota Orionis, not a bow -->
+  <g id="08-sword-and-emblems" data-reveal="8">
+    <path class="metal" d="M 8,120 L 18,289 L 7,343 L -6,290 L -5,121 Z"/>
+    <path class="glint" d="M 7,138 L 7,332"/>
+    <path class="metal" d="M -38,129 Q 7,115 48,129 L 45,143 Q 9,139 -36,143 Z"/>
+    <path class="edge" d="M 8,123 L 11,97 M 8,98 L 8,87"/>
+    <circle class="metal" cx="8" cy="84" r="8"/>
+    <path class="fine" d="M -32,134 Q -14,143 -2,147 M 22,147 Q 35,140 43,136"/>
+    <path class="fine" d="M -47,-20 L -48,-47 M 47,52 L 48,32"/>
+    <!-- chest star / engraved stellar compass -->
+    <circle class="fine" cx="31" cy="-183" r="38"/>
+    <circle class="etch" cx="31" cy="-183" r="48"/>
+    <path class="fine" d="M 30,-230 L 30,-137 M -16,-183 L 77,-183"/>
+    <path class="glint" d="M 31,-215 L 39,-191 L 63,-183 L 39,-175 L 31,-151 L 23,-175 L -1,-183 L 23,-191 Z"/>
+    <circle class="stud" cx="-36" cy="22" r="7"/>
+    <circle class="stud" cx="17" cy="68" r="7"/>
+    <circle class="stud" cx="75" cy="106" r="7"/>
+    <circle class="stud" cx="-259" cy="425" r="6"/>
+    <circle class="stud" cx="165" cy="499" r="6"/>
+    <circle class="stud" cx="7" cy="308" r="6"/>
+  </g>
+
+  <!-- Delicate engraved hatch work: not arbitrary zigzag constellation links -->
+  <g id="09-engraving-and-finishing" data-reveal="9">
+    <path class="etch" d="M -94,-231 L -78,-216 M -97,-219 L -80,-204 M -99,-205 L -82,-190 M -101,-192 L -84,-177 M -103,-179 L -86,-164 M 124,-233 L 141,-245 M 125,-220 L 146,-233 M 127,-207 L 148,-220 M 130,-195 L 151,-208"/>
+    <path class="etch" d="M -98,-119 L -77,-101 M -92,-105 L -70,-86 M -80,-95 L -58,-77 M 113,-121 L 131,-136 M 103,-108 L 126,-123 M 95,-95 L 120,-109"/>
+    <path class="etch" d="M -47,134 L -37,163 M -30,127 L -21,170 M 49,116 L 59,153 M 69,116 L 81,154 M -226,370 L -241,397 M -218,377 L -232,404 M -210,387 L -222,415 M 176,391 L 173,427 M 190,391 L 190,429"/>
+    <path class="fine" d="M -138,-280 Q -149,-269 -167,-276 M 248,-303 Q 267,-311 285,-319 M 295,-277 Q 309,-271 320,-248"/>
+    <path class="glint" d="M -47,-505 Q -26,-518 10,-517 M 61,-509 L 59,-486 M 26,-305 Q 66,-297 107,-302 M -88,-294 L -60,-303"/>
+    <circle class="glyph" cx="-78" cy="-258" r="2.3"/><circle class="glyph" cx="101" cy="-273" r="2.3"/>
+    <circle class="glyph" cx="-28" cy="-91" r="2.3"/><circle class="glyph" cx="86" cy="-94" r="2.3"/>
+    <circle class="glyph" cx="-210" cy="-293" r="2.4"/><circle class="glyph" cx="280" cy="-341" r="2.4"/>
+  </g>
+</svg>

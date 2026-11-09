@@ -1,0 +1,17 @@
+{
+  "schema": "mellon-orion-anatomical-anchors-v7",
+  "coordinate_system": "template Orion planar points, x/y units from -0.5 to +0.5; SVG uses 1000x",
+  "template": "tools/constellations/templates-v3.json#/templates/Ori",
+  "rule": "Never move source-image star coordinates. Uniform-scale, translate and rotate the SVG; reject placements if anchor residuals/figure bounds fail.",
+  "anchors": [
+    {"index": 0, "semantic": "head", "svg_xy_units": [4, -500]},
+    {"index": 1, "semantic": "right_shoulder", "svg_xy_units": [258, -370]},
+    {"index": 2, "semantic": "left_shoulder", "svg_xy_units": [-126, -317]},
+    {"index": 3, "semantic": "belt_left", "svg_xy_units": [-36, 22]},
+    {"index": 4, "semantic": "belt_middle", "svg_xy_units": [17, 68]},
+    {"index": 5, "semantic": "belt_right", "svg_xy_units": [75, 106]},
+    {"index": 6, "semantic": "left_foot", "svg_xy_units": [-259, 425]},
+    {"index": 7, "semantic": "right_foot", "svg_xy_units": [165, 499]},
+    {"index": 8, "semantic": "sword", "svg_xy_units": [7, 308]}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "mellon-orion-stroke-sequence-v7-draft",
+  "status": "storyboard-only; do not trigger on Enter, only actual GNOME auth success if safely available",
+  "total_duration_ms_aspirational": 1250,
+  "method": "future SVG path stroke-dashoffset animation or Cairo path reveal, with layer opacity/crossfade; no implementation yet",
+  "steps": [
+    {"t0_ms": 0, "t1_ms": 120, "action": "illuminate measured stars and quiet nine-vertex geometry"},
+    {"t0_ms": 120, "t1_ms": 320, "svg_groups": ["07-orion-portrait", "06-shoulder-armor"], "action": "helmet and shoulders trace"},
+    {"t0_ms": 280, "t1_ms": 600, "svg_groups": ["05-tunic-and-waist", "09-engraving-and-finishing"], "action": "cuirass and engraved chest"},
+    {"t0_ms": 460, "t1_ms": 800, "svg_groups": ["02-left-arm", "03-spear-and-right-arm", "08-sword-and-emblems"], "action": "equipment outlines, and Orion's three-star belt"},
+    {"t0_ms": 700, "t1_ms": 1070, "svg_groups": ["04-legs-and-greaves", "01-mantle-and-cape"], "action": "greaves and flowing mantle"},
+    {"t0_ms": 1070, "t1_ms": 1250, "action": "soft accent pulse, then yield to GNOME secure transition"}
+  ],
+  "caveat": "GNOME 50 lock-dialog success lifecycle has NOT been proven to allow a pre-unlock hold. No lock-screen integration in v7."
+}

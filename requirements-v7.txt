@@ -1,0 +1,4 @@
+# Installed in the dedicated offline constellation venv, NOT in GNOME shell.
+numpy>=2
+pillow>=11
+cairosvg>=2.7,<3
