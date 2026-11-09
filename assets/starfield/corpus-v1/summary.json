@@ -1,0 +1,47 @@
+{
+  "schema": "mellon-multifield-v1",
+  "images": [
+    {
+      "name": "rosy-rosette",
+      "detected": 13077,
+      "curated": 719,
+      "edges": 3283
+    },
+    {
+      "name": "cosmic-wings",
+      "detected": 11889,
+      "curated": 720,
+      "edges": 3282
+    },
+    {
+      "name": "blue-gold-nebula",
+      "detected": 7380,
+      "curated": 716,
+      "edges": 3258
+    },
+    {
+      "name": "chromatic-nebula",
+      "detected": 10066,
+      "curated": 733,
+      "edges": 3376
+    },
+    {
+      "name": "veiled-ring",
+      "detected": 15335,
+      "curated": 712,
+      "edges": 3252
+    },
+    {
+      "name": "dust-cloud",
+      "detected": 12389,
+      "curated": 724,
+      "edges": 3327
+    }
+  ],
+  "totals": {
+    "candidates": 70136,
+    "curated": 4324,
+    "edges": 19778
+  },
+  "note": "Counts are computed from exact conversation-uploaded source JPEGs; outputs must be regenerated if source bytes differ."
+}
