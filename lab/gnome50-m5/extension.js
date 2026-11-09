@@ -5,12 +5,14 @@ import St from 'gi://St';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {FailureTracker} from './failure-tracker.js';
 
 /**
  * Mellon M5: a NON-REACTIVE visual cover above GNOME's native unlock UI.
  * Native authentication, password entry, focus, retries and locking remain
  * entirely GNOME-owned. We inspect only buffer length, never text or keys.
- * SHOW LOGIN restores the native visual interface; 2 failed attempts do too.
+ * SHOW LOGIN restores native UI. A read-only GNOME failure counter observer
+ * restores it after 2 wrong attempts; no authentication internals modified.
  * VM ONLY. Never install M5 on the BlackPearl host.
  */
 const POLL_MS = 250;
@@ -250,6 +252,7 @@ export default class MellonMVP extends Extension {
         this._prompt = null;
         this._buffer = null;
         this._lastWarning = null;
+        this._failureTracker = new FailureTracker();
         try {
             this._scene = readScene(GLib.build_filenamev([this.path, 'scene.json']));
             this._imagePath = GLib.build_filenamev([this.path, 'background.jpg']);
@@ -300,9 +303,23 @@ export default class MellonMVP extends Extension {
 
     _unmount() {
         this._invalidateSignals();
+        this._failureTracker?.reset();
         this._view?.destroy();
         this._view = null;
         this._dialog = null;
+    }
+
+    _observeFailures(prompt) {
+        if (!prompt || !this._view)
+            return;
+        const result = this._failureTracker.observe(prompt._userVerifier);
+        if (!result.supported) {
+            // On an unknown GNOME implementation, fail open to native UI.
+            this._view.revealNative();
+            return;
+        }
+        for (let i = 0; i < result.failures; i++)
+            this._view?.onFailed();
     }
 
     _tick() {
@@ -322,6 +339,8 @@ export default class MellonMVP extends Extension {
         }
         const prompt = dialog._authPrompt;
         const buffer = prompt?._passwordEntry?.clutter_text?.get_buffer?.();
+        // Count retryable failures even when the prompt and buffer are stable.
+        this._observeFailures(prompt);
         if (prompt === this._prompt && buffer === this._buffer)
             return;
         this._invalidateSignals();
@@ -336,25 +355,6 @@ export default class MellonMVP extends Extension {
             if (current())
                 this._view.setLength(buffer.get_length());
         });
-        // GNOME 50's AuthPrompt 'failed' fires only when a terminal
-        // verification failure is reset. Ordinary incorrect passwords can
-        // retry internally without emitting it. Observe GNOME's existing
-        // per-attempt verifier signal instead; NEVER change verification.
-        //
-        // The verifier is an EventEmitter (not a GObject); connectObject ties
-        // this listener to the prompt's lifetime. The epoch additionally
-        // invalidates callbacks when GNOME replaces the prompt/buffer.
-        const verifier = prompt._userVerifier;
-        if (!verifier?.connectObject) {
-            // If this GNOME implementation differs, preserve the native UI.
-            this._view?.revealNative();
-            return;
-        }
-        verifier.connectObject('verification-failed',
-            (_verifier, serviceName, _canRetry) => {
-                if (current() && serviceName === 'gdm-password')
-                    this._view.onFailed();
-            }, prompt);
         this._view.setLength(buffer.get_length());
     }
 }
