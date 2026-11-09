@@ -1,0 +1,7 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon M4 — Real-Star Constellation MVP (VM only)",
+  "description": "One source-image-aligned Orion pattern driven by the native GNOME password buffer length. Does not read credentials or alter authentication.",
+  "shell-version": ["50"],
+  "session-modes": ["unlock-dialog"]
+}
