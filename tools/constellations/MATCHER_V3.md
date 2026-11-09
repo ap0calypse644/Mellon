@@ -1,3 +1,5 @@
+> **Next stage:** [Mellon v4 — Composition Engine](COMPOSITION_V4.md) selects spaced, recognizable constellation groups from the existing `matches-v3.json` without re-running the v3 search. It does not alter GNOME or the VM.
+
 # Mellon constellation matcher v3 — expanded astronomical library
 
 This remains an **offline** project: no VM, GNOME Shell, lock screen, passwords, or host system settings are modified.
