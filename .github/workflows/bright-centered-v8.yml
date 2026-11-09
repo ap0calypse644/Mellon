@@ -1,0 +1,120 @@
+name: Bright-star centered constellation library v8
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bright-centered-v8.yml'
+      - 'tools/constellations/match_bright_centered_constellations_v8.py'
+      - 'tools/constellations/verify_bright_centered_matches_v8.py'
+      - 'tools/constellations/test_bright_v8.py'
+      - 'tools/constellations/BRIGHT_CENTERED_CONSTELLATIONS_V8.md'
+  workflow_dispatch:
+    inputs:
+      rebuild_all:
+        description: 'Run the full six-image, 31-template brute-force search'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mellon-bright-v8-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out fixed repo revision (no hooks)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Use pinned Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Install scientific dependencies
+        run: python -m pip install --disable-pip-version-check numpy==1.26.4 scipy==1.15.2 Pillow==11.1.0
+
+      - name: Unit checks on photometry and original six catalogs
+        run: python tools/constellations/test_bright_v8.py
+
+      - name: Real-data match, center and brightness verification
+        run: |
+          python tools/constellations/match_bright_centered_constellations_v8.py \
+            --catalog all --only Ori Cas Sco \
+            --only-backgrounds blue-gold-nebula chromatic-nebula \
+            --attempts 5000 --refinements 150 --limit 0 \
+            --min-span 0.55 --qa-per-template 1 \
+            --output /tmp/mellon-bright-v8-smoke
+          python tools/constellations/verify_bright_centered_matches_v8.py \
+            --report /tmp/mellon-bright-v8-smoke/matches-v8.json
+          python - <<'PY'
+          import json
+          d=json.load(open('/tmp/mellon-bright-v8-smoke/matches-v8.json'))
+          assert len(d['images'])==2
+          count=sum(len(rows) for record in d['images'].values()
+                    for rows in record['matches'].values())
+          assert count > 0, 'No match found in smoke test'
+          print('PASS:',count,'brightness-ranked, source-verified placements')
+          PY
+
+  full:
+    needs: smoke
+    if: github.event_name == 'workflow_dispatch' && inputs.rebuild_all == true || (github.event_name == 'push' && contains(github.event.head_commit.message, '[rebuild-v8]'))
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        background:
+          - blue-gold-nebula
+          - chromatic-nebula
+          - cosmic-wings
+          - dust-cloud
+          - rosy-rosette
+          - veiled-ring
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - name: Check out fixed repo revision (no hooks)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Use pinned Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Install scientific dependencies
+        run: python -m pip install --disable-pip-version-check numpy==1.26.4 scipy==1.15.2 Pillow==11.1.0
+
+      - name: Full brightness-aware brute force (v6 geometry unchanged)
+        run: |
+          python tools/constellations/match_bright_centered_constellations_v8.py \
+            --catalog all --only-backgrounds "${{ matrix.background }}" \
+            --attempts 100000 --refinements 1200 \
+            --limit 0 --min-span 0.55 --frame-margin 0.05 \
+            --figure-room-x 0.09 --figure-room-y 0.09 \
+            --center-tolerance-x 0.13 --center-tolerance-y 0.13 \
+            --rotation-limit-deg 35 --qa-per-template 3 \
+            --output "artifacts/${{ matrix.background }}"
+
+      - name: Independently verify all coordinates and photometric ranks
+        run: |
+          python tools/constellations/verify_bright_centered_matches_v8.py \
+            --report "artifacts/${{ matrix.background }}/matches-v8.json"
+
+      - name: Upload verified match report and QA previews
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bright-v8-${{ matrix.background }}
+          path: artifacts/${{ matrix.background }}/
+          if-no-files-found: error
+          retention-days: 30
