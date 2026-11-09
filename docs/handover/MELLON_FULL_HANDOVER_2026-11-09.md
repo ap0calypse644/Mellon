@@ -324,3 +324,332 @@ Links:
 
 **GitHub preference:** future assistant should make code and docs changes directly in repo, verify commit and file content, then provide a short user terminal `git pull --ff-only` command. No VM interaction for offline work.
 
+
+---
+
+## 5. STARFIELD IMAGES, DETECTION, TRANSFORMS AND LICENSING
+
+### 5.1 NASA Messier 24 — huge benchmark, rejected for final visuals
+
+The first online-selected background was NASA/ESA's **Hubble Messier 24 (Small Sagittarius Star Cloud)**:
+https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-24/
+
+Original extraction approximately:
+- Source image 3775×2020.
+- **20,491** detected luminous image features.
+- **92,734** candidate local graph edges.
+- Source image, SHA256, marked detection preview, star IDs/coordinates, graph, tooling, metadata in GitHub under `assets/starfield/` and `tools/starfield/`.
+- Source image may be licensable under NASA/ESA media policy with appropriate attribution; document the exact selected asset and origin, never imply NASA endorses the project.
+
+**User strongly rejected it as the final lock-screen image:** too bright, far too many stars, visually too busy. Retain only as detector stress/algorithm benchmark. The user explicitly clarified **internet images need not be real astronomical photos; professional digital art is equally acceptable.**
+
+### 5.2 Six user-supplied Unsplash cosmic images — current benchmark corpus
+
+The user uploaded six photographs and requested **all six be used** for wider sample coverage, even if only one or a few are later selected for production.
+
+Source photographer descriptions and catalogue slug:
+
+| Slug | Photographer / visual |
+|---|---|
+| `rosy-rosette` | Scott Lord, Rosette nebula |
+| `blue-gold-nebula` | Beat Schuler, blue-gold / orange-blue nebula |
+| `dust-cloud` | Arnaud Girault |
+| `chromatic-nebula` | Aldebaran S |
+| `veiled-ring` | Scott Lord, Veil nebula |
+| `cosmic-wings` | Wallace Henry |
+
+The Beat Schuler image was the first aesthetic favorite; the Veiled Ring often produced stronger geometric matching metrics, but **no final product background was locked in**.
+
+All six sources are in the GitHub repo's `assets/starfield/corpus-v1/source/`, with processed data in `assets/starfield/corpus-v1/catalogs/`. Existence of both directories was checked from the GitHub Contents API on 2026-11-09.
+
+### 5.3 Image-processing steps and quality rules
+
+Pipeline:
+1. Preserve exact source JPEG bytes and SHA256. The star catalogue is defined relative to this exact image, not a new web-resized copy.
+2. Detect local luminous points in the untouched image. These are *candidate stars*; some could be bright nebula edges, noise, double stars, or image artifacts. Claim **measured image features**, not verified astronomical stars.
+3. Record unique IDs, original pixel coordinates, confidence/quality characteristics and relevant source hash.
+4. Rotate portrait image when necessary, crop to 16:9 center region, resample to **1920×1080** without distortive stretching.
+5. Apply the **exact same transform** to every detected star coordinate, clipping those outside the final image.
+6. Produce dimmed variant (initially **44% brightness**, a visual preference, not permanent). Dimming doesn't change coordinates.
+7. Build normalized coordinates (x/width, y/height) linked to transformed image dimensions, and validate source pixel alignment.
+8. Produce individual detection-marking QA images. Star coordinates should remain correct even if background is later tinted/dimmed.
+
+Reported corpus totals:
+- **70,136** isolated luminous point candidates across the six originals.
+- **4,324** curated, widely distributed usable candidates across transformed images.
+- **19,778** optional candidate graph connections.
+- Approximate curated counts by source: Scott Lord Rosette 719; Beat Schuler 720; Arnaud Girault 716; Aldebaran S 733; Scott Lord Veil 712; Wallace Henry 724.
+- These are **not** the limits on v2+ matching: modern search uses `stars-all.json` (all detected points aligned to the image crop), not just the ~700 curated points per image.
+
+Directory contents expected for each catalogue:
+~~~text
+assets/starfield/corpus-v1/catalogs/<slug>/
+├── stars-all.json
+├── stars-curated.json
+├── background-dim-16x9.jpg
+├── metadata.json
+└── [diagnostic image(s) and optional other derived files]
+~~~
+
+Actual metadata includes image dimensions, original source hash and transform fields such as rotation and source crop rectangle. Read actual JSON schema before consuming.
+
+**Absolute invariant:** every selected constellation vertex must align to a real luminous feature in the exact 1920×1080 background displayed at runtime. Different screen aspect ratios/scaling/cropping require ONE consistent explicit image-to-display mapping applied to both background and vertex positions. Do not assume coordinates directly carry over to a newly cropped background.
+
+Licensing: images by Scott Lord (two), Beat Schuler, Arnaud Girault, Aldebaran S, Wallace Henry, originally sourced via Unsplash. Before public release, verify exact photo page, photographer credit and current licensing terms at https://unsplash.com/license. Preserve attribution per source; do not indiscriminately treat every online image or artwork as CC0.
+
+---
+
+## 6. ASTRONOMICAL TEMPLATES — 31 RECOGNIZABLE CONSTELLATIONS
+
+The user rejected early test images of arbitrary crown, spacecraft and five-point-star polygons as potential final content. For production matching, use reference geometries recognizable as real named constellations, even when composed of unrelated source-image stars.
+
+**Source geometry:** d3-celestial / Olaf Frohn, `data/constellations.lines.json`, © 2015, **BSD-3-Clause**:
+https://github.com/ofrohn/d3-celestial/blob/master/data/constellations.lines.json
+
+License and copyright/disclaimer preserved in `tools/constellations/README.md`. The source celestial linework was locally projected into planar x/y reference points, normalized by its largest span; original shape topology retained. Not a real astronomical sky plate solution. A derived match merely selects new image pixels that resemble the constellation.
+
+Important: original Orion reference contained awkward bow and club linework; user objected specifically. v2 introduced a nine-vertex *core Orion without bow/club*, and v3 preserved it. For the later illustrated Orion hunter, avoid blindly resurrecting rejected weird bow.
+
+### Full template list
+
+| ID | Shape | Reference vertices |
+|---|---|---:|
+| `Ori` | Orion core, no bow | 9 |
+| `Cas` | Cassiopeia W | 5 |
+| `UMa` | Ursa Major Big Dipper | 7 |
+| `Cyg` | Cygnus | 9 |
+| `Sco` | Scorpius | 14 |
+| `And` | Andromeda | 17 |
+| `Aqr` | Aquarius | 15 |
+| `Aur` | Auriga | 9 |
+| `Boo` | Boötes | 12 |
+| `CMa` | Canis Major | 11 |
+| `Cap` | Capricornus | 10 |
+| `Car` | Carina | 17 |
+| `Cen` | Centaurus | 16 |
+| `Cep` | Cepheus | 10 |
+| `Cet` | Cetus | 14 |
+| `Crt` | Crater | 9 |
+| `Dra` | Draco | 15 |
+| `Eri` | Eridanus | 27 |
+| `Gem` | Gemini | 12 |
+| `Her` | Hercules | 17 |
+| `Hya` | Hydra | 18 |
+| `Leo` | Leo | 9 |
+| `Lep` | Lepus | 11 |
+| `Oph` | Ophiuchus | 16 |
+| `Peg` | Pegasus | 14 |
+| `Per` | Perseus | 23 |
+| `Psc` | Pisces | 22 |
+| `Sgr` | Sagittarius | 25 |
+| `Tau` | Taurus | 12 |
+| `Vir` | Virgo | 13 |
+| `UMaF` | Full Ursa Major figure | 20 |
+
+**29 of 31** have ≥9 vertices. `Cas` and `UMa` (the little dipper-shaped asterism familiar as Big Dipper) are preserved as iconic shorter exceptions. `UMaF` is distinct from seven-star `UMa`.
+
+Reference template files:
+- `tools/constellations/templates.json` — early small group.
+- `tools/constellations/templates-v2.json` — five cleaned patterns including nine-vertex Orion.
+- **`tools/constellations/templates-v3.json` — current 31-template source for v3–v6**.
+- `tools/constellations/reference/constellations.lines.json` — credited original linework.
+- `tools/constellations/template_gallery_v3.py` — reference-only pattern atlas.
+
+Templates store normalized vertex coordinates and explicit edges. Edges must remain connected correctly, never assign one source-image star to two reference vertices.
+
+---
+
+## 7. CONSTELLATION MATCHING HISTORY — v1 THROUGH v6
+
+### 7.1 v1: initial five-template matcher
+
+File: `tools/constellations/match_constellations.py`  
+First astronomy matcher commit: `5a138ece0134b49b63dc9d4ca6850b4a9e330f30`.
+
+Tried randomized similarity transforms (translation, rotation and **uniform scaling only**), nearest star candidates from KD-tree, Hungarian/min-cost unique assignment, geometric RMS threshold. Mostly used smaller curated catalogues, kept one result per constellation/background. Early results ~10–24 px RMS, some poor orientation; Orion's weird bow looked wrong. Useful proof but not visually ready.
+
+### 7.2 v2: multiple matches; more brute-force; no brightness preference
+
+File: `tools/constellations/match_constellations_v2.py`  
+Commit: `ecea53de8e051dc4bd20511be9fb92287ea85a97`.
+
+- Switch to full catalogue `stars-all.json` with exact image crop transform.
+- Batched KD-tree nearest searches across many randomized transformations.
+- Correct unique-star assignment using Hungarian algorithm.
+- Iterative rigid similarity / Procrustes refinement.
+- Return multiple spatially distinct matches per constellation/image.
+- Search geometry only: **star brightness deliberately ignored**.
+- `--attempts N` = explore N sampled placements per constellation per image, not necessarily N expensive full Hungarian refinements.
+- `--instances K` = keep at most K distinct matches per constellation/image, not number of images/stars.
+- Typical smaller benchmark: 20,000 attempts and up to 12 instances found ~360 matches across 5×6 combinations; best RMS ~0.8–3.7 px.
+- User executed **100,000 attempts, 20 instances** in full five-template benchmark; output 600/600 possible stored matches.
+
+### 7.3 v3: 31-template catalogue
+
+Files: `tools/constellations/match_constellations_v3.py`, `templates-v3.json`  
+Commit: `67c673f7090303b08a8a4727261f105157182bdb`.
+
+31 templates, 29 ≥9 stars; retains shorter Cassiopeia & Big Dipper. Added `--only`, `--min-stars`, `--list-templates`. Same full catalogue / brightness-independent match geometry.
+
+User ran full **31 templates × 6 images × 100,000 attempts = 18.6 million proposal placements**, keeping up to 20 instances each.
+
+**Actual result:** 3,653 matches / 3,720 theoretical (98.2%) across all 186 image/template combinations; median geometric RMS ~3.22 px; all structurally checked. Several combinations on Chromatic Nebula returned fewer than 20, not an algorithm failure.
+
+Produced `~/VMs/Mellon/constellation-benchmark-v3-full/matches-v3.json` and QA overlays. Multiple constellations rendered together as an overview looked cluttered; the user later clarified that this wasn't a production concern.
+
+### 7.4 v4: multi-constellation composition experiment — not production direction
+
+Files: `tools/constellations/compose_constellations_v4.py` and `COMPOSITION_V4.md`.  
+Commit: `af01e6368001fc570860fb88c2c2db61c23c95ef`.
+
+Used v3 candidate matches to pack non-overlapping groups, e.g. 3 per scene. Generated 36 scenes / 108 placements; essentially no bounding-box overlaps. However, the user corrected the target: **ONE constellation per actual lock screen**. Therefore there is **no benefit** to rejecting overlapping **candidate** constellations. v4 is retained for QA/experiments only. Do not build future product selection around v4's packing/anti-overlap rule.
+
+### 7.5 v5: big single-constellation search
+
+Files: `tools/constellations/match_large_constellations_v5.py` and `SINGLE_CONSTELLATION_V5.md`.  
+Commit: `c5ef90d5b7a3bb6d54425f162bcf9dfd564138b8`.
+
+Changes:
+- Exactly one displayed constellation per event; overlap among separately stored candidates allowed.
+- Screen-aware maximum scale, rather than v3 fixed scale cap (around 620 px).
+- Aggressive sampling favoring large patterns.
+- No fixed output count: `--limit 0` retains all accepted unique candidates **within finite attempts/refinements**. There is still a dedup check to suppress near-identical transforms.
+- No star brightness weighting.
+- Individual QA images `<background>/qa/<constellation>/match-XXX.jpg` instead of tangled combined view.
+- Screen-coverage score rewards large spans and bbox area after strict geometric fit.
+- Orientation penalty to avoid ridiculous sideways Orion.
+- Early smoke test with 3 templates over six images found approximately **1,997** distinct candidates; some near **95%** of one display dimension. User then explained why *nearly touching edges is bad*: needs room for character artwork.
+
+### 7.6 v6: CENTERED MATCHES + CHARACTER-ART SAFE ENVELOPE — CURRENT
+
+**Authoritative files:**
+- `tools/constellations/match_centered_constellations_v6.py`
+- `tools/constellations/verify_centered_matches_v6.py`
+- `tools/constellations/CENTERED_CONSTELLATIONS_V6.md`
+
+Commit: **`dfab47f09759fd5f17947aba1327bab3364f0816`**.
+
+The v6 algorithm is a superset of v5's large single-instance matching with **two nested safety regions and measured bbox centering**:
+
+- `--frame-margin 0.05`: an outer **5% fraction of width or height on every screen edge**, reserved even after illustration.
+- `--figure-room-x 0.09`, `--figure-room-y 0.09`: extra **9% of each image dimension per side around the constellation bbox**, reserved for later character/figure artwork.
+- Together these create a *star-safe rectangle*: all actual matched constellation stars must lie within **14%–86%** along both image dimensions.
+- `--center-tolerance-x 0.13`, `--center-tolerance-y 0.13`: measured centroid of the **actual star bbox**, not arbitrary template origin, must be within ±13% screen width/height of midpoint.
+- `--min-span 0.55`: selected constellation must span at least **55% of one** image dimension. This is max(widthFraction,heightFraction), **not screen area**.
+- Theoretical maximum single-axis span with default margins: **72%**.
+- `--rotation-limit-deg 35`: modest tilt allowed by default so a recognized constellation stays roughly conventionally oriented. Higher limits possible intentionally.
+- `--attempts 100000` proposed transformations per constellation/image.
+- `--refinements 1200` expensive unique-star assignment / Procrustes optimization on up to 1200 promising proposals per constellation/image.
+- `--limit 0`: save all unique accepted placements from finite search, no arbitrary fixed N.
+- `--qa-per-template 3`: render top three **separate** individual constellation previews per combination, without limiting stored JSON results.
+- Brightness entirely ignored as a selection factor. All source detections eligible.
+
+**Crucial fix:** after optimizing each proposal, the matcher checks the **ACTUAL assigned star positions** still satisfy the 14%..86% safe rectangle and center tolerance. Refinement can move candidates a little; do not accept mere template-bbox checks.
+
+QA overlays:
+- Cyan rectangle = star-safe region.
+- Amber rectangle = *matched star bbox plus figure room*, a potential character-art bounding envelope.
+- Small amber cross = actual matched bbox center.
+- Cyan lines/nodes = measured image-star coordinates connected via known astronomical template edges.
+- These debug guides must NOT appear in the final lock screen.
+
+v6 JSON records source `star_ids`, normalized `vertices`, original `edges`, `rms_error_px`, `max_error_px`, `coverage.bbox_px` and spans, `center_offset_fraction`, `figure_room_px`, `figure_envelope_bbox_px`, a transform (angle/scale/center), rank score, status and run settings.
+
+**The v6 envelope is only geometrical planning space.** It is not proof that an anatomically correct Orion illustration fits. The actual final SVG/path stroke extent and glow must be checked after fitting.
+
+### 7.7 Full v6 benchmark — USER VERIFIED, DO NOT RERUN BY DEFAULT
+
+Full command already executed on BlackPearl:
+
+~~~bash
+(
+    set -euo pipefail
+
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+
+    PYTHON="$HOME/.local/share/mellon-constellations-venv/bin/python"
+    OUTPUT="$HOME/VMs/Mellon/constellation-benchmark-v6-centered"
+
+    "$PYTHON" tools/constellations/match_centered_constellations_v6.py \
+        --catalog all \
+        --attempts 100000 \
+        --refinements 1200 \
+        --limit 0 \
+        --min-span 0.55 \
+        --frame-margin 0.05 \
+        --figure-room-x 0.09 \
+        --figure-room-y 0.09 \
+        --center-tolerance-x 0.13 \
+        --center-tolerance-y 0.13 \
+        --rotation-limit-deg 35 \
+        --qa-per-template 3 \
+        --output "$OUTPUT"
+
+    "$PYTHON" tools/constellations/verify_centered_matches_v6.py \
+        --report "$OUTPUT/matches-v6.json"
+)
+~~~
+
+The actual terminal run ended:
+
+~~~text
+Wrote /home/ap0calypse/VMs/Mellon/constellation-benchmark-v6-centered/matches-v6.json
+PASS: 36349 candidate placements across 186 constellation/image combinations
+PASS: Every selected star ID, coordinate, center and artwork clearance verified
+~~~
+
+**36,349 candidate matches!** 31×6 combinations, 18.6M transforms; average ~195 distinct valid placements for each template/image pair. Smallest count 73, largest 281. Best match per combination spans approximately **69.2%–71.9%** along its largest screen dimension, nearly the 72% upper bound. Reported median of best-match RMS errors ~**4.69 px**, slightly higher than v3 because v6 optimizes large centered placements rather than absolute minimum error alone.
+
+Reported per-image distribution:
+
+| Background | v6 valid placements | Median best RMS |
+|---|---:|---:|
+| blue-gold-nebula | 6,475 | 5.32 px |
+| chromatic-nebula | 5,105 | 6.06 px |
+| cosmic-wings | 6,106 | 4.58 px |
+| dust-cloud | 6,382 | 4.40 px |
+| rosy-rosette | 6,334 | 4.74 px |
+| veiled-ring | 5,947 | 3.74 px |
+
+The independent validator confirmed source star IDs, exact normalized coordinates, actual center offsets and safe figure envelopes. These numbers are **engineering/structural results**, NOT evidence that all 36,349 would be approved by a professional illustrator. The assistant previously couldn't inspect individual image previews from the uploaded v6 ZIP; **do not falsely claim full human visual approval**.
+
+User supplied full run output as `Pasted text(20261109-104856).txt` and archive `constellation-benchmark-v6-centered.zip`. In the new conversation, if that ZIP cannot be retrieved, the original report remains on BlackPearl at `~/VMs/Mellon/constellation-benchmark-v6-centered/matches-v6.json`.
+
+### 7.8 Computational and output interpretation
+
+- `--attempts` is *per template per image*, so 100,000 × 31 × 6 = 18.6 million proposals. Not 18.6M full Hungarian assignments.
+- `--refinements` budgets the expensive final minimizations.
+- `--limit 0` removes a fixed *output count* cap; not an infinite search and not literally all mathematically possible star patterns.
+- A detected luminous feature is not automatically a real astronomical star, and an RMS match of 2 pixels is not automatically an aesthetically beautiful constellation.
+- Dedicated inspection of **the character's silhouette anchored to the constellation** is still required for v7.
+- No need to prefer bright stars; close, dim detections work fine if their source-image coordinates validate.
+
+---
+
+## 8. WHAT HAS BEEN VALIDATED VS WHAT HAS NOT
+
+**Proven from actual user screenshots/logs/commands:**
+- Separate GNOME 50.1 VM is bootable, SSH accessible from BlackPearl, and has a verified baseline backup.
+- M1: character count triggers star count without reading password plaintext.
+- M2.2: GNOME 50 full-screen rendering works via `St.DrawingArea` and Cairo.
+- M3: cosmic custom lock-screen render works in the VM (though aesthetically still POC).
+- Source/crop/rotation/brightness pipeline exists in repo for all six images.
+- 31 astronomical template geometries are available.
+- Full v2, v3 and v6 matcher runs were reported by the user.
+- v6 output validator passed **36,349** placements and **186** combinations.
+
+**Not proven / still outstanding:**
+- Professional artwork for Orion or any other constellation.
+- Artwork SVG paths, anatomical anchor mapping, fitting validator, character stroke animation.
+- Visual signoff of any individual matched constellation+character scene.
+- Final lock-screen image or chosen licensing treatment for distribution.
+- Runtime bundle with background, matched star IDs, figure paths and animation controls.
+- Hiding all native GNOME unlock visual widgets safely while retaining underlying auth.
+- Success-only pre-unlock character animation that doesn't bypass/delay native authentication unsafely.
+- User-approved full host deployment (STRICTLY forbidden during current phase).
+- Full password retry/failure/re-lock/idle/backspace focus accessibility and multi-monitor QA.
+- Long-run memory/performance tests of the final asset pipeline in VM.
+
+**When planning v7, do not mistake a report saying “36k structurally valid” for approved vector artwork. The next milestone is artistic visual excellence.**
+
