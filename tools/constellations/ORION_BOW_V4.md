@@ -90,3 +90,50 @@ We do **not** change password handling or reveal password length.
 verified nine-star Orion with the proven overlay, alerts and manual
 native-login recovery. No changes have been deployed to the GNOME VM
 or BlackPearl host by this offline template update.
+
+## Full rerun results (verified)
+
+The **full** six-background Orion-only search completed successfully in
+[GitHub Actions run #42674929551](https://github.com/ap0calypse644/Mellon/actions/runs/42674929551)
+at commit `6afcb00a498678d55dd783140ceb6fe6f52ed157`.
+
+- 100,000 random placement attempts and up to 1,200 rigid-fit refinements
+  per background; no result cap.
+- **1,156** accepted candidates in six image/template combinations.
+- All passed the independent source ID, pixel coordinate, brightness
+  measurements, geometric RMS, centering, and artwork-margin validator.
+- The full JSON plus up to eight rendered QA previews per image were
+  published in the `mellon-orion-bow-v8` Actions artifact.
+
+| Background | Accepted | Best span | Best RMS |
+|---|---:|---:|---:|
+| blue-gold-nebula | 205 | 70.6% | 5.85 px |
+| chromatic-nebula | 165 | 71.3% | 6.92 px |
+| cosmic-wings | 199 | 70.1% | 5.00 px |
+| dust-cloud | 204 | 70.4% | 5.12 px |
+| rosy-rosette | 194 | 71.4% | 5.54 px |
+| veiled-ring | 189 | 70.5% | 4.79 px |
+| **Total** | **1,156** | | |
+
+Download the verified artifact from BlackPearl (requires GitHub CLI login):
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    OUTPUT="$HOME/VMs/Mellon/constellation-v8-orion-bow"
+    mkdir -p "$OUTPUT"
+    gh run download 42674929551 --name mellon-orion-bow-v8 --dir "$OUTPUT"
+
+    "$HOME/.local/share/mellon-constellations-venv/bin/python" \
+        tools/constellations/verify_orion_bow_v4.py
+    "$HOME/.local/share/mellon-constellations-venv/bin/python" \
+        tools/constellations/verify_bright_centered_matches_v8.py \
+        --report "$OUTPUT/matches-v8.json"
+)
+```
+
+This is a validated **candidate library**, not final human-curated M6 scenes.
+The original v6 match report, pre-bow v8 reports, and M5.4 GNOME scene
+remain unchanged.
