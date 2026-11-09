@@ -1,0 +1,48 @@
+{
+  "schema": "mellon-multifield-v1",
+  "name": "rosy-rosette",
+  "source_filename": "scott-lord-PiqZfESKt3k-unsplash.jpg",
+  "source_sha256": "5d70fc8c59ffe40a0e84fae5c140f73a88b539e20cf497a7d5ec7210aa50ddab",
+  "source_width": 2047,
+  "source_height": 1997,
+  "photo_url": "https://unsplash.com/photos/PiqZfESKt3k",
+  "original_orientation": "landscape",
+  "transform": {
+    "clockwise_degrees": 0,
+    "rotated_size": [
+      2047,
+      1997
+    ],
+    "crop_box_rotated": [
+      0,
+      423,
+      2047,
+      1574
+    ],
+    "output_size": [
+      1920,
+      1080
+    ],
+    "resize": "Lanczos",
+    "stretch": false
+  },
+  "dim_factor": 0.44,
+  "background_sha256": "06d22a10c835bed66f2f92ee396ed0a3fb48a14aad13b341d9cb67a335393d02",
+  "dimmed_background_sha256": "5a5ef9d0c95d38a47da47bddc13ba5b679f0d21258d3482defec1fd825bb7384",
+  "original_detected_features": 13077,
+  "features_in_crop": 7883,
+  "curated_features": 719,
+  "detector": {
+    "method": "Difference-of-Gaussians + local peaks + non-max suppression",
+    "threshold": 6.2,
+    "min_source_separation_px": 6.0
+  },
+  "curation": {
+    "count_cap": 750,
+    "min_render_separation_px": 15,
+    "quality_floor": 0.79,
+    "prominence_floor": 8.5,
+    "spatial_distribution": "12x7 stratified bins"
+  },
+  "note": "Luminous image features are not scientifically validated astronomical stars. Coordinates refer to the supplied source bytes, then to the derived 1920x1080 image. Any new image transform requires remapping."
+}

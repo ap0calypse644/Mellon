@@ -1,0 +1,48 @@
+{
+  "schema": "mellon-multifield-v1",
+  "name": "dust-cloud",
+  "source_filename": "wallace-henry-qW_OmkbDJVQ-unsplash.jpg",
+  "source_sha256": "57da8b2279e5e9a723699dc72adcba49347e3a4e3785727d51fd77dc931d5278",
+  "source_width": 1391,
+  "source_height": 2048,
+  "photo_url": "https://unsplash.com/photos/qW_OmkbDJVQ",
+  "original_orientation": "portrait",
+  "transform": {
+    "clockwise_degrees": 90,
+    "rotated_size": [
+      2048,
+      1391
+    ],
+    "crop_box_rotated": [
+      0,
+      119,
+      2048,
+      1271
+    ],
+    "output_size": [
+      1920,
+      1080
+    ],
+    "resize": "Lanczos",
+    "stretch": false
+  },
+  "dim_factor": 0.44,
+  "background_sha256": "de957207db5eeaecfa8c5a6f7ab308f776d0482c2e91b0def58b6141bf7cc2e7",
+  "dimmed_background_sha256": "7e38ec0c4179c1cec39bf73350a20133a5021ac48fb27ef3c9ca982f95bb7409",
+  "original_detected_features": 12389,
+  "features_in_crop": 10348,
+  "curated_features": 724,
+  "detector": {
+    "method": "Difference-of-Gaussians + local peaks + non-max suppression",
+    "threshold": 6.2,
+    "min_source_separation_px": 6.0
+  },
+  "curation": {
+    "count_cap": 750,
+    "min_render_separation_px": 15,
+    "quality_floor": 0.79,
+    "prominence_floor": 8.5,
+    "spatial_distribution": "12x7 stratified bins"
+  },
+  "note": "Luminous image features are not scientifically validated astronomical stars. Coordinates refer to the supplied source bytes, then to the derived 1920x1080 image. Any new image transform requires remapping."
+}

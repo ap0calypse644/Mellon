@@ -1,0 +1,48 @@
+{
+  "schema": "mellon-multifield-v1",
+  "name": "cosmic-wings",
+  "source_filename": "beat-schuler-9D2WUVsT9_I-unsplash.jpg",
+  "source_sha256": "4eea76e185451e21bfed10a3fe90ef50dedc04845f99176b06329b93cb9c9535",
+  "source_width": 2048,
+  "source_height": 1561,
+  "photo_url": "https://unsplash.com/photos/9D2WUVsT9_I",
+  "original_orientation": "landscape",
+  "transform": {
+    "clockwise_degrees": 0,
+    "rotated_size": [
+      2048,
+      1561
+    ],
+    "crop_box_rotated": [
+      0,
+      204,
+      2048,
+      1356
+    ],
+    "output_size": [
+      1920,
+      1080
+    ],
+    "resize": "Lanczos",
+    "stretch": false
+  },
+  "dim_factor": 0.44,
+  "background_sha256": "eb2a05e011f01fa42de9c38a8eb32aace3f714bab3bbfedf2d5f92898576a5e8",
+  "dimmed_background_sha256": "a8c1da1b343db37c03d6db3db2286022503d5130654a3b33a45503c9ca3abb74",
+  "original_detected_features": 11889,
+  "features_in_crop": 9237,
+  "curated_features": 720,
+  "detector": {
+    "method": "Difference-of-Gaussians + local peaks + non-max suppression",
+    "threshold": 6.2,
+    "min_source_separation_px": 6.0
+  },
+  "curation": {
+    "count_cap": 750,
+    "min_render_separation_px": 15,
+    "quality_floor": 0.79,
+    "prominence_floor": 8.5,
+    "spatial_distribution": "12x7 stratified bins"
+  },
+  "note": "Luminous image features are not scientifically validated astronomical stars. Coordinates refer to the supplied source bytes, then to the derived 1920x1080 image. Any new image transform requires remapping."
+}

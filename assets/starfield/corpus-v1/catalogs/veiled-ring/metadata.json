@@ -1,0 +1,48 @@
+{
+  "schema": "mellon-multifield-v1",
+  "name": "veiled-ring",
+  "source_filename": "scott-lord-KLFP4HwaXyk-unsplash.jpg",
+  "source_sha256": "e1f7ce33ffa032024f0fcfcf0f2db63ffe5b6aa02e75553c411571dbf2731d86",
+  "source_width": 1213,
+  "source_height": 2048,
+  "photo_url": "https://unsplash.com/photos/KLFP4HwaXyk",
+  "original_orientation": "portrait",
+  "transform": {
+    "clockwise_degrees": 90,
+    "rotated_size": [
+      2048,
+      1213
+    ],
+    "crop_box_rotated": [
+      0,
+      30,
+      2048,
+      1182
+    ],
+    "output_size": [
+      1920,
+      1080
+    ],
+    "resize": "Lanczos",
+    "stretch": false
+  },
+  "dim_factor": 0.44,
+  "background_sha256": "bd7605a0e359b890b072d920fdbedf0eba71869d914ddc4fb4b95511e61a18f2",
+  "dimmed_background_sha256": "debee2e1daab063d378395f318e3c95b2d3ee9c6ccbdf88ec222cdf9108ce7be",
+  "original_detected_features": 15335,
+  "features_in_crop": 14725,
+  "curated_features": 712,
+  "detector": {
+    "method": "Difference-of-Gaussians + local peaks + non-max suppression",
+    "threshold": 6.2,
+    "min_source_separation_px": 6.0
+  },
+  "curation": {
+    "count_cap": 750,
+    "min_render_separation_px": 15,
+    "quality_floor": 0.79,
+    "prominence_floor": 8.5,
+    "spatial_distribution": "12x7 stratified bins"
+  },
+  "note": "Luminous image features are not scientifically validated astronomical stars. Coordinates refer to the supplied source bytes, then to the derived 1920x1080 image. Any new image transform requires remapping."
+}

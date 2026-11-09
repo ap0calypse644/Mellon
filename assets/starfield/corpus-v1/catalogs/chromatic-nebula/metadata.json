@@ -1,0 +1,48 @@
+{
+  "schema": "mellon-multifield-v1",
+  "name": "chromatic-nebula",
+  "source_filename": "aldebaran-s-qtRF_RxCAo0-unsplash.jpg",
+  "source_sha256": "c91abba80e97555953a8cf1f8502de4ddaaa8c592842fd5a698d26b7d00af5f5",
+  "source_width": 2048,
+  "source_height": 1533,
+  "photo_url": "https://unsplash.com/photos/qtRF_RxCAo0",
+  "original_orientation": "landscape",
+  "transform": {
+    "clockwise_degrees": 0,
+    "rotated_size": [
+      2048,
+      1533
+    ],
+    "crop_box_rotated": [
+      0,
+      190,
+      2048,
+      1342
+    ],
+    "output_size": [
+      1920,
+      1080
+    ],
+    "resize": "Lanczos",
+    "stretch": false
+  },
+  "dim_factor": 0.44,
+  "background_sha256": "b6323221fc8393453dc966270b53fb77cd998aea919d97d8f936ddd1bd93245b",
+  "dimmed_background_sha256": "7c0e367a0bc314f334b8aa4b84c6c10c53938df4f15d02117b445c5c88bffa45",
+  "original_detected_features": 10066,
+  "features_in_crop": 7368,
+  "curated_features": 733,
+  "detector": {
+    "method": "Difference-of-Gaussians + local peaks + non-max suppression",
+    "threshold": 6.2,
+    "min_source_separation_px": 6.0
+  },
+  "curation": {
+    "count_cap": 750,
+    "min_render_separation_px": 15,
+    "quality_floor": 0.79,
+    "prominence_floor": 8.5,
+    "spatial_distribution": "12x7 stratified bins"
+  },
+  "note": "Luminous image features are not scientifically validated astronomical stars. Coordinates refer to the supplied source bytes, then to the derived 1920x1080 image. Any new image transform requires remapping."
+}

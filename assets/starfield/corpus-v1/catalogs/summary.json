@@ -1,0 +1,83 @@
+{
+  "schema": "mellon-multifield-v1",
+  "images": [
+    {
+      "name": "rosy-rosette",
+      "original_size": [
+        2047,
+        1997
+      ],
+      "orientation_change": 0,
+      "detected": 13077,
+      "in_16x9_crop": 7883,
+      "curated": 719,
+      "edges": 3283,
+      "average_source_quality": 0.9509
+    },
+    {
+      "name": "cosmic-wings",
+      "original_size": [
+        2048,
+        1561
+      ],
+      "orientation_change": 0,
+      "detected": 11889,
+      "in_16x9_crop": 9237,
+      "curated": 720,
+      "edges": 3282,
+      "average_source_quality": 0.9222
+    },
+    {
+      "name": "blue-gold-nebula",
+      "original_size": [
+        2048,
+        1294
+      ],
+      "orientation_change": 0,
+      "detected": 7380,
+      "in_16x9_crop": 6588,
+      "curated": 716,
+      "edges": 3258,
+      "average_source_quality": 0.9196
+    },
+    {
+      "name": "chromatic-nebula",
+      "original_size": [
+        2048,
+        1533
+      ],
+      "orientation_change": 0,
+      "detected": 10066,
+      "in_16x9_crop": 7368,
+      "curated": 733,
+      "edges": 3376,
+      "average_source_quality": 0.9064
+    },
+    {
+      "name": "veiled-ring",
+      "original_size": [
+        1213,
+        2048
+      ],
+      "orientation_change": 90,
+      "detected": 15335,
+      "in_16x9_crop": 14725,
+      "curated": 712,
+      "edges": 3252,
+      "average_source_quality": 0.9241
+    },
+    {
+      "name": "dust-cloud",
+      "original_size": [
+        1391,
+        2048
+      ],
+      "orientation_change": 90,
+      "detected": 12389,
+      "in_16x9_crop": 10348,
+      "curated": 724,
+      "edges": 3327,
+      "average_source_quality": 0.905
+    }
+  ]
+}

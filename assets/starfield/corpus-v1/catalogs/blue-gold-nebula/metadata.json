@@ -1,0 +1,48 @@
+{
+  "schema": "mellon-multifield-v1",
+  "name": "blue-gold-nebula",
+  "source_filename": "arnaud-girault-zWOgtUIX7OE-unsplash.jpg",
+  "source_sha256": "ac80ecb2c6a760c933d7588088e736b2a1941fdd493ade113c31e474176becee",
+  "source_width": 2048,
+  "source_height": 1294,
+  "photo_url": "https://unsplash.com/photos/zWOgtUIX7OE",
+  "original_orientation": "landscape",
+  "transform": {
+    "clockwise_degrees": 0,
+    "rotated_size": [
+      2048,
+      1294
+    ],
+    "crop_box_rotated": [
+      0,
+      71,
+      2048,
+      1223
+    ],
+    "output_size": [
+      1920,
+      1080
+    ],
+    "resize": "Lanczos",
+    "stretch": false
+  },
+  "dim_factor": 0.44,
+  "background_sha256": "199c0dc4bc51269400e11853fc9be8b4b2423feab2e037c7678a55af9c7cca98",
+  "dimmed_background_sha256": "b3e53af6484fd1ecd9dfcefe001cbe9d1356ec9cea182cb2d89646929eb98d0b",
+  "original_detected_features": 7380,
+  "features_in_crop": 6588,
+  "curated_features": 716,
+  "detector": {
+    "method": "Difference-of-Gaussians + local peaks + non-max suppression",
+    "threshold": 6.2,
+    "min_source_separation_px": 6.0
+  },
+  "curation": {
+    "count_cap": 750,
+    "min_render_separation_px": 15,
+    "quality_floor": 0.79,
+    "prominence_floor": 8.5,
+    "spatial_distribution": "12x7 stratified bins"
+  },
+  "note": "Luminous image features are not scientifically validated astronomical stars. Coordinates refer to the supplied source bytes, then to the derived 1920x1080 image. Any new image transform requires remapping."
+}
