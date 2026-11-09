@@ -1,6 +1,6 @@
 # Mellon M5 — visual-only hidden-chrome MVP
 
-**Experimental: not yet runtime-tested in GNOME 50.1. Deploy only in the isolated `mellon-gnome50-lab` VM.** M4 remains the last user-confirmed working version.
+**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, and manual `SHOW LOGIN` recovery. Automatic recovery after two incorrect passwords **failed in the initial M5 build** and has been patched in M5.1; the fix still requires guest confirmation. M4 remains the known-good fallback.
 
 ## Scope
 
@@ -34,5 +34,33 @@ To lock the guest, from the host:
 **If anything is inaccessible:** The test VM is reachable by SSH. To restore the already-working M4 code, run `bash lab/gnome50-m4/deploy-from-blackpearl.sh` from BlackPearl and restart the **guest**. To disable Mellon in the guest, use `ssh mellon 'gnome-extensions disable mellon-lab@local'`. If locked, the existing emergency removal of the guest extension metadata followed by a guest-only reboot is another recovery route. Do not change host GNOME.
 
 **Not yet validated:** actual M5 UI occlusion, click handler, native focus preservation, wrong-password feedback after multiple attempts, accessibility/IME, multimonitor, or GNOME lifecycle. M4 screenshot and authentication success do not establish M5 success.
+
+## M5.1: per-attempt failure detection fix (2026-11-09)
+
+The original M5 connected to `AuthPrompt.failed`. In GNOME 50,
+`AuthPrompt._onVerificationFailed(serviceName, canRetry)` keeps the prompt in
+the verification flow when GNOME allows another try; `AuthPrompt.failed`
+fires only during `reset()` after a **terminal** failure. Thus ordinary
+incorrect passwords were not counted, and recovery did not occur.
+
+M5.1 listens to the GNOME-owned `prompt._userVerifier` EventEmitter's
+`verification-failed` signal, which fires on **each** authentication failure.
+Only the `gdm-password` service is counted (not fingerprint/smartcard).
+`connectObject(..., prompt)` ties the signal handler to the prompt lifetime;
+the existing epoch guard ignores stale callbacks. The failure total remains
+on the same per-lock `MVPScene`, even when GNOME recreates its auth prompt.
+If the verifier API is unavailable, Mellon reveals native UI rather than
+risking an unreachable login.
+
+This change observes a success/failure event only; it **does not** read
+passwords, intercept keys, log attempt counts, alter GNOME verification, or
+change the well-tested rendering and manual recovery paths.
+
+**Guest verification for M5.1:** after deploying and restarting only the VM's
+GNOME session, lock the VM; enter one incorrect password and verify the brief
+error message; enter a second incorrect password and confirm the native prompt
+appears automatically. Then unlock correctly, relock, and confirm the counter
+resets. If behavior differs, preserve access with `SHOW LOGIN` and investigate
+GNOME's session journal without logging credential data.
 
 No artistic Orion figure or post-authentication animation is included.
