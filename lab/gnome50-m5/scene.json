@@ -1,0 +1,113 @@
+{
+  "schema": "mellon-mvp-scene-v1",
+  "id": "blue-gold-orion-001",
+  "image": "background.jpg",
+  "image_size": [
+    1920,
+    1080
+  ],
+  "image_sha256": "b3e53af6484fd1ecd9dfcefe001cbe9d1356ec9cea182cb2d89646929eb98d0b",
+  "source_image_sha256": "ac80ecb2c6a760c933d7588088e736b2a1941fdd493ade113c31e474176becee",
+  "background_slug": "blue-gold-nebula",
+  "constellation": "Ori",
+  "v6_match_index_zero_based": 6,
+  "template": "tools/constellations/templates-v3.json",
+  "source_catalog": "assets/starfield/corpus-v1/catalogs/blue-gold-nebula/stars-all.json",
+  "star_ids": [
+    "S001421",
+    "S002019",
+    "S002257",
+    "S003768",
+    "S003941",
+    "S004191",
+    "S005666",
+    "S006015",
+    "S005101"
+  ],
+  "vertices": [
+    [
+      0.50586911,
+      0.14355037
+    ],
+    [
+      0.60739745,
+      0.23598093
+    ],
+    [
+      0.45341797,
+      0.27371528
+    ],
+    [
+      0.48778807,
+      0.51419269
+    ],
+    [
+      0.50695313,
+      0.54095481
+    ],
+    [
+      0.53041016,
+      0.58183157
+    ],
+    [
+      0.39354005,
+      0.79689231
+    ],
+    [
+      0.56004396,
+      0.85105037
+    ],
+    [
+      0.50307615,
+      0.7146962
+    ]
+  ],
+  "edges": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      1,
+      5
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      3,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      4,
+      8
+    ]
+  ],
+  "geometry": {
+    "max_span_fraction": 0.7075,
+    "rms_error_px": 4.5622,
+    "rotation_deg": 1.12,
+    "center_offset_fraction": [
+      0.00047,
+      -0.0027
+    ]
+  },
+  "note": "Only real extracted stars; source catalog is transformed using exact crop. Password lengths are not recorded."
+}

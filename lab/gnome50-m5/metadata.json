@@ -1,0 +1,11 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon M5 — Hidden-Chrome MVP (VM only)",
+  "description": "Non-reactive visual cover, exact image stars, native GNOME authentication untouched and fail-open native login recovery.",
+  "shell-version": [
+    "50"
+  ],
+  "session-modes": [
+    "unlock-dialog"
+  ]
+}
