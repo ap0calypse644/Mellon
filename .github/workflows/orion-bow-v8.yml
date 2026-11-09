@@ -1,0 +1,86 @@
+name: Rebuild Orion with bow — Mellon v8
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/orion-bow-v8.yml'
+      - 'tools/constellations/templates-v4-orion-bow.json'
+      - 'tools/constellations/verify_orion_bow_v4.py'
+      - 'tools/constellations/match_bright_centered_constellations_v8.py'
+      - 'tools/constellations/rebuild_orion_bow_v8.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  orion-bow:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned matching libraries
+        run: python -m pip install --disable-pip-version-check numpy==1.26.4 scipy==1.15.2 Pillow==11.1.0
+
+      - name: Verify bow anatomy, source geometry, and original template preservation
+        run: |
+          python tools/constellations/verify_orion_bow_v4.py
+          python tools/constellations/test_bright_v8.py
+
+      - name: Six-image Orion bow brightness-aware search
+        run: |
+          python tools/constellations/match_bright_centered_constellations_v8.py \
+            --templates tools/constellations/templates-v4-orion-bow.json \
+            --only Ori \
+            --catalog all \
+            --attempts 100000 \
+            --refinements 1200 \
+            --limit 0 \
+            --min-span 0.55 \
+            --frame-margin 0.05 \
+            --figure-room-x 0.09 \
+            --figure-room-y 0.09 \
+            --center-tolerance-x 0.13 \
+            --center-tolerance-y 0.13 \
+            --rotation-limit-deg 35 \
+            --qa-per-template 8 \
+            --output artifacts/orion-bow
+
+      - name: Independently validate all source-star IDs and hard constraints
+        run: |
+          python tools/constellations/verify_bright_centered_matches_v8.py \
+            --report artifacts/orion-bow/matches-v8.json
+          python - <<'PY'
+          import json
+          d=json.load(open('artifacts/orion-bow/matches-v8.json'))
+          assert len(d['images'])==6
+          counts={}
+          for slug, image in d['images'].items():
+              assert set(image['matches'])=={'Ori'}
+              matches=image['matches']['Ori']
+              counts[slug]=len(matches)
+              for match in matches:
+                  assert len(match['star_ids'])==18
+                  assert len(match['vertices'])==18
+                  assert len(match['edges'])==18
+          print('Orion-with-bow candidates:', counts)
+          assert sum(counts.values()) > 0, 'No matching constellation found'
+          PY
+
+      - name: Publish Orion-with-bow matches and visual QA
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mellon-orion-bow-v8
+          path: artifacts/orion-bow/
+          if-no-files-found: error
+          retention-days: 30
