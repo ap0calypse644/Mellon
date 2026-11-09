@@ -8,7 +8,6 @@ on:
       - 'tools/constellations/match_bright_centered_constellations_v8.py'
       - 'tools/constellations/verify_bright_centered_matches_v8.py'
       - 'tools/constellations/test_bright_v8.py'
-      - 'tools/constellations/merge_bright_v8.py'
       - 'tools/constellations/BRIGHT_CENTERED_CONSTELLATIONS_V8.md'
   workflow_dispatch:
     inputs:
@@ -119,4 +118,3 @@ jobs:
           path: artifacts/${{ matrix.background }}/
           if-no-files-found: error
           retention-days: 30
-
