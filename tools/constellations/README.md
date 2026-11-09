@@ -1,3 +1,5 @@
+> **New expanded library:** [Matcher v3 — 31 constellation templates](MATCHER_V3.md) adds 26 patterns (29 with nine or more stars), a reference atlas, and a selective multi-instance benchmark. This document describes the original v1 implementation; the tested v2 implementation remains available in [MATCHER_V2.md](MATCHER_V2.md).
+
 # Mellon constellation matcher — first real-geometry benchmark
 
 This **offline** prototype uses real constellation *line geometries* as templates and selects **only existing detected star coordinates** from the six-image Mellon corpus. It does not synthesize, move, or fake image stars, and does not modify GNOME or the virtual machine.
