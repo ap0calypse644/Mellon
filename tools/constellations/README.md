@@ -1,3 +1,5 @@
+> **New: [Mellon v6 — centered, illustration-safe constellations](CENTERED_CONSTELLATIONS_V6.md).** This is the recommended matcher for the eventual single-constellation lock screen: large patterns, close to center, with explicit empty space around the stars for character artwork. v5 is retained for unconstrained benchmark comparison.
+
 > **Single-constellation production direction (v5):** use [large-screen matching](SINGLE_CONSTELLATION_V5.md). Each lock displays **one** constellation, overlap between candidate matches is allowed, and large image-aligned patterns are preferred. The original v3 and v4 methods remain for benchmarks.
 
 > **New expanded library:** [Matcher v3 — 31 constellation templates](MATCHER_V3.md) adds 26 patterns (29 with nine or more stars), a reference atlas, and a selective multi-instance benchmark. This document describes the original v1 implementation; the tested v2 implementation remains available in [MATCHER_V2.md](MATCHER_V2.md).
