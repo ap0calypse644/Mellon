@@ -1,6 +1,6 @@
 # Mellon M5 — visual-only hidden-chrome MVP
 
-**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, and manual `SHOW LOGIN` recovery. Automatic recovery after two incorrect passwords **failed in the initial M5 build** and has been patched in M5.1; the fix still requires guest confirmation. M4 remains the known-good fallback.
+**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, and manual `SHOW LOGIN` recovery. **Automatic recovery after two incorrect passwords failed in both M5 and M5.1.** M5.2 replaces that mechanism; it is not yet guest-verified. M4 is the known-good fallback.
 
 ## Scope
 
@@ -35,32 +35,62 @@ To lock the guest, from the host:
 
 **Not yet validated:** actual M5 UI occlusion, click handler, native focus preservation, wrong-password feedback after multiple attempts, accessibility/IME, multimonitor, or GNOME lifecycle. M4 screenshot and authentication success do not establish M5 success.
 
-## M5.1: per-attempt failure detection fix (2026-11-09)
+## M5.2: read-only per-attempt failure counter observer (2026-11-09)
 
-The original M5 connected to `AuthPrompt.failed`. In GNOME 50,
-`AuthPrompt._onVerificationFailed(serviceName, canRetry)` keeps the prompt in
-the verification flow when GNOME allows another try; `AuthPrompt.failed`
-fires only during `reset()` after a **terminal** failure. Thus ordinary
-incorrect passwords were not counted, and recovery did not occur.
+**Why:** The original M5 `AuthPrompt.failed` event reports terminal resets,
+not ordinary retries. M5.1 subscribed to the verifier's
+`verification-failed` EventEmitter signal, but user testing confirmed it
+still produced neither first-failure feedback nor second-failure recovery.
+The host/VM source hashes matched, and the extension was enabled, so this
+was not a deployment mismatch. The runtime reason that the M5.1 listener
+didn't fire remains unconfirmed.
 
-M5.1 listens to the GNOME-owned `prompt._userVerifier` EventEmitter's
-`verification-failed` signal, which fires on **each** authentication failure.
-Only the `gdm-password` service is counted (not fingerprint/smartcard).
-`connectObject(..., prompt)` ties the signal handler to the prompt lifetime;
-the existing epoch guard ignores stale callbacks. The failure total remains
-on the same per-lock `MVPScene`, even when GNOME recreates its auth prompt.
-If the verifier API is unavailable, Mellon reveals native UI rather than
-risking an unreachable login.
+GNOME 50's `ShellUserVerifier._onConversationStopped()` increments
+`_failCounter` for each failed foreground authentication conversation, even
+when more attempts are allowed. M5.2 **only reads** that count in the existing
+250ms UI poll. It never modifies GNOME's counter, the authentication service,
+password widgets, focus, PAM, or success path.
 
-This change observes a success/failure event only; it **does not** read
-passwords, intercept keys, log attempt counts, alter GNOME verification, or
-change the well-tested rendering and manual recovery paths.
+- `failure-tracker.js` is a pure, testable observer. It tracks the identity
+  of GNOME's verifier and its last observed failure count. It emits at most
+  the difference in *new* failures; repeated polls aren't counted twice.
+  A GNOME counter reset isn't treated as a new failure.
+- The per-lock `MVPScene` still owns the two-strikes recovery threshold; its
+  count survives prompt/buffer recreation and resets on a new lock.
+- If GNOME stops exposing an integer `_failCounter`, the extension reveals
+  native login rather than rendering an inaccessible hidden prompt.
+- **No failure counts, password lengths, input timing, text, or user-provided
+  credentials are logged or persisted.**
+- This intentionally depends on a GNOME **private** API and must be tested
+  on the exact 50.1 guest; it is not ready for BlackPearl host installation.
 
-**Guest verification for M5.1:** after deploying and restarting only the VM's
-GNOME session, lock the VM; enter one incorrect password and verify the brief
-error message; enter a second incorrect password and confirm the native prompt
-appears automatically. Then unlock correctly, relock, and confirm the counter
-resets. If behavior differs, preserve access with `SHOW LOGIN` and investigate
-GNOME's session journal without logging credential data.
+### Regression tests (host-only, no VM changes)
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    node lab/gnome50-m5/test-failure-tracker.mjs
+)
+```
+
+If Node is not installed, this optional check can be skipped; the functional
+test is in the VM, not on BlackPearl.
+
+### VM verification after deploying M5.2
+
+1. Deploy using `bash lab/gnome50-m5/deploy-from-blackpearl.sh`. This checks
+   `failure-tracker.js` too. Restart **only the guest** GNOME session.
+2. Lock the guest, enter a wrong password and press Enter. Confirm the
+   scene dims and the first-failure message appears.
+3. After GNOME accepts input again, enter a second wrong password. Confirm
+   native login automatically appears without clicking SHOW LOGIN.
+4. Unlock correctly, relock and check that the original hidden interface
+   and independent two-attempt counter are restored.
+5. Confirm SHOW LOGIN still works manually.
+
+If any check fails, use SHOW LOGIN. The VM remains accessible via SSH and
+the M4 fallback is unchanged. Do not install this prototype on the host.
+**M5.2 needs actual guest test results before being called complete.**
 
 No artistic Orion figure or post-authentication animation is included.
