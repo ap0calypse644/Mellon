@@ -67,3 +67,7 @@ An isolated, VM-only prototype lives in [`lab/gnome50-m1/`](lab/gnome50-m1/READM
 ### M3: The Observatory (GNOME 50 VM lab)
 
 The first cinematic milestone is under [`lab/gnome50-m3/`](lab/gnome50-m3/README.md): layered deep-space scenery, Orion/Cygnus/Cassiopeia constellation formation and a subtle cockpit readout. It uses GNOME 50's `St.DrawingArea` and the native password buffer's **character count**; GNOME authentication and the original extension stay untouched. **VM-only; runtime validation still required.**
+
+## Starfield Atlas (image-aligned constellation catalog)
+
+The new [Starfield Atlas](tools/starfield/README.md) uses a NASA/ESA Hubble Messier 24 background and an offline detector to index **20,491 actual bright points** in the original image, with **92,734 nearby-node connection candidates**. The image, pixel-accurate coordinates, graph, provenance, and marked QA preview are in [`assets/starfield/`](assets/starfield/). Generated and independently validated by the [GitHub Actions pipeline](.github/workflows/build-starfield.yml). Any subset of these points may be used for invented constellations; their astronomical identity does not matter for Mellon.
