@@ -56,7 +56,8 @@ def check_geometry_unchanged():
     assert out['rms_error_px'] < 1e-6
 
     safe_x, safe_y, room_x, room_y = safe_zone(1920, 1080, args)
-    assert (safe_x, safe_y, room_x, room_y) == (268.8, 151.2, 172.8, 97.2)
+    assert np.allclose([safe_x, safe_y, room_x, room_y],
+                       [268.8, 151.2, 172.8, 97.2])
     m = {
         'coverage': {'max_span_fraction': .61, 'bounding_area_fraction': .24,
                      'bbox_px': [300., 180., 1470., 815.]},
