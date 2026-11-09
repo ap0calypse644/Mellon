@@ -1,12 +1,12 @@
 # Mellon M5 — visual-only hidden-chrome MVP
 
-**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, and manual `SHOW LOGIN` recovery. **Automatic recovery after two incorrect passwords failed in both M5 and M5.1.** M5.2 replaces that mechanism; it is not yet guest-verified. M4 is the known-good fallback.
+**VM-only prototype.** User-confirmed on GNOME 50.1: visual cover, hidden input with successful native unlock, manual `SHOW LOGIN` recovery, and M5.2 automatic recovery after two wrong attempts. The new M5.3 centered visual alert is **not yet guest-verified**. M4 remains the known-good fallback.
 
 ## Scope
 
 M4's actual background, nine star IDs and image coordinates, constellation edges, low-power drawing engine, native password-length observation, and password verification are preserved unchanged. M5 draws the same image/stars *above* GNOME's original clock, avatar and password-field visuals. These are **not removed or hidden**—they remain in the unlock dialog under a non-reactive visual cover. No raw keystrokes, plaintext passwords, PAM changes, or success-animation hooks are introduced.
 
-**Safety mechanisms:** a small visible `SHOW LOGIN` button at the top left reveals the untouched GNOME login screen and calls GNOME's own `UnlockDialog.activate()` to focus the real password entry. After two failed authentications in one lock cycle, the overlay automatically reveals GNOME. The first failure shows an explicit message and brief red constellation fade. On an extension error, M5 tears down the cover; the original prompt can remain usable. Recovery is also available via the guest's SSH, and the deploy script backs up the previous extension before copying files.
+**Safety mechanisms:** a small visible `SHOW LOGIN` button at the top left reveals the untouched GNOME login screen and calls GNOME's own `UnlockDialog.activate()` to focus the real password entry. After two failed authentications in one lock cycle, the overlay automatically reveals GNOME. The first failure shows a large centered blinking red **UNAUTHORIZED ACCESS** warning and brief red constellation fade (M5.3). On an extension error, M5 tears down the cover; the original prompt can remain usable. Recovery is also available via the guest's SSH, and the deploy script backs up the previous extension before copying files.
 
 ## Deploy on BlackPearl, targeting only the test VM
 
@@ -91,6 +91,34 @@ test is in the VM, not on BlackPearl.
 
 If any check fails, use SHOW LOGIN. The VM remains accessible via SSH and
 the M4 fallback is unchanged. Do not install this prototype on the host.
-**M5.2 needs actual guest test results before being called complete.**
+**M5.2 automatic recovery was subsequently confirmed working by the user in the GNOME 50.1 VM.**
 
 No artistic Orion figure or post-authentication animation is included.
+
+## M5.3: centered glowing alert (2026-11-09)
+
+This is a **visual-only follow-up** to the user-verified M5.2 authentication flow.
+
+- Replaces the small top-left failure message with the exact text
+  **UNAUTHORIZED ACCESS**, positioned at the **center of the lock screen**
+  through a GNOME 50 `Clutter.AlignConstraint` with `AlignAxis.BOTH`.
+- Styles the message as a large vivid-red title with soft red
+  `text-shadow`, a restrained dark translucent panel, border and glow.
+- On the *first* failed password, blinks for approximately 1.5 seconds
+  using the existing eight-frame-per-second animation timer; does not
+  start any new timer or idle animation loop.
+- On the *second* failed password, the **existing immediate automatic
+  native-login recovery takes priority**, unchanged from M5.2.
+- The alert actor remains non-reactive, never takes keyboard focus and
+  is hidden immediately when Mellon reveals the native login.
+- No background, star coordinates, GNOME authentication, failure-count
+  observer, password tracking, or recovery logic changes.
+
+**Guest QA:** Lock the VM; enter one wrong password, inspect the
+large center-screen blinking red message (not the top left); verify the
+alert disappears; enter a second wrong password and confirm that SHOW
+LOGIN is still automatically activated. Then unlock correctly and relock.
+If any native login difficulty occurs, click SHOW LOGIN or roll back to
+M4. Do not install on the BlackPearl host.
+
+**M5.3 source/syntax verified; live guest visual behavior awaits testing.**
