@@ -653,3 +653,356 @@ User supplied full run output as `Pasted text(20261109-104856).txt` and archive 
 
 **When planning v7, do not mistake a report saying “36k structurally valid” for approved vector artwork. The next milestone is artistic visual excellence.**
 
+
+---
+
+## 9. V7 — PROFESSIONAL ORION CHARACTER ARTWORK (THE IMMEDIATE NEXT TASK)
+
+### 9.1 Why v7 exists
+
+We already have a huge, robust inventory of constellation candidates. More brute-force proposals do not address the user's highest priority: **make the lock-screen look professionally designed, not like a proof of concept**.
+
+The intended transition is: a beautiful cosmic background; on password entry, existing faint stars light up and form a recognizable Orion pattern; on *confirmed* successful authentication, a refined mythological drawing of **Orion the Hunter** appears around and anatomically connected to that constellation. Eventually the native GNOME authentication widgets won't be visible, but GNOME must remain the actual verifier.
+
+A proper character silhouette is more difficult than a constellation's simple lines. We must solve **fit, identity, anatomy, scene balance and animation**, not just pixel-nearest star matching.
+
+### 9.2 Recommended first v7 deliverable (offline ONLY)
+
+Deliver an **Orion artwork prototype** with:
+- Professionally styled, editable vector illustration / layered linework (ideally SVG) of Orion, designed to be revealed by strokes.
+- Mapping from the nine Orion core constellation vertices to meaningful anatomy/gear anchors.
+- At least three candidate placements of this artwork on existing v6 Orion matches, preferably across two differing backgrounds.
+- For each candidate: full-resolution clean 1920×1080 preview, technical QA preview with anchor labels and v6 safe-envelope boundaries, and a machine-readable art-fit record.
+- An explicit automated **geometry validator** for all placed art paths/stroke bounding boxes and anchor residuals.
+- Original-source / license information for any imported graphics and reproducible build scripts.
+- A short, carefully designed animation storyboard or offline frame sequence after art quality is approved.
+- GitHub code commit and a concise pull/render command. No need to deploy anything to VM for this milestone.
+
+Do not render an ugly placeholder figure as though it were finished. The user previously rejected poor AI-looking wallpaper results and asked for professional-looking astronomy/space design. If external reference imagery is used, confirm it is reusable and honestly identify it. If an illustration is newly drawn, provide genuinely editable vector source where possible rather than claiming an image preview is editable SVG.
+
+### 9.3 Start by checking v6 Orion matches
+
+The existing candidates are in:
+
+`~/VMs/Mellon/constellation-benchmark-v6-centered/matches-v6.json`
+
+and stored separately in JSON per background/template. V6 usage is fully explained in `tools/constellations/CENTERED_CONSTELLATIONS_V6.md`.
+
+Before writing selection code:
+1. Inspect the actual output keys and v6 `images[slug]` / `matches["Ori"]` shape; don't guess nested JSON structure.
+2. Load `tools/constellations/templates-v3.json` and study **`templates["Ori"]["points"]` and `edges`**, ensuring the exact nine-star reference and identifying visual landmarks.
+3. For each image's v6 Orion candidates, compute screen span, bbox center offset, RMS and max residual, source star IDs, transformation angle, illustrated head/shoulder/belt/leg clearance, and nebula contrast near linework.
+4. Pick a small diverse shortlist; the highest coverage ranking may NOT have the best anatomical art-fitting shape.
+5. Verify each selected star ID is physically in `stars-all.json` after correct image transform; reject false positives when visually obvious.
+6. Produce **one constellation per output image**. Do not combine all different constellations into a cluttered QA image.
+7. Preserve original normalized image coords and pixels. The illustration is fitted to the stars, **never vice versa**.
+
+Potential starting backgrounds: `blue-gold-nebula` (aesthetic favorite) and `veiled-ring` (often best geometric matching). Neither is permanently selected; try another image if visually superior.
+
+### 9.4 Character art design considerations
+
+**Orion anatomy and anchor concept (must verify exact indices in JSON):**
+- Head above torso.
+- Left/right shoulder with confident proportional silhouette.
+- Three-star belt clearly defines waist orientation.
+- Sword below belt if composition allows.
+- Two feet/legs anchored in appropriate directions.
+- Cloak/armor/tunic/weapon details can extend into reserved envelope, but do not create the weird/unrecognizable giant bow from the rejected first template.
+- Astronomical dotted figure remains discoverable beneath the art; linework need not literalize every star as a joint.
+- Familiar historical celestial atlases, tasteful ink engravings, restrained glowing etchings and cinematic line art are relevant stylistic directions. **Source art must have permission** (public domain, documented license, or original work).
+
+**Do not simply stretch an SVG to fit an arbitrary template.** Good options:
+- Rigid similarity fit (uniform scale, rotate, translate) of art anchors to star anchors; reject badly fitting matches.
+- Anchor-assisted layout using a small number of controlled, semantic local path adjustments (only if anatomy retains natural proportions).
+- Precompute a handful of approved “art-to-template variants” so multiple candidate matches can be used without stretching the body.
+- A vector map with stable path ordering and named layers gives a much better basis for a future stroke reveal.
+
+**Rendering hierarchy suggestion:**
+1. Dimmed real/digital cosmic background (source image, exact aligned crop).
+2. Very subtle native image stars.
+3. Illuminated actual constellation stars and selected thin topology edges.
+4. Character outline revealed as refined lines, with selective brighter accents.
+5. Minimal soft glow and particles, preferably concentrated along drawing strokes; avoid filling the whole screen with neon.
+
+### 9.5 Specific fit and safety measurements for v7
+
+At 1920×1080 using v6 defaults:
+- Outer permanent frame margin: **5% each edge** = 96 px horizontally / 54 px vertically.
+- Reserve for figure beyond constellation bbox: **9% each side** = 172.8 px horizontally / 97.2 px vertically.
+- Star-safe inner region: 14%–86% = x between **268.8 and 1651.2 px**, y between **151.2 and 928.8 px**.
+- Constellation bbox center ±13% of screen dimensions: horizontal ±249.6 px from x=960; vertical ±140.4 px from y=540.
+- Max possible **single-axis star span** at these settings: 72% of that axis.
+
+**Caveat:** These calculations are width/height fractions, not equal radial distances in physical pixels. The planned figure envelope is an axis-aligned star bbox expanded separately in X and Y. It does not guarantee correct figure anatomy. Make the art fit actual vector bounds INCLUDING stroke width, glow/bloom and blur padding; verify no off-screen clipping. If an attractive figure cannot fit, choose another of the many v6 Orion candidates instead of relaxing all constraints without asking.
+
+### 9.6 Suggested v7 data contract (proposal, not built)
+
+Possible repository additions:
+
+~~~text
+assets/constellation-art/
+    orion/
+        orion-figure.svg                 # editable original vector
+        anatomical-anchors.json          # named constellation-to-art anchors
+        stroke-sequence.json             # path groups and order for animation
+        PROVENANCE.md                    # license and attribution
+
+tools/constellations/
+    select_orion_art_candidates_v7.py    # choose viable source-star matches
+    fit_orion_figure_v7.py               # fit artwork, reject distorted candidates
+    render_orion_art_v7.py               # full-res clean previews + QA overlays
+    verify_orion_figure_v7.py            # exact star IDs / anchor fit / bounds
+    render_orion_strokes_v7.py           # optional later offline animation
+
+Local output (not automatically committed):
+~/VMs/Mellon/orion-artwork-v7/
+    selected-placements.json
+    fit-results.json
+    previews/
+    qa/
+    animation-frames/
+~~~
+
+Example target records should keep:
+- `background_slug`, source-image hash, precise transformed image dimensions.
+- `constellation_id` = `Ori`.
+- Stable candidate ID derived from actual source star IDs plus background identity (don't assume v6 already provides one).
+- Original nine star IDs and actual normalized coordinates.
+- Exact reference edges and reference/template version.
+- Artwork SVG path and SHA256/creator/license.
+- Art anchor names and mapping to constellation vertices.
+- Fitted rigid transform (translation/rotation/uniform scale).
+- Per-anchor residual errors, overall anchor RMS, candidate-quality score.
+- Fitted art-path bounds (including stroke/glow), and invariant that figure is contained in v6 reserved envelope.
+- Human QA status, with explicit pending/approved/rejected rather than treating all generated results as approved.
+
+### 9.7 Offline animation plan — AFTER STILL ART LOOKS EXCELLENT
+
+Potential success-only animation:
+1. Last constellation star becomes fully illuminated as user finishes entering password.
+2. Enter tells GNOME to verify **normally**; no “success” assertion before GNOME reports it.
+3. On confirmed successful authentication, begin an elegant trace: glowing navigational lines / selected stars pulse, then head/shoulder/chest outlines, then arms/weapon, torso/cloak, legs, concluding with a subtle combined pulse.
+4. Do not make the animation long or intrusive. Consider ~0.5–1.5 seconds as an aesthetic target, not a promise until technical lifecycle is solved.
+5. Wrong password: brief dim/reversion, no character art/success reveal.
+6. On relock: select anew, reset all count/timing/art states.
+
+Develop **offline frames/GIF/video** first. A static single image is not evidence that stroke animation paths or timing are correct. The user should be able to inspect high-quality example animations without touching the VM.
+
+### 9.8 GNOME success lifecycle — research required before promising
+
+M1/M2/M3 have **not** established a mechanism for a guaranteed successful-login hold. GNOME 50's unlock dialog may be destroyed immediately upon auth success. Consider:
+- Whether GNOME has a supported extension-safe way to show a noninteractive transition on screen after auth, without touching auth verification or allowing early desktop exposure.
+- Whether a post-unlock, visually seamless fade overlay is safer than delaying the actual lock/unlock lifecycle.
+- Whether a successful auth notification is exposed at the right moment in a non-secret interface.
+- Whether a time-limited transition is acceptable to user even if it occurs *after* the secure unlock handoff rather than literally “before login.”
+- Regression/recovery handling if animations fail, host sleeps, video mode changes, or Shell restarts.
+- Do not hijack PAM, password submission, login session internals, or capture keystrokes for an animation.
+
+This must be investigated inside `mellon-gnome50-lab` **after** offline artwork and animation approvals. Do not install experimental extension on the host.
+
+### 9.9 Acceptance criteria for v7
+
+v7 artwork is not complete unless:
+- The Orion figure is actually recognizable without a label, with believable anatomy.
+- Constellation belt/shoulders/head/legs line up to actual image stars.
+- Individual star IDs, normalized coordinates and transformed background hashes all validate.
+- Character illustration is high quality, not just a stickman, crude contour, or disconnected glyph.
+- The entire finished art including glow has safe margins and no clipping.
+- Multiple distinct Orion placement previews exist, each with ONE constellation.
+- An author/credit/license is recorded for all source art.
+- Artwork is editable enough to animate (prefer SVG path groups).
+- Output includes clean presentation images and separate diagnostic QA, reproducible from GitHub code.
+- User gets to see/approve the designs before VM work.
+- No host/VM GNOME settings changed during v7 offline stage.
+
+---
+
+## 10. EVENTUAL v8+ PRODUCT INTEGRATION ROADMAP
+
+### Phase A — art library expansion
+
+Once Orion is good, apply framework to other recognizable templates—e.g. Scorpius, Cygnus, Leo, Sagittarius, Pegasus, Gemini, Taurus. Each mythological figure has different geometry and may require handcrafted illustration/anchor constraints. Avoid trying to auto-generate arbitrary humanoid art for every shape before Orion is solved.
+
+### Phase B — candidate curation and runtime bundle
+
+- The entire 36,349-candidate v6 dataset is ideal for offline search and QA, but a GNOME extension doesn't need to carry all candidates.
+- Curate a small set of vetted matches per background/template and corresponding artwork assets. User requested **quality over quantity** at visual stage.
+- Prepare compact runtime JSON or binary assets with file hashes, normalized coordinates, IDs/edges, timing, and authored artwork paths.
+- Render background and illuminated image-aligned star positions using GNOME 50 `St.DrawingArea`, or a suitable proven efficient renderer.
+- Respect aspect ratio changes (letterbox/cover/crop), UI scale, monitors, and the user-selected lock background; use single consistent image transform.
+
+### Phase C — visible native auth UI removal (only in VM)
+
+- On guest lock screen, hide visual GNOME clock/user avatar/password field if possible while leaving the native password widget alive, in focus, and safely handling all input.
+- Do **not** read actual password string. Use `notify::length` on native buffer to drive the star progression.
+- Reassess UI when auth prompt is lazily created or re-created, and on failure or session mode changes.
+- Provide an emergency/escape mechanism that reveals the native password prompt if a renderer/input issue happens.
+- Preserve accessibility, language/keyboard/IME compatibility as far as practical; test focus retention and screen readers.
+- Make extension fail-open toward GNOME native secure prompt, not fail-locked into a broken UI.
+
+### Phase D — actual character stroke animations + secure unlock timing
+
+- Integrate offline-approved vector path sequence.
+- Trigger only on confirmed native auth success, not merely Enter.
+- Carefully test shell teardown/transition, no auth bypass, no leaking plaintext.
+- Avoid expensive image processing while the screen is locked; matching is fully offline/precomputed.
+- Measure CPU/memory/frames in the VM; avoid animations that cause fans to run constantly or introduce unnecessary login latency.
+
+### Phase E — production readiness, host deployment (explicit future consent required)
+
+Before touching BlackPearl lock screen, test in VM:
+- Login success/failure, Backspace and replacement, Esc, empty password, repeated locks and unlocks.
+- Keyboard focus retention, different layouts, paste/IME behavior as appropriate to GNOME.
+- Incorrect passwords and delayed auth, sleep/resume, screen rotation, monitor disconnect, fractional scale.
+- GNOME Shell crashes, extension disable/enable, guest reboot, GDM interactions.
+- Security: never log password text, never intercept raw keystrokes, never modify PAM/credential flow.
+- Failure recovery through guest SSH/TTY and restore baseline.
+- User-approved production appearance, path license, maintainable source tree and a host recovery strategy.
+- Host installation and auto-lock policy only after user asks explicitly. **Current instruction: do not install on BlackPearl.**
+
+---
+
+## 11. RESUME COMMANDS, LOCATION AND TROUBLESHOOTING
+
+### 11.1 Update local repository
+
+~~~bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    git log -1 --oneline
+)
+~~~
+
+### 11.2 Inspect available v6 results and Orion template, without re-running search
+
+~~~bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    PYTHON="$HOME/.local/share/mellon-constellations-venv/bin/python"
+    V6="$HOME/VMs/Mellon/constellation-benchmark-v6-centered/matches-v6.json"
+    test -f "$V6"
+    "$PYTHON" - "$V6" <<'PY'
+import json, sys
+from pathlib import Path
+
+data = json.loads(Path(sys.argv[1]).read_text())
+print("Schema:", data.get("schema"))
+for image, block in data["images"].items():
+    ori = block["matches"].get("Ori", [])
+    print(f"{image:<22} Orion candidate count: {len(ori)}")
+    if ori:
+        print("  best match:", json.dumps({
+            k: ori[0].get(k) for k in
+            ["rms_error_px", "max_error_px", "coverage",
+             "center_offset_fraction", "figure_envelope_bbox_px"]
+        }, indent=2))
+templates = json.loads(Path("tools/constellations/templates-v3.json").read_text())
+print("Orion reference:", json.dumps(templates["templates"]["Ori"], indent=2))
+PY
+)
+~~~
+
+This command is intended as a quick read-only first inspect. No secrets. The future assistant can inspect individual actual stars and image files once available.
+
+### 11.3 Re-run independent validator (read-only; generated files unchanged)
+
+~~~bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    PYTHON="$HOME/.local/share/mellon-constellations-venv/bin/python"
+    "$PYTHON" tools/constellations/verify_centered_matches_v6.py \
+        --report "$HOME/VMs/Mellon/constellation-benchmark-v6-centered/matches-v6.json"
+)
+~~~
+
+Expected based on last executed full run:
+
+~~~text
+PASS: 36349 candidate placements across 186 constellation/image combinations
+PASS: Every selected star ID, coordinate, center and artwork clearance verified
+~~~
+
+If output differs, inspect actual dataset or new code changes before assuming previous values remain valid.
+
+### 11.4 Trouble patterns already encountered
+
+- Git pull error after host reboot? VM status irrelevant to offline work; don't start VM for matcher/illustration tasks.
+- `ssh mellon: No route to host` → VM shut off or DHCP IP changed; check `virsh domstate` and leases.
+- `ssh: Permission denied` → guest Unix account is `test1`, not `mellon`.
+- Guest extension shows INITIALIZED during desktop → it may be unlock-session-only; lock VM and check errors.
+- `enabled-extensions = []` after deploy → use fixed GSettings sync/independent session verification.
+- `Clutter.Canvas is not a constructor` → use GNOME 50 `St.DrawingArea` and Cairo.
+- disposed auth object warning → avoid GObject signal disconnect after disposal; epoch guards.
+- Looking at constellation sets together yields spaghetti lines → test **single constellation per image**.
+- User sees weird Orion bow → use v2/v3 nine-point Orion core, not older elaborate atlas polygon.
+- Big constellation almost clips screen → use v6 centered / reserved art envelope, not v5 maximum-edge preview.
+- Very faint stars should still be usable → `--catalog all`, no brightness ranking.
+
+---
+
+## 12. REFERENCES, PROVENANCE AND LINKS
+
+**Project:** https://github.com/ap0calypse644/Mellon  
+**v6 source commit:** https://github.com/ap0calypse644/Mellon/commit/dfab47f09759fd5f17947aba1327bab3364f0816  
+**v6 matcher:** https://github.com/ap0calypse644/Mellon/blob/main/tools/constellations/match_centered_constellations_v6.py  
+**v6 verifier:** https://github.com/ap0calypse644/Mellon/blob/main/tools/constellations/verify_centered_matches_v6.py  
+**v6 notes:** https://github.com/ap0calypse644/Mellon/blob/main/tools/constellations/CENTERED_CONSTELLATIONS_V6.md  
+**v3 template collection:** https://github.com/ap0calypse644/Mellon/blob/main/tools/constellations/templates-v3.json  
+**d3-celestial source linework:** https://github.com/ofrohn/d3-celestial/blob/master/data/constellations.lines.json  
+**Six-image source and catalogue:** https://github.com/ap0calypse644/Mellon/tree/main/assets/starfield/corpus-v1  
+**Six-image corpus notes:** https://github.com/ap0calypse644/Mellon/blob/main/assets/starfield/corpus-v1/README.md  
+**Last VM Observatory prototype:** https://github.com/ap0calypse644/Mellon/tree/main/lab/gnome50-m3  
+**Working GNOME 50 Cairo path:** https://github.com/ap0calypse644/Mellon/tree/main/lab/gnome50-m2  
+**NASA M24:** https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-24/  
+**Unsplash licensing:** https://unsplash.com/license
+
+**Files user generated on BlackPearl:**
+- `~/VMs/Mellon/constellation-benchmark-v2/` (v2)
+- `~/VMs/Mellon/constellation-benchmark-v3-full/matches-v3.json` (v3)
+- `~/VMs/Mellon/constellation-benchmark-v6-centered/matches-v6.json` (v6, current)
+- `~/VMs/Mellon/checkpoints/MELLON-BASELINE-001/` (verified VM baseline)
+
+**Previous chat uploads:** `constellation-benchmark-v2.zip`, `constellation-benchmark-v3-full.zip`, `constellation-benchmark-v6-centered.zip` and respective terminal logs. The current handover documents the useful numerical results so a new chat does not need the entire ZIP until it needs the actual Orion coordinates.
+
+---
+
+## 13. DECISIONS THAT MUST NOT BE LOST
+
+1. One constellation per lock. No v4 collision packing for product.
+2. Large, mostly centered, with meaningful space for full character art around stars.
+3. The star IDs/coordinates must exist in the displayed source image; astronomical pattern shape is a separate template.
+4. Star brightness never excludes a candidate. Screens can show very faint stellar points.
+5. Six uploaded images are benchmark sources; not all need appear in final product. M24 remains a technical stress image, not production wallpaper.
+6. Source backgrounds must be internet-sourced real photos or professional digital art with appropriate licensing; do not improvise low-quality generated wallpaper.
+7. Current best matches already computed in v6, with 36,349 validated candidates.
+8. Accuracy score alone doesn't guarantee recognized, beautiful illustration.
+9. Orion nine-star core excludes previously disliked bow/club shape.
+10. Professional mythological hunter illustration, not stickman, is the next big goal.
+11. Illustration transform must not deform anatomy; reject bad candidates.
+12. Reserve 5% permanent outer margin, 9% art allowance around star bbox, ±13% centering tolerance.
+13. GNOME native auth verification remains intact; ultimately only its VISUAL UI should disappear.
+14. Modern GNOME integration observes password buffer **length** only; never text or key events.
+15. A guaranteed post-success/pre-unlock animation is **not yet proven**; don't promise until researched/tested.
+16. Host GNOME must remain untouched until user specifically approves deployment.
+17. User wants changes pushed to GitHub and pulled locally.
+18. User terminal is Zsh; all paste-ready scripts wrapped `( ... )`; disable Git hooks on pulls where possible.
+19. Work is **offline-first** at the v7 artistic stage; don't drag the user back into VM troubleshooting.
+20. User was frustrated by multiple previous “analysis errored” attempts on this handover; preserve it as a persistent GitHub file and avoid repeat tool-dependent temporary artifacts.
+
+---
+
+## 14. EXACT NEW CHAT STARTING INSTRUCTION
+
+The next assistant can begin with this framing:
+
+> Continue Mellon from the project handover. We are starting v7. First design and fit **professional, aesthetically convincing Orion figure artwork** to the real star coordinates in selected v6 Orion matches. Work offline in the Mellon repository, prepare several clean 1920×1080 previews plus QA with art-safe margins, validate the geometry, and commit source assets/scripts directly to GitHub. **Do not run the 18.6M search again, do not touch the VM or host GNOME, and do not replace GNOME's actual authentication.**
+
+**Project completion status at this handover:**
+- Completed: isolated VM, baseline, M1/M2/M3 visual proofs, 6-image corpus, M24 stress test, 31 reference templates, v1–v6 matchers, v6 **36,349** validated candidates.
+- Not completed: professional figure art, actual Orion fit, stroke animation, hidden native GNOME unlock UI, secure success transition, production runtime bundle, user-approved host deployment.
+
+**End — Comprehensive Mellon handover, 2026-11-09.**
