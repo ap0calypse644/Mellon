@@ -1,127 +1,58 @@
-name: Build six-image Mellon starfield corpus
+name: Validate Mellon six-image starfield corpus
 
 on:
   push:
     branches: [main]
     paths:
-      - '.github/workflows/build-six-starfields.yml'
+      - 'assets/starfield/corpus-v1/source/**'
+      - 'assets/starfield/corpus-v1/catalogs/**'
+      - 'tools/starfield/corpus/**'
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: mellon-six-image-corpus
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - name: Checkout source
+      - name: Check out Mellon
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          persist-credentials: true
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
 
-      - name: Install scientific dependencies
+      - name: Install dependencies
         run: python -m pip install --disable-pip-version-check -r tools/starfield/requirements.txt
 
-      - name: Fetch the six exact Unsplash photo IDs
-        shell: bash
+      - name: Verify exact source image hashes and pixel-coordinate mappings
         run: |
-          set -euo pipefail
-          mkdir -p assets/starfield/corpus-v1/source
+          python tools/starfield/corpus/validate_multi.py \
+            --data assets/starfield/corpus-v1/catalogs \
+            --originals assets/starfield/corpus-v1/source
 
-          while IFS='|' read -r id filename; do
-            [[ -n "$id" ]] || continue
-            path="assets/starfield/corpus-v1/source/$filename"
-            echo "Downloading $id as $filename"
-
-            # Unsplash's normal public photo download endpoint; this is not
-            # the Unsplash API and does not require an application API key.
-            if ! curl -fLsS --retry 3 --retry-all-errors \
-                 --connect-timeout 15 --max-time 120 \
-                 -A 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36' \
-                 "https://unsplash.com/photos/$id/download?force=true&w=2048" \
-                 -o "$path"; then
-              echo "Primary Unsplash link failed, trying normal download."
-              curl -fLsS --retry 3 --retry-all-errors \
-                --connect-timeout 15 --max-time 120 \
-                -A 'Mozilla/5.0' \
-                "https://unsplash.com/photos/$id/download" -o "$path"
-            fi
-            test "$(stat -c %s "$path")" -gt 50000
-          done <<'SOURCES'
-          PiqZfESKt3k|scott-lord-PiqZfESKt3k-unsplash.jpg
-          9D2WUVsT9_I|beat-schuler-9D2WUVsT9_I-unsplash.jpg
-          zWOgtUIX7OE|arnaud-girault-zWOgtUIX7OE-unsplash.jpg
-          qtRF_RxCAo0|aldebaran-s-qtRF_RxCAo0-unsplash.jpg
-          KLFP4HwaXyk|scott-lord-KLFP4HwaXyk-unsplash.jpg
-          qW_OmkbDJVQ|wallace-henry-qW_OmkbDJVQ-unsplash.jpg
-          SOURCES
-
-          python - <<'PY'
-          from pathlib import Path
-          from PIL import Image
-          files = sorted(Path('assets/starfield/corpus-v1/source').glob('*.jpg'))
-          assert len(files) == 6
-          for file in files:
-              with Image.open(file) as image:
-                  image.verify()
-              with Image.open(file) as image:
-                  assert min(image.size) >= 600, (file, image.size)
-                  print(file.name, image.size)
-          PY
-
-      - name: Extract aligned star catalogues and dimmed 16-by-9 backgrounds
-        run: |
-          python tools/starfield/build_corpus.py \
-            --input assets/starfield/corpus-v1/source \
-            --output assets/starfield/corpus-v1/catalogs \
-            --threshold 6.2 \
-            --min-separation 6 \
-            --curated-count 750 \
-            --dim-factor 0.44
-
-      - name: Quick data integrity check
+      - name: Verify saved example constellation references
         run: |
           python - <<'PY'
-          import hashlib, json
+          import json
           from pathlib import Path
-          root=Path('assets/starfield/corpus-v1')
-          dirs=[p for p in (root/'catalogs').iterdir() if p.is_dir()]
-          assert len(dirs) == 6
-          for p in dirs:
-              m=json.loads((p/'metadata.json').read_text())
-              source=root/'source'/m['source_filename']
-              assert hashlib.sha256(source.read_bytes()).hexdigest()==m['source_sha256']
-              d=p/'background-dim-16x9.jpg'
-              assert hashlib.sha256(d.read_bytes()).hexdigest()==m['dimmed_background_sha256']
+          root=Path('assets/starfield/corpus-v1/catalogs')
+          folders=[p for p in root.iterdir() if p.is_dir()]
+          assert len(folders)==6
+          for p in folders:
               stars=json.loads((p/'stars-curated.json').read_text())
-              assert stars['image_sha256']==m['dimmed_background_sha256']
-              assert len(stars['stars']) >= 300
-              for s in stars['stars']:
-                  assert 0 <= s['x'] < 1 and 0 <= s['y'] < 1
-              print(p.name, len(stars['stars']), 'candidate points')
+              patterns=json.loads((p/'pattern-examples.json').read_text())
+              ids={s['id'] for s in stars['stars']}
+              assert len(ids)>=300
+              assert patterns['source_catalog_image_sha256']==stars['image_sha256']
+              for pattern in patterns['patterns'].values():
+                  used=pattern['star_ids']
+                  assert len(used)==len(set(used))
+                  assert all(u in ids for u in used)
+                  assert all(0<=a<len(used) and 0<=b<len(used)
+                             for a,b in pattern['edges'])
+              print(p.name, 'OK', len(ids), 'reference points')
           PY
-
-      - name: Commit source images and catalogue
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git -c core.hooksPath=/dev/null add -- \
-            assets/starfield/corpus-v1/source \
-            assets/starfield/corpus-v1/catalogs
-          if git diff --cached --quiet; then
-            echo 'No new image/catalog changes'
-          else
-            git -c core.hooksPath=/dev/null commit \
-              -m 'Index six Unsplash starfields with crop-aligned catalogues'
-            git -c core.hooksPath=/dev/null push origin HEAD:main
-          fi
