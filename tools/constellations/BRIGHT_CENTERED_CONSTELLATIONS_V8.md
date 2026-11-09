@@ -143,18 +143,41 @@ The workflow `.github/workflows/bright-centered-v8.yml` provides:
 - An explicit **full rebuild**: six independent image jobs, all 31
   constellation templates per image, original v6 100k/1200 search budget,
   independent post-search verification, and QA images.
-- A merge stage: verifies compatible settings, rejects duplicate or
-  missing image reports, merges the six image reports into a **single**
-  `mellon-v8-brightness-library` downloadable Actions artifact, then
-  independently verifies the combined output again.
+- Six independently verified per-image artifacts in Actions, each
+  named `bright-v8-<background>`. A separate strict merger
+  (`merge_bright_v8.py`) combines the downloaded reports into a single
+  library and rejects duplicate images, missing images or mismatched
+  matching parameters. Run the independent validator on the result.
 
 To repeat this on GitHub, open **Actions → Bright-star centered constellation
 library v8 → Run workflow**, keep `rebuild_all` selected, and run it.
 
-Artifacts have a 30-day retention in Actions; download them to
-`~/VMs/Mellon/` if you want a durable local copy. Each image also has
-separate optional QA/artifact output. The merged `matches-v8.json` is the
-input for M6 scene curation, **not** a pre-approved scene set.
+Artifacts have a 30-day retention in Actions. The workflow publishes
+**six independent verified background reports** with QA previews. Once
+the six jobs finish, you can download and combine them from BlackPearl:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    OUTPUT="$HOME/VMs/Mellon/constellation-benchmark-v8-bright"
+    mkdir -p "$OUTPUT/actions-parts"
+    gh run download 42672244861 \
+        --pattern 'bright-v8-*' \
+        --dir "$OUTPUT/actions-parts"
+    "$HOME/.local/share/mellon-constellations-venv/bin/python" \
+        tools/constellations/merge_bright_v8.py \
+        --parts "$OUTPUT"/actions-parts/bright-v8-*/matches-v8.json \
+        --output "$OUTPUT/matches-v8.json"
+    "$HOME/.local/share/mellon-constellations-venv/bin/python" \
+        tools/constellations/verify_bright_centered_matches_v8.py \
+        --report "$OUTPUT/matches-v8.json"
+)
+```
+
+The resulting `matches-v8.json` is the input for M6 scene curation,
+**not** a pre-approved scene set. If this Actions run fails, use the
+self-contained local brute-force command above instead.
 
 ## Evaluate whether brightness genuinely improved
 
