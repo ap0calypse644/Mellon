@@ -13,7 +13,7 @@
 
     echo 'MELLON M5 // TEST VM ONLY // NO HOST GNOME CHANGES'
     test -f "$V6" || { echo "Missing existing v6 report: $V6"; exit 1; }
-    for item in "$HERE/extension.js" "$HERE/metadata.json" "$HERE/stylesheet.css" "$HERE/scene.json" "$BG"; do
+    for item in "$HERE/extension.js" "$HERE/failure-tracker.js" "$HERE/metadata.json" "$HERE/stylesheet.css" "$HERE/scene.json" "$BG"; do
         test -f "$item" && test ! -L "$item" || { echo "Missing or symlinked $item"; exit 1; }
     done
     python3 "$ROOT/tools/mvp/verify_scene.py" --root "$ROOT" --scene "$HERE/scene.json" --report "$V6"
@@ -43,9 +43,9 @@ GUEST
 
     # Install data and source on the TEST guest, never on BlackPearl.
     ssh -o BatchMode=yes mellon "mkdir -p '$DEST'"
-    scp -q "$HERE/extension.js" "$HERE/metadata.json" "$HERE/stylesheet.css" "$HERE/scene.json" "mellon:$DEST/"
+    scp -q "$HERE/extension.js" "$HERE/failure-tracker.js" "$HERE/metadata.json" "$HERE/stylesheet.css" "$HERE/scene.json" "mellon:$DEST/"
     scp -q "$BG" "mellon:$DEST/background.jpg"
-    for file in extension.js metadata.json stylesheet.css scene.json; do
+    for file in extension.js failure-tracker.js metadata.json stylesheet.css scene.json; do
         expected="$(sha256sum "$HERE/$file" | cut -d ' ' -f 1)"
         actual="$(ssh -o BatchMode=yes mellon "sha256sum '$DEST/$file'" | cut -d ' ' -f 1)"
         test "$expected" = "$actual" || { echo "Guest checksum mismatch: $file"; exit 1; }
