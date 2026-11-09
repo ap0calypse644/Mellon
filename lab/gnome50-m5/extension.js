@@ -47,6 +47,7 @@ class MVPScene {
         this._energy = new Float32Array(9);
         this._frameTimer = 0;
         this._deniedUntil = 0;
+        this._deniedStartedAt = 0;
         this._nativeRevealed = false;
         this._failures = 0;
 
@@ -98,12 +99,20 @@ class MVPScene {
         this._recovery.connect('clicked', () => this.revealNative());
         dialog.insert_child_above(this._recovery, this._canvas);
 
+        // GNOME 50 Clutter alignment keeps the alert exactly centered even
+        // when the guest display resolution changes. This remains an entirely
+        // non-reactive visual: GNOME owns keyboard focus and authentication.
         this._feedback = new St.Label({
-            text: 'INCORRECT PASSWORD  /  TRY AGAIN',
+            text: 'UNAUTHORIZED ACCESS',
             reactive: false,
+            can_focus: false,
             style_class: 'mellon-m5-failure',
         });
-        this._feedback.set_position(26, 72);
+        this._feedback.add_constraint(new Clutter.AlignConstraint({
+            source: dialog,
+            align_axis: Clutter.AlignAxis.BOTH,
+            factor: 0.5,
+        }));
         this._feedback.hide();
         dialog.insert_child_above(this._feedback, this._recovery);
     }
@@ -149,8 +158,10 @@ class MVPScene {
             return;
         }
         this._target = 0;
-        this._deniedUntil = GLib.get_monotonic_time() / 1000000 + 1.5;
-        this._feedback?.show();
+        this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
+        this._deniedUntil = this._deniedStartedAt + 1.5;
+        this._feedback.opacity = 255;
+        this._feedback.show();
         this._startFrames();
     }
 
@@ -175,8 +186,16 @@ class MVPScene {
                     changing ||= this._energy[i] !== target;
                 }
                 this._canvas.queue_repaint();
-                if (!changing && GLib.get_monotonic_time() / 1000000 >= this._deniedUntil) {
+                const now = GLib.get_monotonic_time() / 1000000;
+                if (now < this._deniedUntil) {
+                    // Bold red beacon: flash around 2.3 times/sec for 1.5s.
+                    // Uses the existing 8fps drawing timer, not a new loop.
+                    const phase = Math.floor((now - this._deniedStartedAt) / 0.22);
+                    this._feedback.opacity = phase % 2 === 0 ? 255 : 55;
+                } else {
                     this._feedback?.hide();
+                }
+                if (!changing && now >= this._deniedUntil) {
                     this._frameTimer = 0;
                     return GLib.SOURCE_REMOVE;
                 }
