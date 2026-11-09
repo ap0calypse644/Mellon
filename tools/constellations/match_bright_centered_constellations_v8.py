@@ -442,7 +442,7 @@ def overlay_image(bg, match, ident, name, index, target, args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--corpus', type=Path, default=DEFAULT_CORPUS)
-    ap.add_argument('--templates', type=Path, default=HERE/'templates-v3.json')
+    ap.add_argument('--templates', type=Path, default=HERE/'templates-v4-orion-bow.json')
     ap.add_argument('--output', type=Path, default=Path('constellation-centered-v8-bright'))
     ap.add_argument('--catalog', choices=['all','curated'], default='all')
     ap.add_argument('--only', nargs='+', default=None)
