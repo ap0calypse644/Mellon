@@ -11,8 +11,9 @@ import {FailureTracker} from './failure-tracker.js';
  * Mellon M5: a NON-REACTIVE visual cover above GNOME's native unlock UI.
  * Native authentication, password entry, focus, retries and locking remain
  * entirely GNOME-owned. We inspect only buffer length, never text or keys.
- * SHOW LOGIN restores native UI. A read-only GNOME failure counter observer
- * restores it after 2 wrong attempts; no authentication internals modified.
+ * SHOW LOGIN manually reveals native UI. Each failed password shows an alert;
+ * no failure count automatically reveals the native password field.
+ * Read-only GNOME verifier polling does not modify authentication.
  * VM ONLY. Never install M5 on the BlackPearl host.
  */
 const POLL_MS = 250;
@@ -49,7 +50,6 @@ class MVPScene {
         this._deniedUntil = 0;
         this._deniedStartedAt = 0;
         this._nativeRevealed = false;
-        this._failures = 0;
 
         const file = Gio.File.new_for_path(imagePath);
         if (!file.query_exists(null))
@@ -152,11 +152,9 @@ class MVPScene {
     onFailed() {
         if (this._destroyed || this._nativeRevealed)
             return;
-        this._failures++;
-        if (this._failures >= 2) {
-            this.revealNative();
-            return;
-        }
+        // Every incorrect password shows the warning, including repeated
+        // attempts. Never reveal GNOME's native prompt due to an attempt count;
+        // the visible SHOW LOGIN control is the user's manual recovery path.
         this._target = 0;
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
         this._deniedUntil = this._deniedStartedAt + 1.5;
