@@ -446,6 +446,8 @@ def main():
     ap.add_argument('--output', type=Path, default=Path('constellation-centered-v8-bright'))
     ap.add_argument('--catalog', choices=['all','curated'], default='all')
     ap.add_argument('--only', nargs='+', default=None)
+    ap.add_argument('--only-backgrounds', nargs='+', default=None,
+                    help='Restrict search to these image folder slugs (for parallel jobs)')
     ap.add_argument('--min-stars', type=int, default=0)
     ap.add_argument('--attempts', type=int, default=20000)
     ap.add_argument('--refinements', type=int, default=600,
@@ -522,8 +524,15 @@ def main():
               args.frame_margin + args.figure_room_y,
               args.figure_room_x, args.figure_room_y,
               args.center_tolerance_x, args.center_tolerance_y), flush=True)
+    available_folders = {p.name for p in args.corpus.iterdir() if p.is_dir()}
+    if args.only_backgrounds:
+        missing_backgrounds = set(args.only_backgrounds) - available_folders
+        if missing_backgrounds:
+            ap.error('Unknown background(s): ' + ', '.join(sorted(missing_backgrounds)))
     for folder in sorted(args.corpus.iterdir()):
         if not folder.is_dir():
+            continue
+        if args.only_backgrounds and folder.name not in args.only_backgrounds:
             continue
         path = folder/('stars-all.json' if args.catalog=='all' else 'stars-curated.json')
         if not path.is_file():
