@@ -106,6 +106,8 @@ func TestCenterAndArtworkBoundsAreHard(t *testing.T) {
     if ok {t.Fatal("artwork-safe bounds must reject excessively tall constellation")}
     // Smaller scale passes with the same hard margin; no brightness override.
     f.Scale=1200
+    f.RMS=0
+    f.Worst=0
     for i,p:=range template.Points {
         f.Actual[i]=center.Add(p.Mul(f.Scale))
         c.Stars[i].P=f.Actual[i]
