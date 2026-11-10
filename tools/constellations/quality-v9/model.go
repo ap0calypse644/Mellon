@@ -103,6 +103,7 @@ type Config struct {
     ThresholdPX float64
     MaxVertexErrorPX float64
     Force bool
+    VerifyOnly bool
     EnhanceScale float64
     EnhanceGain float64
     LineOpacity float64
@@ -165,6 +166,8 @@ type CachedResult struct {
 type ImageReport struct {
     ImageSize [2]int `json:"image_size"`
     SourceStars int `json:"source_stars"`
+    SourceFingerprint string `json:"source_fingerprint"`
+    BackgroundSHA256 string `json:"background_sha256"`
     Matches map[string][]Match `json:"matches"`
     SelectionOrder []string `json:"selection_order"`
     Stats map[string]SearchStats `json:"stats"`
