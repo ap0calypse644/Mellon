@@ -82,6 +82,7 @@ func parseConfig() (Config,error) {
     flag.Float64Var(&cfg.EnhanceGain,"enhance-gain",cfg.EnhanceGain,"Shared RGB gain on original luminous residuals")
     flag.Float64Var(&cfg.LineOpacity,"line-opacity",cfg.LineOpacity,"Thin antialiased connector opacity on QA preview")
     flag.BoolVar(&cfg.Force,"force",false,"Ignore previous resumable checkpoints and recompute selected jobs")
+    flag.BoolVar(&cfg.VerifyOnly,"verify-only",false,"Revalidate saved matches-v9.json without doing ANY search or rendering")
     flag.Parse()
     if cfg.Attempts<1 || cfg.Refine<1 || cfg.CoarseK<1 || cfg.AssignmentK<1 ||
        cfg.Workers<1 || cfg.Workers>256 || cfg.PerBackground<1 || cfg.PerTemplate<1 {
@@ -287,6 +288,7 @@ func run(cfg Config) error {
         chosen:=selectBest(gathered[slug],cfg.PerBackground)
         record:=ImageReport{
             ImageSize:[2]int{c.W,c.H},SourceStars:len(c.Stars),
+            SourceFingerprint:c.Fingerprint,BackgroundSHA256:c.ImageHash,
             Matches:make(map[string][]Match),Stats:stats[slug],
         }
         for i,m:=range chosen {
@@ -325,6 +327,8 @@ func run(cfg Config) error {
 
 func main() {
     cfg,err:=parseConfig()
-    if err==nil {err=run(cfg)}
+    if err==nil {
+        if cfg.VerifyOnly {err=verifySaved(cfg)} else {err=run(cfg)}
+    }
     if err!=nil {fmt.Fprintln(os.Stderr,"ERROR:",err);os.Exit(1)}
 }
