@@ -37,6 +37,9 @@ export function validateLibrary(library) {
             n < 8 || n > 24 || n !== scene.star_ids.length ||
             new Set(scene.star_ids).size !== n ||
             !scene.star_ids.every(id => /^S[0-9]{6}$/.test(id)) ||
+            !Array.isArray(scene.sprite_size) ||
+            scene.sprite_size[0] !== 26 || scene.sprite_size[1] !== 26 ||
+            !/^[a-f0-9]{64}$/.test(scene.image_sha256) ||
             !Array.isArray(scene.sprites) ||
             scene.sprites.length !== n ||
             !scene.sprites.every(isSafeRelative) ||
@@ -57,7 +60,7 @@ export function activationCount(length, n, stages = 8) {
         !Number.isInteger(stages) || stages < 4 || stages > 12)
         throw new Error('Invalid activation mapping');
     const amount = Number.isFinite(length) ? Math.max(0, Math.floor(length)) : 0;
-    // n=13 → 2,3,5,7,9,10,12,13 across eight length increments.
+    // n=13 → 2,4,5,7,9,10,12,13 across eight length increments.
     return Math.min(n, Math.ceil(n * Math.min(amount, stages) / stages));
 }
 
