@@ -1,0 +1,15 @@
+{
+  "schema": "mellon-m6-pilot-selection-v1",
+  "description": "Six visually reviewed scenes, one per background, all at least eight real source stars. Only the local v9 report is the source of vertex coordinates and edges.",
+  "pilot_scene_ids": [
+    "blue-gold-nebula/02-Leo",
+    "chromatic-nebula/01-Leo",
+    "cosmic-wings/03-Vir",
+    "dust-cloud/03-Crt",
+    "rosy-rosette/04-Cyg",
+    "veiled-ring/03-Gem"
+  ],
+  "default_scene_id": "blue-gold-nebula/02-Leo",
+  "initial_mode": "fixed",
+  "activation_stages": 8
+}
