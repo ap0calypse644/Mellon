@@ -233,7 +233,7 @@ func run(cfg Config) error {
     }
     fmt.Printf("SEARCH %d backgrounds x %d templates = %d jobs; %d Go workers\n",
         len(folders),len(codes),len(folders)*len(codes),cfg.Workers)
-    fmt.Printf("Each job: %,d random placements, up to %d geometric refinements\n",
+    fmt.Printf("Each job: %d random placements, up to %d geometric refinements\n",
         cfg.Attempts,cfg.Refine)
     done:=0
     var firstErr error
