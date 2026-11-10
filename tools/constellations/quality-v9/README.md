@@ -157,8 +157,9 @@ To search just Orion's new 18-star bow for diagnosis:
 ```bash
 (
     cd "$HOME/go/src/ap0calypse644/Mellon"
-    bash tools/constellations/rebuild_quality_v9.sh \
-        --only Ori --per-background 1
+    MELLON_QUALITY_OUTPUT="$HOME/VMs/Mellon/quality-v9-orion-only" \
+        bash tools/constellations/rebuild_quality_v9.sh \
+            --only Ori --per-background 1
 )
 ```
 
