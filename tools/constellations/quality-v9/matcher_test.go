@@ -95,7 +95,7 @@ func TestCenterAndArtworkBoundsAreHard(t *testing.T) {
         Edges:[][2]int{{0,1},{1,2}}}
     center:=Point{960,540}
     coords:=make([]Point,3)
-    for i,p:=range template.Points {coords[i]=center.Add(p.Mul(1100))}
+    for i,p:=range template.Points {coords[i]=center.Add(p.Mul(1450))}
     c:=&Catalog{W:1920,H:1080,ByID:map[string]int{}}
     for i,p:=range coords {
         id:=string(rune('A'+i))
@@ -104,11 +104,11 @@ func TestCenterAndArtworkBoundsAreHard(t *testing.T) {
             Prominence:90,Score:.88})
     }
     f:=refined{Indices:[]int{0,1,2},Actual:coords,Center:center,
-        Scale:1100,Theta:0,RMS:1,Worst:2}
+        Scale:1450,Theta:0,RMS:1,Worst:2}
     _,ok:=makeMatch(c,"Toy",template,f,cfg)
     if ok {t.Fatal("artwork-safe bounds must reject excessively tall constellation")}
     // Smaller scale passes with the same hard margin; no brightness override.
-    f.Scale=720
+    f.Scale=1200
     for i,p:=range template.Points {
         f.Actual[i]=center.Add(p.Mul(f.Scale))
         c.Stars[i].P=f.Actual[i]
