@@ -1,0 +1,11 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon M6 — Six-Scene Observatory (VM only)",
+  "description": "Variable-size photo-derived constellation illumination; same GNOME-native authentication and manual SHOW LOGIN as M5.4.",
+  "shell-version": [
+    "50"
+  ],
+  "session-modes": [
+    "unlock-dialog"
+  ]
+}
