@@ -45,6 +45,7 @@ type SourceStar struct {
 type sourceCatalog struct { Stars []SourceStar `json:"stars"` }
 
 type sourceMetadata struct {
+    DimmedBackgroundSHA256 string `json:"dimmed_background_sha256"`
     SourceWidth int `json:"source_width"`
     SourceHeight int `json:"source_height"`
     Transform struct {
