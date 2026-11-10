@@ -53,6 +53,9 @@ func searchTemplate(ctx context.Context,c *Catalog,key string,t Template,cfg Con
     centerLoX,centerHiX:=w*(.5-cfg.CenterToleranceX),w*(.5+cfg.CenterToleranceX)
     centerLoY,centerHiY:=h*(.5-cfg.CenterToleranceY),h*(.5+cfg.CenterToleranceY)
     scratch:=make([]neighbor,0,cfg.CoarseK)
+    // Reuse the duplicate tracker for millions of proposals: no map
+    // allocations in the throughput-critical search loop.
+    seenIDs:=make([]int,0,len(t.Points))
     for iter:=0;iter<cfg.Attempts;iter++ {
         if iter % 8192==0 {
             select { case <-ctx.Done(): return nil,stats,ctx.Err(); default: }
@@ -87,7 +90,7 @@ func searchTemplate(ctx context.Context,c *Catalog,key string,t Template,cfg Con
         center:=Point{lowX+rng.Float64()*(highX-lowX),lowY+rng.Float64()*(highY-lowY)}
         stats.Feasible++
         var totalDistance,meanScore float64
-        seen:=make(map[int]bool,len(t.Points))
+        seenIDs=seenIDs[:0]
         dup:=0
         for _,p:=range rotBounds {
             target:=center.Add(p.Mul(scale))
@@ -102,8 +105,10 @@ func searchTemplate(ctx context.Context,c *Catalog,key string,t Template,cfg Con
                     bestIdx,bestCost,bestDistance=candidate.Index,cost,candidate.D2
                 }
             }
-            if seen[bestIdx] { dup++ }
-            seen[bestIdx]=true
+            repeated:=false
+            for _,existing:=range seenIDs { if existing==bestIdx { repeated=true; break } }
+            if repeated { dup++ }
+            seenIDs=append(seenIDs,bestIdx)
             meanScore+=c.Stars[bestIdx].Score
             totalDistance+=bestDistance
         }
