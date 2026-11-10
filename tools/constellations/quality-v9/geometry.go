@@ -332,6 +332,31 @@ func validateMatch(c *Catalog, key string, t Template, m Match, cfg Config) erro
         math.Abs((minY+maxY)/(2*h)-.5)>cfg.CenterToleranceY+1e-5 {
         return fmt.Errorf("off-center star placement")
     }
-    if math.Max((maxX-minX)/w,(maxY-minY)/h)<cfg.MinSpan { return fmt.Errorf("star shape too small") }
+    span:=math.Max((maxX-minX)/w,(maxY-minY)/h)
+    if span<cfg.MinSpan { return fmt.Errorf("star shape too small") }
+    expectedBBox:=[4]float64{minX,minY,maxX,maxY}
+    for i,x:=range expectedBBox {
+        if math.Abs(x-m.Coverage.BBoxPX[i])>.02 {
+            return fmt.Errorf("recorded image-star bbox changed")
+        }
+    }
+    if math.Abs(span-m.Coverage.MaxSpanFraction)>2e-5 ||
+        math.Abs((minX+maxX)/(2*w)-.5-m.CenterOffsetFraction[0])>2e-5 ||
+        math.Abs((minY+maxY)/(2*h)-.5-m.CenterOffsetFraction[1])>2e-5 {
+        return fmt.Errorf("recorded coverage or center offset changed")
+    }
+    rx,ry:=cfg.FigureRoomX*w,cfg.FigureRoomY*h
+    expectedEnvelope:=[4]float64{minX-rx,minY-ry,maxX+rx,maxY+ry}
+    for i,x:=range expectedEnvelope {
+        if math.Abs(x-m.FigureEnvelopeBBoxPX[i])>.02 {
+            return fmt.Errorf("recorded illustration envelope changed")
+        }
+    }
+    if minX-rx<cfg.FrameMargin*w-1e-5 ||
+        maxX+rx>(1-cfg.FrameMargin)*w+1e-5 ||
+        minY-ry<cfg.FrameMargin*h-1e-5 ||
+        maxY+ry>(1-cfg.FrameMargin)*h+1e-5 {
+        return fmt.Errorf("future artwork clearance violates outer frame")
+    }
     return nil
 }
