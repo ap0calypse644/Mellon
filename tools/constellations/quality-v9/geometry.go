@@ -259,8 +259,15 @@ func validateMatch(c *Catalog, key string, t Template, m Match, cfg Config) erro
         len(m.Edges) != len(t.Edges) || len(m.Vertices) != len(m.StarIDs) {
         return fmt.Errorf("invalid template fields: %s/%s",c.Slug,key)
     }
+    if len(m.Brightness.StarScores)!=len(m.StarIDs) {
+        return fmt.Errorf("incorrect per-star brightness count")
+    }
+    for i,e:=range t.Edges {
+        if m.Edges[i]!=e { return fmt.Errorf("template topology changed") }
+    }
     seen:=map[string]bool{}
     pts:=make([]Point,len(m.StarIDs))
+    var pixelTotal,promTotal,scoreTotal float64
     for i,id := range m.StarIDs {
         idx,ok:=c.ByID[id]
         if !ok || seen[id] { return fmt.Errorf("unknown or repeated star: %s",id) }
@@ -275,6 +282,34 @@ func validateMatch(c *Catalog, key string, t Template, m Match, cfg Config) erro
         if math.Abs(s.Score-m.Brightness.StarScores[i])>2e-6 {
             return fmt.Errorf("altered photometry: %s",id)
         }
+        scoreTotal+=s.Score
+        pixelTotal+=s.Brightness
+        promTotal+=s.Prominence
+    }
+    count:=float64(len(pts))
+    if math.Abs(scoreTotal/count-m.Brightness.ScoreMean)>2e-5 ||
+        math.Abs(pixelTotal/count-m.Brightness.PixelBrightnessMean)>2e-5 ||
+        math.Abs(promTotal/count-m.Brightness.ProminenceMean)>2e-4 {
+        return fmt.Errorf("aggregate brightness measurements changed")
+    }
+    center,scale,theta,targets,fitOK:=fitSimilarity(t.Points,pts)
+    if !fitOK { return fmt.Errorf("unable to fit real detected points") }
+    var errorSquares,recomputedWorst float64
+    for i,pt:=range targets {
+        d:=math.Sqrt(pt.Dist2(pts[i]))
+        errorSquares+=d*d
+        recomputedWorst=math.Max(recomputedWorst,d)
+    }
+    recomputedRMS:=math.Sqrt(errorSquares/count)
+    if math.Abs(recomputedRMS-m.RMSErrorPX)>2e-3 ||
+        math.Abs(recomputedWorst-m.MaxErrorPX)>2e-3 {
+        return fmt.Errorf("geometric fit measurements do not match source stars")
+    }
+    if math.Hypot(center[0]-m.Transform.CenterPX[0],
+                  center[1]-m.Transform.CenterPX[1])>.02 ||
+        math.Abs(scale-m.Transform.ScalePX)>.02 ||
+        math.Abs(theta*180/math.Pi-m.Transform.RotationDeg)>.02 {
+        return fmt.Errorf("recorded similarity transform does not match source")
     }
     fit:=refined{Actual:pts,RMS:m.RMSErrorPX,Worst:m.MaxErrorPX,
         Center:m.Transform.CenterPX,Scale:m.Transform.ScalePX,Theta:m.Transform.RotationDeg*math.Pi/180}
