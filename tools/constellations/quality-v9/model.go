@@ -71,6 +71,7 @@ type Catalog struct {
     Tree *KDTree
     Fingerprint string
     Image string
+    ImageHash string
 }
 
 type Config struct {
