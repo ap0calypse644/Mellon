@@ -53,6 +53,7 @@ class MVPScene {
         this._target = 0;
         this._energy = new Float32Array(scene.vertices.length);
         this._stages = stages;
+        this._spriteViewport = null;
         this._frameTimer = 0;
         this._deniedUntil = 0;
         this._deniedStartedAt = 0;
@@ -239,12 +240,19 @@ class MVPScene {
         const points = this._scene.vertices.map(([x, y]) => [
             dx + x * iw * scale, dy + y * ih * scale,
         ]);
-        const [spriteW, spriteH] = this._scene.sprite_size;
-        for (let i = 0; i < points.length; i++) {
-            this._sprites[i].set_position(
-                points[i][0] - spriteW * scale / 2,
-                points[i][1] - spriteH * scale / 2);
-            this._sprites[i].set_size(spriteW * scale, spriteH * scale);
+        // Position the 26px photo sprites only when the screen geometry
+        // changes, never on every 125ms animation frame.
+        if (!this._spriteViewport ||
+            this._spriteViewport.width !== width ||
+            this._spriteViewport.height !== height) {
+            const [spriteW, spriteH] = this._scene.sprite_size;
+            for (let i = 0; i < points.length; i++) {
+                this._sprites[i].set_position(
+                    points[i][0] - spriteW * scale / 2,
+                    points[i][1] - spriteH * scale / 2);
+                this._sprites[i].set_size(spriteW * scale, spriteH * scale);
+            }
+            this._spriteViewport = {width, height};
         }
 
         const strokeScale = clamp(Math.min(width / 1920, height / 1080), .6, 2.5);
@@ -281,6 +289,7 @@ class MVPScene {
         this._recovery = null;
         this._canvas = null;
         this._sprites = null;
+        this._spriteViewport = null;
         this._background = null;
         this._dialog = null;
     }
