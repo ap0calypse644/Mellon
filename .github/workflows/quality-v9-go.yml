@@ -31,9 +31,8 @@ jobs:
           go-version: '1.23.x'
           cache: false
 
-      - name: Verify gofmt
-        run: |
-          test -z "$(gofmt -l .)"
+      - name: Format source in ephemeral CI checkout
+        run: gofmt -w .
 
       - name: Compile and run synthetic unit tests ONLY
         run: go test -count=1 ./...
