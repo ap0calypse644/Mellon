@@ -74,9 +74,6 @@ func TestSimilarityFitRigidTransform(t *testing.T) {
 func TestExistingOrionAndAllOtherTemplatesPreserved(t *testing.T) {
     updated,_,err:=loadTemplates(filepath.Join("..","templates-v4-orion-bow.json"))
     if err!=nil {t.Fatal(err)}
-    old,_,err:=readJSON(filepath.Join("..","templates-v3.json"),&TemplateFile{})
-    _=old
-    if err!=nil {t.Fatal(err)}
     var file TemplateFile
     if _,err:=readJSON(filepath.Join("..","templates-v3.json"),&file);err!=nil {t.Fatal(err)}
     if len(updated)!=len(file.Templates) {t.Fatal("changed number of templates")}
