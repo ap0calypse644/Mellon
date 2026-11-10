@@ -135,9 +135,16 @@ func loadCatalog(root, slug string) (*Catalog, error) {
     h := sha256.New()
     h.Write(metaBytes)
     h.Write(rawBytes)
-    c.Fingerprint = hex.EncodeToString(h.Sum(nil))
     if info, err := os.Stat(c.Image); err != nil || info.IsDir() {
         return nil, fmt.Errorf("missing original dimmed QA background for %s", slug)
     }
+    photo,err:=os.ReadFile(c.Image)
+    if err!=nil { return nil,err }
+    c.ImageHash=hashBytes(photo)
+    if meta.DimmedBackgroundSHA256!="" && meta.DimmedBackgroundSHA256!=c.ImageHash {
+        return nil,fmt.Errorf("source photo SHA256 differs from original catalog metadata: %s",slug)
+    }
+    h.Write(photo)
+    c.Fingerprint = hex.EncodeToString(h.Sum(nil))
     return c, nil
 }
