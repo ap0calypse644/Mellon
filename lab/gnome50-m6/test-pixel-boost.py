@@ -7,7 +7,8 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from build_pilot_pack import star_sprite
+from runpy import run_path
+star_sprite = run_path(str(Path(__file__).with_name('build-pilot-pack.py')))['star_sprite']
 
 
 def check(hue: str, rgb: tuple[int,int,int]):
