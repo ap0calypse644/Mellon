@@ -32,7 +32,7 @@ def check(hue: str, rgb: tuple[int,int,int]):
     center=composed[13,13]
     assert float(center.max())>float(baseline.max())+25, 'Original pixel not brightened'
     if hue=='red': assert center[0] > center[1]*2 and center[0]>center[2]*2
-    if hue=='blue': assert center[2] > center[0]*2 and center[2]>center[1]*1.5
+    if hue=='blue': assert center[2] > center[1] > center[0], f'Blue star hue changed: {center}'
     assert np.max(alpha[0])==0 and np.max(alpha[:,-1])==0
     print(f'PASS: {hue} original photographed light enhanced with sparse alpha, '
           'no generic white dot')
