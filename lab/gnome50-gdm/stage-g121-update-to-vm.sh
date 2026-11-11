@@ -80,8 +80,11 @@ GUEST
             exit 1
         }
     done
-    # Refuse unknown entries. No automatic deletion or re-copying.
-    for file in .* *; do
+    # Refuse unknown entries (including hidden files), but don't treat
+    # a non-matching glob as a literal pathname on a clean directory.
+    # No automatic deletion or re-copying.
+    shopt -s dotglob nullglob
+    for file in *; do
         case "$file" in
             .|..|extension.js|update-g121-in-guest.sh|rollback-g121-in-guest.sh|SHA256SUMS) ;;
             *) echo "Unexpected staging entry: $file" >&2; exit 1 ;;
