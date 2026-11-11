@@ -1,0 +1,11 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon M7 — Stellar Ignition Lab (VM only)",
+  "description": "12 original-star constellations with brief ignition, directional line pulses, and completion glow; native GNOME login unchanged.",
+  "shell-version": [
+    "50"
+  ],
+  "session-modes": [
+    "unlock-dialog"
+  ]
+}
