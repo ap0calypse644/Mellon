@@ -69,6 +69,38 @@
         cp -- "$HERE/$file" "$STAGING/$file"
     done
     cp -a -- "$PACK/." "$STAGING/"
+
+    # This is a visual-only upgrade: preserve the guest's previously chosen
+    # fixed scene / random-on-lock setting rather than silently resetting it
+    # to the new pack's default Blue Gold / Leo selection. Validate BEFORE
+    # replacing any guest files; the source is JSON only, never executed.
+    if ssh -o BatchMode=yes mellon \
+        'test -f "$HOME/.local/share/gnome-shell/extensions/mellon-lab@local/scene-config.json"'; then
+        ssh -o BatchMode=yes mellon \
+            'cat "$HOME/.local/share/gnome-shell/extensions/mellon-lab@local/scene-config.json"' \
+            > "$STAGING/.previous-scene-config.json"
+        "$PYTHON" - "$STAGING/library.json" "$STAGING/.previous-scene-config.json" \
+            "$STAGING/scene-config.json" <<'PY'
+import json
+import pathlib
+import sys
+library_path, old_path, output_path = map(pathlib.Path, sys.argv[1:])
+ids = {scene['id'] for scene in json.loads(library_path.read_text())['scenes']}
+previous = json.loads(old_path.read_text())
+if previous.get('stages', 8) != 8:
+    raise SystemExit('Guest M6 scene stages unexpectedly changed; refusing to reset')
+if previous.get('mode') == 'random-on-lock':
+    current = {'mode': 'random-on-lock', 'stages': 8}
+elif previous.get('mode') == 'fixed' and previous.get('scene_id') in ids:
+    current = {'mode': 'fixed', 'scene_id': previous['scene_id'], 'stages': 8}
+else:
+    raise SystemExit('Cannot safely preserve current guest M6 scene selection')
+output_path.write_text(json.dumps(current, indent=2) + '\\n')
+print('Preserved guest M6 scene mode:', current['mode'])
+PY
+        rm -- "$STAGING/.previous-scene-config.json"
+    fi
+
     if find "$STAGING" -type l -print -quit | grep -q .; then
         echo 'Symlink in M6 staging refused' >&2; exit 1;
     fi
