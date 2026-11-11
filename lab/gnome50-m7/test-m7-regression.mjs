@@ -33,10 +33,27 @@ for(const forbidden of [
 ]) {
     assert.ok(!m7.includes(forbidden),`M7 must not handle native input or paint artificial star nodes: ${forbidden}`);
 }
+// The bright state must come from duplicate ORIGINAL source sprites,
+// never fabricated Cairo star disks or a continuous draw loop.
+for (const fragment of [
+    'this._halos = spritePaths.map',
+    'this._halos[i].set_scale(profile.haloScale',
+    'this._halos[i].opacity = Math.round(',
+    'const persistent = completionLevel(fx);',
+    'connectionLightProfile(wave, persistent)',
+    'if (profile.glowAlpha > .01)',
+    'this._halos?.forEach(halo => halo.hide())',
+    'this._halos?.forEach(halo => halo.destroy())',
+]) {
+    assert.ok(m7.includes(fragment),`M7.1 missing original-star bloom/cleanup: ${fragment}`);
+}
+assert.ok(!m7.includes('GLib.timeout_add(GLib.PRIORITY_DEFAULT, FRAME_MS') ||
+    m7.includes('if (!changing && now >= this._deniedUntil)'),
+    'Transient animation timer must stop once the scene settles');
 assert.ok(!effects.includes('gi://'),'Effects module must be pure JavaScript');
 assert.equal(tracker,await read('../gnome50-m6/failure-tracker.js'),
     'Must reuse the fully tested M6.4 authentication failure observer');
 const meta=JSON.parse(metadata);
 assert.equal(meta.uuid,'mellon-lab@local');
 assert.deepEqual(meta['session-modes'],['unlock-dialog']);
-console.log('PASS M7: GNOME-native authentication, private buffer observer, manual recovery and source-star geometry preserved');
+console.log('PASS M7.1: photographic bloom/cleanup plus GNOME-native authentication, manual recovery, private buffer observer and geometry preserved');
