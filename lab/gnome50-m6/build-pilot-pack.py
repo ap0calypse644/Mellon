@@ -39,7 +39,7 @@ def bilinear(image: np.ndarray, x: float, y: float) -> np.ndarray:
 
 
 def star_sprite(dim: np.ndarray, original: np.ndarray, x: float, y: float,
-                gain: float = 2.65, expand: float = 1.60) -> Image.Image:
+                gain: float = 5.20, expand: float = 1.90) -> Image.Image:
     """Recover real photographed light; make a sparse alpha patch for St.Widget.
 
     Alpha inversion produces a transparent texture which, composited at 100%
@@ -61,7 +61,7 @@ def star_sprite(dim: np.ndarray, original: np.ndarray, x: float, y: float,
         for px in range(SPRITE_SIZE):
             dx, dy = px - HALF, py - HALF
             r = math.hypot(dx, dy)
-            if r > 9.5:
+            if r > 10.75:
                 continue
             # Isolate and magnify *only* the existing local source star light.
             photon = bilinear(original, x+dx/expand, y+dy/expand)
@@ -69,14 +69,21 @@ def star_sprite(dim: np.ndarray, original: np.ndarray, x: float, y: float,
             if float(np.max(residual)) < 1.5:
                 continue
             feather = 1.0
-            if r > 5.0:
-                k = max(0.0, min(1.0, (9.5-r)/4.5))
+            if r > 5.5:
+                k = max(0.0, min(1.0, (10.75-r)/5.25))
                 feather = k*k*(3-2*k)
             if feather < .001:
                 continue
             actual = bilinear(dim, x+dx, y+dy)
-            delta = np.minimum(np.maximum(0, 252-actual),
-                               residual * gain * feather)
+            # Brighter than M6.0, but scale ALL RGB residual channels by
+            # the same gain. Independent per-channel clipping would wash a
+            # colored blue/red star toward neutral white.
+            wanted = residual * gain * feather
+            headroom = np.maximum(0.0, 252.0-actual)
+            occupied = wanted > 0.001
+            safe_scale = min(1.0, float(np.min(headroom[occupied] /
+                                            wanted[occupied])))
+            delta = wanted * max(0.0, safe_scale)
             if float(np.max(delta)) < 0.25:
                 continue
             # Solve opacity * (spriteRGB - actualRGB) == deltaRGB.
@@ -94,7 +101,7 @@ def star_sprite(dim: np.ndarray, original: np.ndarray, x: float, y: float,
 
 
 def build(selection: Path, index: Path, database: Path, corpus: Path,
-          dest: Path, *, gain: float = 2.65, expand: float = 1.60):
+          dest: Path, *, gain: float = 5.20, expand: float = 1.90):
     config = json.loads(selection.read_text())
     qa_index = json.loads(index.read_text())
     report = json.loads(database.read_text())
@@ -107,7 +114,7 @@ def build(selection: Path, index: Path, database: Path, corpus: Path,
         raise ValueError('Exactly six distinct pilot scenes required')
     if dest.exists():
         raise FileExistsError(f'Pack already exists; refusing overwrite: {dest}')
-    if not (1.0 <= gain <= 4.0 and 1.0 <= expand <= 2.1):
+    if not (1.0 <= gain <= 7.0 and 1.0 <= expand <= 2.3):
         raise ValueError('Invalid original-pixel enhancement settings')
 
     # Perform all image/schema validation before writing the final pack.
@@ -205,6 +212,9 @@ def build(selection: Path, index: Path, database: Path, corpus: Path,
                 'qa_index_sha256':sha256(index),
                 'pilot_selection_sha256':sha256(selection),
                 'status':'pilot-only-not-validated-in-GNOME',
+                'star_light_renderer':'mellon-m6-photo-light-v2',
+                'enhance_gain':gain,
+                'expand_factor':expand,
             },
             'scenes':scenes,
         }
@@ -229,7 +239,7 @@ if __name__=='__main__':
     p.add_argument('--database',type=Path,required=True)
     p.add_argument('--corpus',type=Path,default=Path('assets/starfield/corpus-v1/catalogs'))
     p.add_argument('--out',type=Path,required=True)
-    p.add_argument('--gain',type=float,default=2.65)
-    p.add_argument('--expand',type=float,default=1.60)
+    p.add_argument('--gain',type=float,default=5.20)
+    p.add_argument('--expand',type=float,default=1.90)
     a=p.parse_args()
     build(a.selection,a.index,a.database,a.corpus,a.out,gain=a.gain,expand=a.expand)
