@@ -1,0 +1,24 @@
+.mellon-m5-recovery {
+    font-size: 11px;
+    font-weight: bold;
+    color: rgba(224, 238, 250, 0.94);
+    background-color: rgba(8, 18, 28, 0.75);
+    border: 1px solid rgba(141, 190, 221, 0.5);
+    border-radius: 7px;
+    padding: 9px 15px;
+}
+.mellon-m5-recovery:hover {
+    background-color: rgba(24, 50, 70, 0.92);
+}
+.mellon-m5-failure {
+    font-size: 60px;
+    font-weight: 900;
+    color: #ff394d;
+    text-shadow: 0px 0px 18px rgba(255, 48, 69, 0.98);
+    background-color: rgba(32, 2, 10, 0.78);
+    border: 2px solid rgba(255, 69, 88, 0.85);
+    border-radius: 11px;
+    padding: 18px 34px;
+    text-align: center;
+    box-shadow: 0px 0px 30px rgba(220, 20, 46, 0.48);
+}
