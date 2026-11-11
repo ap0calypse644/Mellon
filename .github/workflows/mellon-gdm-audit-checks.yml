@@ -22,6 +22,7 @@ jobs:
         run: |
           bash -n lab/gnome50-gdm/audit-guest-greeter.sh
           bash -n lab/gnome50-gdm/audit-live-greeter.sh
+          bash -n lab/gnome50-gdm/checkpoint-before-gdm.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-guest-greeter.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-live-greeter.sh
           grep -Fq "gnome-shell" lab/gnome50-gdm/audit-live-greeter.sh
@@ -31,4 +32,8 @@ jobs:
             echo 'Refusing mutation in read-only greeter audit' >&2
             exit 1
           fi
-          echo 'PASS: read-only GDM inventory, VM-bound, no greeter changes'
+          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/checkpoint-before-gdm.sh
+          grep -Fq "state\" != 'shut off'" lab/gnome50-gdm/checkpoint-before-gdm.sh
+          grep -Fq "backing-filename" lab/gnome50-gdm/checkpoint-before-gdm.sh
+          grep -Fq "sha256sum -c SHA256SUMS" lab/gnome50-gdm/checkpoint-before-gdm.sh
+          echo 'PASS: GDM read-only inventory and powered-off checkpoint helper syntax'

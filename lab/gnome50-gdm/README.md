@@ -52,7 +52,7 @@ system-supplied greeter desktop/session files. It does not attempt to
 read password buffers, private greeter environment variables, PAM state,
 GDM's secrets, or any authentication data.
 
-## Then: G0.2 offline VM checkpoint before system-wide changes
+## G0.2: offline VM checkpoint before system-wide changes (NEXT)
 
 Once G0.1 confirms the real greeter mode, prepare a **fresh** restorable
 checkpoint of the isolated VM, covering qcow2 disk, libvirt domain XML
@@ -62,6 +62,67 @@ guest safely **shut off**, not by copying its running qcow2.
 
 Keep an independent SSH and virtual-console recovery method; do not
 restart GDM before backup verification. Do not modify the host.
+
+### Offline checkpoint helper
+
+`checkpoint-before-gdm.sh` is available and intentionally has two modes.
+
+Inspect the storage and NVRAM paths **without changing anything**:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-gdm/checkpoint-before-gdm.sh inspect
+)
+```
+
+When the inventory looks correct, shut down **only** the VM, from
+BlackPearl's terminal (the guest is currently on GDM's login screen):
+
+```bash
+(
+    set -euo pipefail
+    virsh -c qemu:///system shutdown mellon-gnome50-lab
+    virsh -c qemu:///system domstate mellon-gnome50-lab
+)
+```
+
+If shutdown is still in progress, run `virsh -c qemu:///system domstate
+mellon-gnome50-lab` again. The exact state must be **shut off** before
+the next command.
+
+Create the checkpoint on the **powered-off VM**:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-gdm/checkpoint-before-gdm.sh create
+)
+```
+
+The helper verifies the VM name/state, existing baseline, one standalone
+qcow2 disk without a backing chain, persistent UEFI NVRAM, available free
+space and SHA256 integrity of the copied disk/vars/XML; it publishes
+`$HOME/VMs/Mellon/checkpoints/MELLON-GDM-PREINSTALL-001/` only after
+all checks pass. It **never overwrites** an existing checkpoint. The
+original `MELLON-BASELINE-001` is preserved. Copying the disk may
+require host `sudo`. The checkpoint includes enough raw assets for
+an offline recovery, but a restore drill remains a separate later test.
+
+To boot the test VM again **after** confirming checkpoint success:
+
+```bash
+(
+    set -euo pipefail
+    virsh -c qemu:///system start mellon-gnome50-lab
+)
+```
+
+If the snapshot command fails, **do not install a GDM extension**.
+Paste its output so we can investigate without risking the guest login.
 
 ## Planned subsequent milestones
 
