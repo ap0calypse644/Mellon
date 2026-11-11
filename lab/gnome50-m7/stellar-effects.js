@@ -3,9 +3,9 @@
 // No GNOME imports, authentication, key events, password values or I/O.
 // All event times are monotonic seconds passed by the renderer.
 // Arrays contain only existing star indices and actual topology edges.
-export const IGNITION_SEC = 0.56;
+export const IGNITION_SEC = 0.72;
 export const PULSE_SEC = 0.70;
-export const COMPLETION_SEC = 1.18;
+export const COMPLETION_SEC = 1.60;
 
 const clamp = value => Math.min(1, Math.max(0, value));
 const validTime = now => Number.isFinite(now) && now >= 0;
@@ -115,8 +115,13 @@ export class StellarEffects {
         }
         const ct = norm(now, this._completeAt, COMPLETION_SEC);
         const completion = ct >= 0 && ct < 1 ? ct : null;
+        // Preserve a bright static constellation AFTER the wave finishes.
+        // This is a visual latch, not a GNOME success/authentication flag.
+        // Backspace or a failed attempt resets it immediately.
+        const settled = this._completeAt !== -Infinity &&
+            ct >= 1 && this._lit.every(x => x === 1);
         busy ||= completion !== null;
 
-        return {ignition, pulses, completion, busy};
+        return {ignition, pulses, completion, settled, busy};
     }
 }
