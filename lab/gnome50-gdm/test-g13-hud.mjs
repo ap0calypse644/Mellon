@@ -7,19 +7,21 @@ const m8=path=>readFile(new URL('../gnome50-m8/'+path,import.meta.url),'utf8');
 const gdm=path=>readFile(new URL('./greeter-extension/'+path,import.meta.url),'utf8');
 for(const file of [
   'hud-state.js','hud-progress.js',
-  'hud-intro-state.js','observatory-hud.js','observatory-intro.js',
+  'hud-intro-state.js','observatory-intro.js',
   'stylesheet.css','scene-data.js'
 ]){
   assert.equal(await gdm(file),await m8(file),'M8 visual-engine drift: '+file);
 }
-// The GDM-only hud-layout.js intentionally differs from M8's version:
-// native GDM has no top-left SHOW LOGIN recovery button to protect.
+// Only GDM's HUD geometry and recovery-layout switch intentionally differ
+// from approved M8.3.2; all cosmetic panels and effects stay unchanged.
 const gdmLayout=await gdm('hud-layout.js');
 const sessionLayout=await m8('hud-layout.js');
 assert.notEqual(gdmLayout,sessionLayout);
 assert.ok(gdmLayout.includes('recovery = null'));
 assert.ok(gdmLayout.includes('Math.max(78, recovery.y + recovery.height + 12)'));
-assert.ok(gdmLayout.includes('recovery = null'));
+const gdmHud=await gdm('observatory-hud.js');
+assert.ok(gdmHud.includes('setRecoveryLayout(enabled)'));
+assert.ok(gdmHud.includes('hudLayout(width, height, recovery)'));
 assert.ok(sessionLayout.includes('recovery = {x: 26, y: 22'));
 const source=await gdm('extension.js');
 const metadata=JSON.parse(await gdm('metadata.json'));
@@ -38,4 +40,4 @@ for(const forbidden of [
   'get_password', 'prompted', 'getAnswer(', 'PAM',
   'set_child_above_sibling(', 'insert_child_above('
 ]) assert.ok(!executable.includes(forbidden),'No GDM authentication touching: '+forbidden);
-console.log('PASS G1.4: approved GDM HUD and five-second grid remain intact below native GDM login');
+console.log('PASS G1.6A: M8 HUD visual parity with dynamic SHOW LOGIN-safe GDM geometry');
