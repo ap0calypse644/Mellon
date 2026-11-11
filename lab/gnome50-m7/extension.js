@@ -8,7 +8,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {FailureTracker} from './failure-tracker.js';
 import {validateLibrary, pickScene, activationCount, coverTransform,
     updateActiveStars, activeEdges} from './scene-data.js';
-import {StellarEffects, completionWave} from './stellar-effects.js';
+import {StellarEffects, completionWave, completionLevel,
+    starLightProfile, connectionLightProfile} from './stellar-effects.js';
 
 /**
  * Mellon M7: bounded transient effects on M6.4's verified photographic stars.
@@ -249,9 +250,7 @@ class MVPScene {
                 // Latch sustained brightness only AFTER the entire
                 // constellation has completed its spectacular wave.
                 // Backspace/reset clears it through StellarEffects.
-                const persistent = fx.settled ? 1 :
-                    fx.completion === null ? 0 :
-                        clamp((fx.completion - .24) / .70, 0, 1);
+                const persistent = completionLevel(fx);
                 let changing = fx.busy;
                 // Keep the original M6 125ms fade time constant despite
                 // increasing transient animation frequency to ~16fps.
@@ -270,18 +269,16 @@ class MVPScene {
                     // Strong flash: the *photographed* star expands and a
                     // wide translucent copy of the same source pixels
                     // blooms behind it, without adding a drawn star marker.
-                    const scale = 1 + .75 * flare + .48 * wave +
-                        .18 * persistent;
-                    this._sprites[i].set_scale(scale, scale);
-                    const haloScale = 1.35 + 1.30 * flare +
-                        1.15 * wave + .30 * persistent;
-                    this._halos[i].set_scale(haloScale, haloScale);
-                    // The transient flare begins before the base star
-                    // reaches maximum opacity. The settled halo remains
-                    // on while the constellation is fully illuminated.
-                    const bloom = clamp(.98 * flare + 1.05 * wave +
-                        .65 * persistent, 0, .98);
-                    this._halos[i].opacity = Math.round(255 * bloom *
+                    const profile = starLightProfile(flare, wave, persistent);
+                    this._sprites[i].set_scale(profile.coreScale,
+                        profile.coreScale);
+                    this._halos[i].set_scale(profile.haloScale,
+                        profile.haloScale);
+                    // Ignition starts before the base star reaches maximum
+                    // opacity. Post-completion bloom is continuously visible
+                    // but uses no timer once the animation finishes.
+                    this._halos[i].opacity = Math.round(
+                        255 * profile.haloStrength *
                         (this._active[i] ? 1 : this._energy[i]));
                     changing ||= this._energy[i] !== target;
                 }
@@ -333,9 +330,7 @@ class MVPScene {
         const denied = GLib.get_monotonic_time() / 1000000 < this._deniedUntil;
         const rgb = denied ? [1, .37, .48] : [.53, .83, 1];
         const fx = this._effects.sample(GLib.get_monotonic_time() / 1000000);
-        const persistent = fx.settled ? 1 :
-            fx.completion === null ? 0 :
-                clamp((fx.completion - .24) / .70, 0, 1);
+        const persistent = completionLevel(fx);
         for (const [a, b] of activeEdges(this._scene.edges, this._active)) {
             const intensity = Math.min(this._energy[a], this._energy[b]);
             if (intensity < .01)
@@ -348,20 +343,18 @@ class MVPScene {
             // Completion wave: dramatic broad luminous underlay + strong
             // concentrated line, using only genuine constellation edges.
             // After settling, keep both strokes bright and stationary.
-            const glow = Math.max(wave, persistent);
-            if (glow > .01) {
-                cr.setSourceRGBA(...rgb, Math.min(.65,
-                    (.40 * persistent + .58 * wave) * intensity));
+            const profile = connectionLightProfile(wave, persistent);
+            if (profile.glowAlpha > .01) {
+                cr.setSourceRGBA(...rgb, profile.glowAlpha * intensity);
                 cr.setLineWidth(Math.max(2.4,
-                    (5.6 + 4.2 * wave) * strokeScale));
+                    profile.glowWidth * strokeScale));
                 cr.moveTo(...points[a]);
                 cr.lineTo(...points[b]);
                 cr.stroke();
             }
-            cr.setSourceRGBA(...rgb, Math.min(.99,
-                (.56 + .37 * persistent + .42 * wave) * intensity));
+            cr.setSourceRGBA(...rgb, profile.lineAlpha * intensity);
             cr.setLineWidth(Math.max(.65,
-                (1.0 + 1.0 * persistent + 2.2 * wave) * strokeScale));
+                profile.lineWidth * strokeScale));
             cr.moveTo(...points[a]);
             cr.lineTo(...points[b]);
             cr.stroke();
