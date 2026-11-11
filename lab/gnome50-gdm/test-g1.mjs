@@ -17,6 +17,11 @@ assert.ok(source.includes('Main.screenShield?._lockDialogGroup'));
 assert.ok(source.includes('dialog.get_parent() !== container'));
 assert.ok(!source.includes('dialog?._backgroundGroup'));
 assert.ok(source.includes('container.insert_child_below(photo, dialog)'));
+assert.ok(source.includes('container.insert_child_below(hud.actor, dialog)'));
+assert.ok(source.includes('new ObservatoryHUD(container, hudMetadata(scene))'));
+assert.ok(source.includes("import {hudMetadata} from './hud-state.js'"));
+assert.ok(source.includes("import {ObservatoryHUD} from './observatory-hud.js'"));
+assert.ok(source.includes('this._hud?.destroy()'));
 assert.ok(source.includes('source: container, coordinate: Clutter.BindCoordinate.SIZE'));
 assert.ok(source.includes('reactive: false, can_focus: false'));
 assert.ok(source.includes('Clutter.BindCoordinate.SIZE'));
@@ -39,4 +44,4 @@ assert.equal(scene,await readFile(
 // The existing user lock extension is a separate module and need not be
 // adapted to accept the gdm mode.
 assert.ok(lock.includes("Main.sessionMode.currentMode !== 'unlock-dialog'"));
-console.log('PASS G1.2.1: GDM-only extension, photo sibling below native LoginDialog, no authentication interception, bounded cleanup');
+console.log('PASS G1.3: GDM-only photo+Observatory HUD below LoginDialog, no authentication interception, bounded cleanup');

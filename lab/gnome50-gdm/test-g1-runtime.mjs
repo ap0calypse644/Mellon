@@ -10,6 +10,8 @@ const imports=[
     "import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';\n",
     "import * as Main from 'resource:///org/gnome/shell/ui/main.js';\n",
     "\nimport {validateLibrary, pickScene} from './scene-data.js';\n",
+    "import {hudMetadata} from './hud-state.js';\n",
+    "import {ObservatoryHUD} from './observatory-hud.js';\n",
 ];
 let code=source;
 for(const imp of imports){
@@ -19,8 +21,8 @@ for(const imp of imports){
 code=code.replace('export default class MellonGreeter','class MellonGreeter');
 assert.ok(!/^import /m.test(code));
 
-function harness(mode='gdm', ready=true, imagesExist=true){
-    let timerID=0, warnings=0, added=0, destroyed=0, above=false;
+function harness(mode='gdm', ready=true, imagesExist=true, hudFails=false){
+    let timerID=0, warnings=0, added=0, destroyed=0, hudMade=0, hudDestroyed=0;
     const timers=new Map();
     const GLib={
         PRIORITY_DEFAULT:0,
@@ -63,12 +65,23 @@ function harness(mode='gdm', ready=true, imagesExist=true){
         assert.equal(config.mode,'random-on-lock');
         return lib.scenes[0];
     };
+    const hudMetadata=(scene)=>({name:scene.id,sourceStars:8});
+    class ObservatoryHUD {
+        constructor(parent,info){
+            assert.equal(parent,group);
+            assert.equal(info.name,'scene0');
+            hudMade++;
+            if(hudFails)throw Error('HUD unavailable');
+            this.actor={name:'MellonHUD'};
+        }
+        destroy(){hudDestroyed++;}
+    }
     const Extension=class{};
     const ctor=new Function('Clutter','Gio','GLib','St','Extension',
-        'Main','validateLibrary','pickScene',
+        'Main','validateLibrary','pickScene','hudMetadata','ObservatoryHUD',
         code+'\nreturn MellonGreeter;');
     const Klass=ctor(Clutter,Gio,GLib,St,Extension,Main,
-        validateLibrary,pickScene);
+        validateLibrary,pickScene,hudMetadata,ObservatoryHUD);
     const instance=new Klass();
     instance.path='/usr/share/gnome-shell/extensions/mellon-greeter@local';
 
@@ -84,16 +97,20 @@ function harness(mode='gdm', ready=true, imagesExist=true){
         get added(){return added;},
         get destroyed(){return destroyed;},
         get warnings(){return warnings;},
+        get hudMade(){return hudMade;},
+        get hudDestroyed(){return hudDestroyed;},
     };
 }
 
 {
     const h=harness();
     h.instance.enable();
-    assert.equal(h.added,1,'Must mount behind native GDM login exactly once');
+    assert.equal(h.added,2,'Must mount photo and HUD below native GDM login');
+    assert.equal(h.hudMade,1);
     assert.equal(h.size,0,'No timer when background already exists');
     h.instance.disable();
     assert.equal(h.destroyed,1);
+    assert.equal(h.hudDestroyed,1);
     assert.equal(h.size,0);
 }
 {
@@ -113,6 +130,7 @@ function harness(mode='gdm', ready=true, imagesExist=true){
     assert.equal(h.size,0);
     h.instance.disable();
     assert.equal(h.destroyed,1);
+    assert.equal(h.hudDestroyed,1);
 }
 {
     const h=harness('gdm',false);
@@ -130,4 +148,13 @@ function harness(mode='gdm', ready=true, imagesExist=true){
     assert.ok(h.warnings>0);
     h.instance.disable();
 }
-console.log('PASS G1.2.1 runtime: native GDM dialog sibling layering, bounded retry, fail-open and teardown');
+{
+    const h=harness('gdm',true,true,true);
+    h.instance.enable();
+    assert.equal(h.added,1,'Photo mounted before HUD error');
+    assert.equal(h.destroyed,1,'Photo destroyed when HUD unavailable');
+    assert.equal(h.size,1,'Retry remains bounded after optional HUD error');
+    h.instance.disable();
+    assert.equal(h.size,0);
+}
+console.log('PASS G1.3 runtime: photo+HUD below LoginDialog, bounded retry, fail-open and teardown');

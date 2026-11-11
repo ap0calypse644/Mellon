@@ -6,8 +6,13 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {validateLibrary, pickScene} from './scene-data.js';
+import {hudMetadata} from './hud-state.js';
+import {ObservatoryHUD} from './observatory-hud.js';
 
-// Mellon G1.2.1: VISIBLE PHOTO BACKDROP ONLY, GNOME 50.1 test VM.
+// Mellon G1.3: PHOTO + OBSERVATORY HUD, GNOME 50.1 test VM.
+// The source-approved M8.3.2 HUD includes a subtle 5-second grid scan.
+// All mapping segments remain unlit until a future separate GDM
+// read-only visual adapter is reviewed and explicitly integrated.
 // GNOME 50 LoginDialog has NO _backgroundGroup. Its own vfunc_allocate()
 // only allocates the native login widgets. Mount instead as a NONREACTIVE
 // SIBLING BELOW LoginDialog in screenShield._lockDialogGroup.
@@ -25,13 +30,14 @@ function readJSON(path) {
 export default class MellonGreeter extends Extension {
     enable() {
         this._background = null;
+        this._hud = null;
         this._pollId = 0;
         this._attempts = 0;
         this._stopped = false;
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.2.1] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.3] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -91,6 +97,7 @@ export default class MellonGreeter extends Extension {
             return;
 
         let photo = null;
+        let hud = null;
         try {
             // The original 12-scene curated library is read-only. GDM
             // selects one scene at startup; future G1.3 will draw original
@@ -113,10 +120,17 @@ export default class MellonGreeter extends Extension {
             // A sibling BELOW the native LoginDialog. No auth actor moves,
             // no changes to its custom vfunc_allocate(), and no focus grab.
             container.insert_child_below(photo, dialog);
+            // Reuse the M8.3.2 instrument cluster and bounded grid scan.
+            // The entire HUD remains NONREACTIVE and below the native
+            // LoginDialog. It sees photographic metadata only, not input.
+            hud = new ObservatoryHUD(container, hudMetadata(scene));
+            container.insert_child_below(hud.actor, dialog);
+            this._hud = hud;
             this._background = photo;
             this._sceneId = scene.id;
-            console.log('[Mellon Greeter G1.2.1] mounted photo behind native login dialog');
+            console.log('[Mellon Greeter G1.3] photo, HUD and grid mounted below LoginDialog');
         } catch (error) {
+            hud?.destroy();
             photo?.destroy();
             this._warn(error);
         }
@@ -126,7 +140,7 @@ export default class MellonGreeter extends Extension {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.2.1] ${key}`);
+            console.warn(`[Mellon Greeter G1.3] ${key}`);
             this._lastError = key;
         }
     }
@@ -137,6 +151,8 @@ export default class MellonGreeter extends Extension {
             GLib.source_remove(this._pollId);
             this._pollId = 0;
         }
+        this._hud?.destroy();
+        this._hud = null;
         this._background?.destroy();
         this._background = null;
         this._library = null;

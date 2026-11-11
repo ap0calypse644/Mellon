@@ -45,6 +45,9 @@ jobs:
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/scene-data.js
           node lab/gnome50-gdm/test-g1.mjs
           node lab/gnome50-gdm/test-g1-runtime.mjs
+          node lab/gnome50-gdm/test-g13-hud.mjs
+          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-hud.js
+          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-intro.js
           bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh
           bash -n lab/gnome50-gdm/preflight-activation.sh
           bash -n lab/gnome50-gdm/audit-extension-enablement.sh

@@ -1,0 +1,98 @@
+.mellon-m5-recovery {
+    font-size: 11px;
+    font-weight: bold;
+    color: rgba(224, 238, 250, 0.94);
+    background-color: rgba(8, 18, 28, 0.75);
+    border: 1px solid rgba(141, 190, 221, 0.5);
+    border-radius: 7px;
+    padding: 9px 15px;
+}
+.mellon-m5-recovery:hover {
+    background-color: rgba(24, 50, 70, 0.92);
+}
+.mellon-m5-failure {
+    font-size: 60px;
+    font-weight: 900;
+    color: #ff394d;
+    text-shadow: 0px 0px 18px rgba(255, 48, 69, 0.98);
+    background-color: rgba(32, 2, 10, 0.78);
+    border: 2px solid rgba(255, 69, 88, 0.85);
+    border-radius: 11px;
+    padding: 18px 34px;
+    text-align: center;
+    box-shadow: 0px 0px 30px rgba(220, 20, 46, 0.48);
+}
+
+/* M8.1: deliberately restrained, translucent edge instruments. */
+.mellon-m8-panel {
+    background-color: rgba(10, 19, 38, 0.40);
+    border-left: 2px solid rgba(90, 224, 245, 0.65);
+    border-top: 1px solid rgba(116, 145, 235, 0.29);
+    border-bottom: 1px solid rgba(116, 145, 235, 0.19);
+    border-radius: 3px;
+    padding: 7px 11px;
+    spacing: 2px;
+}
+.mellon-m8-top-right, .mellon-m8-bottom-right {
+    border-left: 1px solid rgba(116, 145, 235, 0.29);
+    border-right: 2px solid rgba(160, 128, 252, 0.70);
+}
+.mellon-m8-eyebrow {
+    font-family: monospace;
+    font-size: 9px;
+    font-weight: bold;
+    color: rgba(146, 221, 236, 0.84);
+    letter-spacing: 1px;
+}
+.mellon-m8-brand {
+    font-size: 13px;
+    font-weight: bold;
+    color: rgba(232, 242, 255, 0.96);
+}
+.mellon-m8-primary {
+    font-size: 24px;
+    font-weight: bold;
+    color: rgba(237, 242, 255, 0.97);
+}
+.mellon-m8-clock {
+    font-size: 26px;
+    font-weight: bold;
+    color: rgba(230, 241, 255, 0.95);
+}
+.mellon-m8-data {
+    font-family: monospace;
+    font-size: 10px;
+    color: rgba(185, 208, 232, 0.90);
+}
+.mellon-m8-status {
+    font-family: monospace;
+    font-size: 10px;
+    color: rgba(155, 228, 219, 0.90);
+}
+.mellon-m8-segment-row { spacing: 6px; padding: 8px 0 5px 0; }
+.mellon-m8-unlit-segment {
+    background-color: rgba(91, 123, 162, 0.23);
+    border: 1px solid rgba(137, 167, 213, 0.35);
+    border-radius: 2px;
+}
+.mellon-m8-compact { padding: 5px 8px; spacing: 1px; }
+.mellon-m8-compact .mellon-m8-primary { font-size: 19px; }
+.mellon-m8-compact .mellon-m8-clock { font-size: 21px; }
+.mellon-m8-compact .mellon-m8-eyebrow { font-size: 8px; }
+.mellon-m8-compact .mellon-m8-data,
+.mellon-m8-compact .mellon-m8-status { font-size: 9px; }
+/* M8.2: eight visual mapping stages from original source-star activation.
+ * Neutral while empty, cyan during mapping, static brilliant blue at full
+ * constellation completion. None implies a successful authentication. */
+.mellon-m8-lit-segment {
+    background-color: rgba(103, 222, 248, 0.91);
+    border: 1px solid rgba(158, 236, 255, 0.92);
+    border-radius: 2px;
+    box-shadow: 0px 0px 7px rgba(89, 201, 251, 0.58);
+}
+.mellon-m8-mapped-segment {
+    background-color: rgba(202, 241, 255, 0.98);
+    border: 1px solid rgba(239, 246, 255, 0.98);
+    border-radius: 2px;
+    box-shadow: 0px 0px 13px rgba(110, 215, 255, 0.94);
+}

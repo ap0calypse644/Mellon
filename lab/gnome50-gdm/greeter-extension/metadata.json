@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-greeter@local",
-  "name": "Mellon Greeter G1 — Photographic Observatory (VM only)",
-  "description": "Read-only, non-interactive system greeter background prototype; preserves native GDM login. VM lab only.",
+  "name": "Mellon Greeter G1.3 — Observatory HUD + Photo (VM only)",
+  "description": "Non-interactive approved photo, scene metadata HUD and 5s grid behind GDM LoginDialog. No GDM authentication access. VM only.",
   "shell-version": [
     "50"
   ],
