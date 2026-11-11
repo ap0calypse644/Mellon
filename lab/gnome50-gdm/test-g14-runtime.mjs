@@ -124,6 +124,13 @@ const cr={
 };
 stars._paint(cr,1484,928);
 assert.ok(drawn.length>0,'true scene edges are drawn');
+const firstPosition=[stars._sprites[0].x,stars._sprites[0].y];
+stars._paint(cr,1920,1080);
+const resizedPosition=[stars._sprites[0].x,stars._sprites[0].y];
+assert.notDeepEqual(resizedPosition,firstPosition,
+    'Original photo-star geometry must be recomputed at new resolution');
+assert.ok(stars._sprites.every(s=>Number.isFinite(s.width)&&s.width>0),
+    'Resized photo sprite dimensions must stay valid');
 assert.ok(stars._sprites.every(s=>Number.isFinite(s.x)&&Number.isFinite(s.y)),
     'original source star coordinates mapped to GDM photo cover geometry');
 stars.clear();

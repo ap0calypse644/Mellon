@@ -24,6 +24,12 @@
     node "$HERE/test-g14-starfield.mjs"
     node "$HERE/test-g14-runtime.mjs"
     node "$HERE/test-g14-deploy.mjs"
+    # This G1.4-only pack must never deploy later GDM versions with a
+    # different runtime, even if the old module filenames still exist.
+    if ! grep -Fq '[Mellon Greeter G1.4] enabled in gdm mode' "$SRC/extension.js"; then
+        echo 'G1.4 staging retired: current extension requires a versioned upgrade.' >&2
+        exit 1
+    fi
 
     for file in "${FILES[@]}"; do
         test -f "$SRC/$file" && test ! -L "$SRC/$file" || exit 1

@@ -25,7 +25,7 @@ stripped=stripped.replace('export default class MellonGreeter','class MellonGree
 assert.ok(!/^import\s/m.test(stripped));
 const tests=[];
 function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
-    let nextId=0,warnings=0,photoDestroyed=0;
+    let nextId=0,warnings=0,photoDestroyed=0,scenePicks=0;
     const timers=new Map(),layers=[],created=[],syncs=[];
     const GLib={
         PRIORITY_DEFAULT:0,SOURCE_REMOVE:false,SOURCE_CONTINUE:true,
@@ -49,7 +49,8 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
         destroy(){photoDestroyed++;}
     }};
     const group={insert_child_below(actor,sibling){
-        assert.equal(sibling,dialog,'All Mellon actors below native login');
+        assert.equal(sibling,Main.screenShield._dialog,
+            'All Mellon actors below currently active native login');
         layers.push(actor?.name??'photo');
     }};
     const dialog={get_parent:()=>group,_authPrompt:{visible:false}};
@@ -61,6 +62,7 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
     const validateLibrary=()=>library;
     const pickScene=(lib,config)=>{
         assert.equal(lib,library);assert.equal(config.mode,'random-on-lock');
+        scenePicks++;
         return library.scenes[0];
     };
     const hudMetadata=()=>({sourceStars:8});
@@ -77,13 +79,16 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
             this.actor={name:'stars'};this.lengths=[];created.push(this);
         }
         setLength(length){this.lengths.push(length);}
+        clear(){this.cleared=true;}
         destroy(){this.destroyed=true;}
     }
     class GreeterLengthObserver {
         constructor(fn){this.fn=fn;created.push(this);}
         sync(value,isGdm){
             syncs.push({value,isGdm});
-            if(failAt==='observer')throw Error('Read-only observer refused');
+            if(failAt==='observer' ||
+                (failAt==='observer-sync-after' && syncs.length>1))
+                throw Error('Read-only observer refused');
         }
         destroy(){this.destroyed=true;}
     }
@@ -104,6 +109,8 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
         }
     };
     return {instance,Main,dialog,layers,timers,created,syncs,tick,
+        makeDialog:()=>({get_parent:()=>group,_authPrompt:{visible:false}}),
+        get scenePicks(){return scenePicks;},
         get warnings(){return warnings;},
         get photoDestroyed(){return photoDestroyed;}};
 }
@@ -170,4 +177,81 @@ for(const fail of ['hud','stars','observer']){
     h.instance.disable();
     assert.equal(h.timers.size,0);
 }
-console.log('PASS G1.4 runtime: native LoginDialog above all 3 layers, scalar-only visual sync, cleanup, bounded retries');
+{
+    const h=harness();
+    h.instance.enable();
+    assert.equal(h.scenePicks,1);
+    h.Main.screenShield._dialog=null;
+    for(let i=0;i<6;i++)h.tick(250);
+    assert.equal(h.timers.size,1,
+        'Only one bounded recovery timer during missing native dialog');
+    assert.equal(h.instance._background,null,
+        'Detached LoginDialog must remove old visuals and observer');
+    h.Main.screenShield._dialog=h.makeDialog();
+    h.tick(250);
+    assert.deepEqual(h.layers.slice(-3),['photo','stars','hud']);
+    assert.equal(h.scenePicks,1,
+        'Preserve selected nebula through native LoginDialog re-creation');
+    assert.equal(h.timers.size,1);
+    h.instance.disable();
+    assert.equal(h.timers.size,0,'No timers survive greeter disable');
+}
+{
+    const h=harness();
+    h.instance.enable();
+    h.Main.screenShield._dialog=null;
+    for(let i=0;i<125;i++)h.tick(250);
+    assert.equal(h.timers.size,0,'Rebind must stop after 120 failed ticks');
+    assert.ok(h.warnings>0,'One bounded rebind warning');
+    assert.equal(h.instance._background,null);
+    h.instance.disable();
+}
+{
+    const h=harness('gdm',true,false,'observer-sync-after');
+    h.instance.enable();
+    h.tick(250);
+    assert.equal(h.timers.size,0,'Read-only observer failure stops sync');
+    const stars=h.created.find(x=>x.actor?.name==='stars');
+    assert.ok(stars.cleared,'Visual input mapping resets on observer failure');
+    assert.ok(h.instance._background,'Original GDM photo stays visible');
+    assert.equal(h.photoDestroyed,0);
+    h.instance.disable();
+}
+{
+    const h=harness();
+    for(let cycle=1;cycle<=3;cycle++){
+        h.instance.enable();
+        assert.equal(h.scenePicks,cycle,
+            'Each new greeter session can select its own photo');
+        assert.equal(h.layers.length,cycle*3,
+            'One photo, starfield and HUD per greeter enable');
+        h.tick(250);
+        h.instance.disable();
+        assert.equal(h.timers.size,0,
+            'Repeated session teardown must clear all sources');
+        assert.ok(h.created.every(x=>x.destroyed),
+            'No stranded observers, HUDs or starfields across logouts');
+        assert.equal(h.photoDestroyed,cycle);
+    }
+}
+{
+    const h=harness();
+    h.instance.enable();
+    h.dialog.get_parent=()=>null; // GNOME reparented the native actor.
+    h.tick(250);
+    assert.equal(h.instance._background,null,
+        'Detached LoginDialog must lose all Mellon visual siblings');
+    assert.equal(h.timers.size,1);
+    h.dialog.get_parent=()=>h.Main.screenShield._lockDialogGroup;
+    h.tick(250);
+    assert.equal(h.scenePicks,1,
+        'Preserve chosen scene on reattachment of same native dialog');
+    assert.equal(h.timers.size,1);
+    h.Main.sessionMode.currentMode='user';
+    h.tick(250);
+    assert.equal(h.timers.size,0,
+        'GDM visual observer must stop as soon as session mode changes');
+    assert.equal(h.instance._background,null);
+    h.instance.disable();
+}
+console.log('PASS G1.5 runtime: GDM layering, preserved scenes, bounded rebind and visual-only failure isolation');

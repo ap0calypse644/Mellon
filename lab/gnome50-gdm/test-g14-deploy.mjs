@@ -18,6 +18,7 @@ assert.ok(stage.includes('g14-incoming-001'));
 assert.ok(stage.includes('sha256sum -c SHA256SUMS'));
 assert.ok(stage.includes('Host manifest differs from guest'));
 assert.ok(stage.includes('Existing G1.4 stage found: verifying without replacing it.'));
+assert.ok(stage.includes('G1.4 staging retired: current extension requires a versioned upgrade.'));
 assert.ok(stage.includes('node "$HERE/test-g14-runtime.mjs"'));
 assert.ok(stage.includes('node "$HERE/test-g14-length.mjs"'));
 assert.ok(stage.includes('node --input-type=module --check < "$SRC/$file"'));

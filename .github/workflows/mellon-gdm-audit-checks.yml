@@ -62,6 +62,10 @@ jobs:
           bash -n lab/gnome50-gdm/install-g14-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g14-in-guest.sh
           node lab/gnome50-gdm/test-g14-deploy.mjs
+          bash -n lab/gnome50-gdm/stage-g15-to-vm.sh
+          bash -n lab/gnome50-gdm/install-g15-in-guest.sh
+          bash -n lab/gnome50-gdm/rollback-g15-in-guest.sh
+          node lab/gnome50-gdm/test-g15-deploy.mjs
           bash -n lab/gnome50-gdm/stage-g131-to-vm.sh
           bash -n lab/gnome50-gdm/install-g131-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g131-in-guest.sh

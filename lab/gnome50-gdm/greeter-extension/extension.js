@@ -11,7 +11,8 @@ import {ObservatoryHUD} from './observatory-hud.js';
 import {GreeterStarfield} from './greeter-starfield.js';
 import {GreeterLengthObserver} from './greeter-length-observer.js';
 
-// Mellon G1.4: PHOTO + HUD + SOURCE-PHOTOGRAPHIC CONSTELLATION, VM ONLY.
+// Mellon G1.5: GDM SESSION LIFECYCLE HARDENING, VM ONLY.
+// G1.4 photograph, starfield, colors, HUD and auth observation stay intact.
 // The GDM adapter observes only the visible native password-field length.
 // No password text, key event, login result, or verifier is accessed.
 // The user selector, GNOME authentication and focus remain native.
@@ -22,6 +23,8 @@ import {GreeterLengthObserver} from './greeter-length-observer.js';
 const GREETER_POLL_MS = 350;
 const GREETER_LENGTH_SYNC_MS = 250;
 const GREETER_MAX_ATTEMPTS = 90;
+// Bound reattachment after GNOME replaces/disposes the live LoginDialog.
+const GREETER_MAX_REBIND_TICKS = 120;
 
 function readJSON(path) {
     const [ok, bytes] = GLib.file_get_contents(path);
@@ -40,11 +43,13 @@ export default class MellonGreeter extends Extension {
         this._syncId = 0;
         this._pollId = 0;
         this._attempts = 0;
+        this._rebindTicks = 0;
+        this._selectedScene = null;
         this._stopped = false;
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.4] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.5] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -112,7 +117,8 @@ export default class MellonGreeter extends Extension {
         try {
             // Retain the single approved photo and actual selected scene.
             // Source-derived star sprites use this identical cover transform.
-            const scene = pickScene(this._library, {mode: 'random-on-lock'});
+            const scene = this._selectedScene ??
+                pickScene(this._library, {mode: 'random-on-lock'});
             const file = Gio.File.new_for_path(
                 GLib.build_filenamev([this.path, scene.image]));
             if (!file.query_exists(null))
@@ -149,6 +155,8 @@ export default class MellonGreeter extends Extension {
             this._background = photo;
             this._dialog = dialog;
             this._sceneId = scene.id;
+            this._selectedScene = scene;
+            this._rebindTicks = 0;
             this._syncInput();
             if (!this._syncId) {
                 this._syncId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
@@ -159,26 +167,48 @@ export default class MellonGreeter extends Extension {
                             this._unmount();
                             return GLib.SOURCE_REMOVE;
                         }
-                        // The live LoginDialog may be temporarily absent
-                        // during user-selection / recovery transitions.
-                        // Keep this ONE timer until the replacement is ready;
-                        // never leave a stale observer attached to old input.
+                        // GNOME can replace, dispose or reparent LoginDialog.
+                        // Keep ONE observer timer while recovering, but stop
+                        // after a bounded grace period: native GDM stays alive.
+                        const container = Main.screenShield?._lockDialogGroup;
                         if (Main.screenShield?._dialog !== this._dialog ||
+                            this._dialog?.get_parent?.() !== container ||
                             !this._background) {
                             this._unmount();
+                            if (++this._rebindTicks >=
+                                GREETER_MAX_REBIND_TICKS) {
+                                this._syncId = 0;
+                                this._warn(new Error('Native dialog reattachment timed out'));
+                                return GLib.SOURCE_REMOVE;
+                            }
                             this._tryMount();
                             return GLib.SOURCE_CONTINUE;
                         }
                         try {
                             this._syncInput();
-                        } catch (error) {
-                            this._warn(error);
-                            this._observer?.sync(null, false);
+                        } catch (_) {
+                            // Never rethrow from the GNOME main-loop callback.
+                            // Disable only input-driven decoration and leave
+                            // the photograph, HUD and native login accessible.
+                            this._syncId = 0;
+                            try {
+                                this._observer?.destroy();
+                            } catch (_) {
+                                // A disposed GObject must not kill the shell.
+                            }
+                            this._observer = null;
+                            try {
+                                this._starfield?.clear();
+                            } catch (_) {
+                                // The visual layer may already be disposed.
+                            }
+                            this._warn(new Error('Read-only visual observer disabled'));
+                            return GLib.SOURCE_REMOVE;
                         }
                         return GLib.SOURCE_CONTINUE;
                     });
             }
-            console.log('[Mellon Greeter G1.4] photo, stars and HUD layered below native login');
+            console.log('[Mellon Greeter G1.5] photo, stars and HUD layered below native login');
         } catch (error) {
             // A failed source-star mount cannot strand native authentication.
             observer?.destroy();
@@ -217,7 +247,7 @@ export default class MellonGreeter extends Extension {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.4] ${key}`);
+            console.warn(`[Mellon Greeter G1.5] ${key}`);
             this._lastError = key;
         }
     }
@@ -235,5 +265,7 @@ export default class MellonGreeter extends Extension {
         this._unmount();
         this._library = null;
         this._sceneId = null;
+        this._selectedScene = null;
+        this._rebindTicks = 0;
     }
 }
