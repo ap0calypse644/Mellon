@@ -51,6 +51,7 @@ jobs:
         run: |
           bash -n lab/gnome50-m6/deploy-from-blackpearl.sh
           bash -n lab/gnome50-m6/select-scene-in-guest.sh
+          bash -n lab/gnome50-m6/rollback-last-guest-install.sh
           grep -q "mellon-gnome50-lab" lab/gnome50-m6/deploy-from-blackpearl.sh
           grep -q 'test "$(gnome-shell --version)" = "GNOME Shell 50.1"' lab/gnome50-m6/deploy-from-blackpearl.sh
           echo 'PASS: M6 no-search unit validation only'
