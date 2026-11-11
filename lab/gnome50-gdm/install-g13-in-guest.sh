@@ -13,8 +13,12 @@
     test "$(systemd-detect-virt)" != none || {
         echo 'Refusing installation outside test VM' >&2; exit 1;
     }
-    test -n "$(getent passwd gdm-greeter)" || {
-        echo 'Cannot confirm GDM greeter account' >&2; exit 1;
+    # GNOME 50 allocates gdm-greeter dynamically. Its account may
+    # disappear while test1 is logged in, so requiring getent here
+    # would wrongly block a safe extension upgrade.
+    systemctl is-active --quiet gdm.service || {
+        echo 'GDM service inactive; refusing extension upgrade' >&2
+        exit 1
     }
 
     PARENT='/usr/share/gnome-shell/extensions'
