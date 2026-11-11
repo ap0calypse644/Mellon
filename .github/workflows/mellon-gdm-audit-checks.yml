@@ -46,6 +46,10 @@ jobs:
           node lab/gnome50-gdm/test-g1.mjs
           node lab/gnome50-gdm/test-g1-runtime.mjs
           node lab/gnome50-gdm/test-g13-hud.mjs
+          bash -n lab/gnome50-gdm/stage-g13-to-vm.sh
+          bash -n lab/gnome50-gdm/install-g13-in-guest.sh
+          bash -n lab/gnome50-gdm/rollback-g13-in-guest.sh
+          node lab/gnome50-gdm/test-g13-deploy.mjs
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-hud.js
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-intro.js
           bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh
