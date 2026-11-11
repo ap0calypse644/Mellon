@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-lab@local",
-  "name": "Mellon M8.3 — Observatory Arrival Scan (VM only)",
-  "description": "One-shot 1.05-second edge-panel scan and fade, no idle loop; M8.2 mapping, M7.1 photos and GNOME native authentication unchanged.",
+  "name": "Mellon M8.3.1 — Full-Screen Grid Sweep (VM only)",
+  "description": "One-time 1.85-second left-to-right full-screen translucent grid; M8.2 mapping, M7.1 photos and native GNOME authentication unchanged.",
   "shell-version": [
     "50"
   ],

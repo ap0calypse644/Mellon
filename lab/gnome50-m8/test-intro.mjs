@@ -1,54 +1,84 @@
 #!/usr/bin/env node
+// M8.3.1 synthetic full-screen grid-sweep verification (no GNOME/VM).
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-const load=async path=>import('data:text/javascript;base64,'+
-    Buffer.from(await readFile(new URL(path, import.meta.url), 'utf8'))
-        .toString('base64'));
-const {introFrame,introScanBounds,INTRO_DURATION_MS,INTRO_TICK_MS}=
-    await load('./hud-intro-state.js');
-const {hudLayout,SOURCE_SAFE_INSET}=await load('./hud-layout.js');
-assert.equal(INTRO_DURATION_MS,1050);
-assert.equal(INTRO_TICK_MS,50);
-assert.deepEqual(introFrame(0),{
-    done:false,progress:0,panelOpacity:0,scanOpacity:0,
+const source = path => readFile(new URL(path, import.meta.url), 'utf8');
+const load = async path => import('data:text/javascript;base64,' +
+    Buffer.from(await source(path)).toString('base64'));
+const {INTRO_DURATION_MS, INTRO_TICK_MS, introFrame,
+    gridGeometry, gridCellStrength} = await load('./hud-intro-state.js');
+const {hudLayout} = await load('./hud-layout.js');
+
+assert.equal(INTRO_DURATION_MS, 1850);
+assert.equal(INTRO_TICK_MS, 50);
+assert.deepEqual(introFrame(0), {
+    done: false, progress: 0, sweep: 0,
+    gridOpacity: 0, panelOpacity: 0,
 });
-for (const t of [1050,1100,20000]) {
-    const f=introFrame(t);
-    assert.equal(f.done,true);
-    assert.equal(f.panelOpacity,255);
-    assert.equal(f.scanOpacity,0);
-}
-for(const value of [-1,NaN,Infinity])
-    assert.throws(()=>introFrame(value));
-let opacity=0,frames=0;
-for(let t=0;t<=INTRO_DURATION_MS+INTRO_TICK_MS;t+=INTRO_TICK_MS) {
-    const f=introFrame(t);
-    assert.ok(f.panelOpacity>=opacity && f.panelOpacity<=255);
-    assert.ok(f.scanOpacity>=0 && f.scanOpacity<=96);
-    opacity=f.panelOpacity;
-    if(!f.done)frames++;
-}
-assert.ok(frames<=Math.ceil(INTRO_DURATION_MS/INTRO_TICK_MS));
-const intersects=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&
-    a.y<b.y+b.height&&a.y+a.height>b.y;
-for(const [w,h] of [[1920,1080],[2560,1440],[1440,900],
-    [1280,720],[1024,768],[900,1600],[800,600]]) {
-    const boxes=hudLayout(w,h);
-    const center={x:w*SOURCE_SAFE_INSET,y:h*SOURCE_SAFE_INSET,
-        width:w*(1-2*SOURCE_SAFE_INSET),
-        height:h*(1-2*SOURCE_SAFE_INSET)};
-    const recovery={x:26,y:22,width:145,height:46};
-    for(const box of Object.values(boxes).filter(Boolean))
-        for(const p of [0,.03,.25,.5,.8,1]) {
-            const scan=introScanBounds(box,p);
-            assert.ok(scan.x>=box.x && scan.y>=box.y);
-            assert.ok(scan.x+scan.width<=box.x+box.width);
-            assert.ok(scan.y+scan.height<=box.y+box.height);
-            assert.ok(!intersects(scan,center),'Scan enters central starfield');
-            assert.ok(!intersects(scan,recovery),'Scan covers SHOW LOGIN');
+const end = introFrame(INTRO_DURATION_MS);
+assert.equal(end.done, true);
+assert.equal(end.sweep, 1);
+assert.equal(end.gridOpacity, 0);
+assert.equal(end.panelOpacity, 255);
+assert.equal(introFrame(INTRO_DURATION_MS * 10).done, true);
+for (const input of [-1, NaN, Infinity])
+    assert.throws(() => introFrame(input));
+
+const geom = gridGeometry(1920, 1080);
+assert.deepEqual([geom.columns, geom.rows], [23, 14]);
+assert.ok(Object.isFrozen(geom));
+assert.ok(Math.abs(geom.cellWidth * geom.columns - 1920) < 1e-8);
+assert.ok(Math.abs(geom.cellHeight * geom.rows - 1080) < 1e-8);
+for (const [w, h] of [[2560,1440],[1920,1080],[1440,900],
+    [1280,720],[1024,768],[800,600],[600,400]]) {
+    const g = gridGeometry(w,h);
+    assert.ok(g.columns>=12 && g.columns<=36);
+    assert.ok(g.rows>=5 && g.rows<=24);
+    assert.equal(g.width, w);
+    assert.equal(g.height, h);
+    // Grid is viewport-wide even when the HUD intentionally hides panels.
+    if (w===800 && h===600) {
+        assert.ok(Object.values(hudLayout(w,h)).every(x=>x===null));
+        assert.ok(g.columns >= 12);
+    }
+    // The maximum row stagger stays below the next column's start.
+    for (let col=0; col<g.columns-1; col++)
+        assert.ok(col/g.columns + .014 < (col+1)/g.columns);
+    for (const progress of [0,.01,.13,.31,.5,.67,.85,1]) {
+        let seenRight=false;
+        for (let col=g.columns-1; col>=0; col--) {
+            const strength=gridCellStrength({sweep:progress},col,0,g);
+            assert.ok(strength>=0 && strength<=1);
+            if (strength>0)seenRight=true;
+            else assert.ok(!seenRight, 'Left-to-right column ordering reversed');
         }
+    }
+    // At the halfway point every far-right column stays dark.
+    const atHalf={sweep:.5};
+    assert.ok(gridCellStrength(atHalf,0,0,g)>0);
+    assert.equal(gridCellStrength(atHalf,g.columns-1,g.rows-1,g),0);
+    assert.ok(gridCellStrength({sweep:1},g.columns-1,g.rows-1,g)>0);
 }
-assert.throws(()=>introScanBounds(null,.5));
-assert.throws(()=>introScanBounds({x:0,y:0,width:9,height:2},.5));
-assert.throws(()=>introScanBounds({x:0,y:0,width:300,height:80},1.1));
-console.log('PASS M8.3: bounded one-shot fading, no ongoing effect and screen-safe scan geometry');
+for(const bad of [[0,1080],[1920,0],[319,240],
+    [800,239],[NaN,800],[Infinity,800]])
+    assert.throws(()=>gridGeometry(...bad));
+
+const g=gridGeometry(1920,1080);
+for(const args of [
+    [null,0,0,g],[{sweep:-.1},0,0,g],
+    [{sweep:.5},-1,0,g],[{sweep:.5},g.columns,0,g],
+    [{sweep:.5},0,g.rows,g],[{sweep:.5},0,0,null],
+]) assert.throws(()=>gridCellStrength(...args));
+
+// Once the deadline is reached there is no live progress or opacity.
+let ticks=0;
+for(let elapsed=0;elapsed<=INTRO_DURATION_MS+100;elapsed+=INTRO_TICK_MS) {
+    const f=introFrame(elapsed);
+    if(f.done)break;
+    assert.ok(f.gridOpacity>=0 && f.gridOpacity<=1);
+    assert.ok(f.sweep>=0 && f.sweep<=1);
+    assert.ok(f.panelOpacity>=0 && f.panelOpacity<=255);
+    ticks++;
+}
+assert.ok(ticks<=Math.ceil(INTRO_DURATION_MS/INTRO_TICK_MS));
+console.log('PASS M8.3.1: 23x14 full-screen grid, left-to-right columns, deterministic mosaic, finite 1.85s lifetime');

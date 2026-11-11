@@ -1,35 +1,62 @@
-// M8.3: pure, short-lived, visual-only Observatory intro.
-export const INTRO_DURATION_MS = 1050;
+// Mellon M8.3.1 — Full-screen grid arrival, pure visual math only.
+// No GNOME, keyboard, authentication, passwords, sensors, timers or I/O.
+export const INTRO_DURATION_MS = 1850;
 export const INTRO_TICK_MS = 50;
-const clamp = v => Math.max(0, Math.min(1, v));
-const smooth = p => p * p * (3 - 2 * p);
 
+// Sized by screen, not by photographic constellation or HUD visibility.
+export function gridGeometry(width, height) {
+    if (!Number.isFinite(width) || !Number.isFinite(height) ||
+        width < 320 || height < 240)
+        throw new Error('Unsupported grid viewport');
+    const columns = Math.max(12, Math.min(36, Math.round(width / 82)));
+    const rows = Math.max(5, Math.min(24, Math.round(height / 78)));
+    return Object.freeze({
+        width, height, columns, rows,
+        cellWidth: width / columns,
+        cellHeight: height / rows,
+    });
+}
+
+const clamp = value => Math.max(0, Math.min(1, value));
+const smooth = value => value * value * (3 - 2 * value);
+
+// A single sweep crosses the whole display from left to right.
+// The left-hand cells retain a faint afterglow until the grid fades away.
 export function introFrame(elapsedMs) {
     if (!Number.isFinite(elapsedMs) || elapsedMs < 0)
         throw new Error('Invalid Observatory intro elapsed time');
     const p = clamp(elapsedMs / INTRO_DURATION_MS);
-    const fade = smooth(clamp(p / .68));
-    return {
+    const fadeIn = smooth(clamp(p / .09));
+    const fadeOut = smooth(clamp((1 - p) / .15));
+    return Object.freeze({
         done: p >= 1,
         progress: p,
-        panelOpacity: Math.round(255 * fade),
-        scanOpacity: Math.round(96 * Math.sin(Math.PI * p)),
-    };
+        sweep: clamp(p / .84),
+        gridOpacity: fadeIn * fadeOut,
+        panelOpacity: Math.round(255 * smooth(clamp(p / .55))),
+    });
 }
 
-export function introScanBounds(box, progress) {
-    if (!box || ![box.x, box.y, box.width, box.height].every(Number.isFinite) ||
-        box.width < 40 || box.height < 30 ||
-        !Number.isFinite(progress) || progress < 0 || progress > 1)
-        throw new Error('Invalid Observatory scan geometry');
-    // Scan is trapped inside a pre-validated HUD corner rectangle.
-    const margin = Math.min(12, Math.max(7, Math.floor(box.width * .03)));
-    const width = 2;
-    return {
-        x: Math.round(box.x + margin +
-            (box.width - 2 * margin - width) * progress),
-        y: Math.round(box.y + 7),
-        width,
-        height: Math.max(1, Math.round(box.height - 14)),
-    };
+// The row stagger is deliberately shorter than one column step, so every
+// column activates before the next: genuinely left-to-right grid lighting.
+export function gridCellStrength(frame, column, row, geometry) {
+    if (!frame || !Number.isFinite(frame.sweep) ||
+        frame.sweep < 0 || frame.sweep > 1 || !geometry ||
+        !Number.isInteger(geometry.columns) ||
+        !Number.isInteger(geometry.rows) ||
+        geometry.columns < 12 || geometry.columns > 36 ||
+        geometry.rows < 5 || geometry.rows > 24 ||
+        !Number.isInteger(column) || !Number.isInteger(row) ||
+        column < 0 || column >= geometry.columns ||
+        row < 0 || row >= geometry.rows)
+        throw new Error('Invalid grid-cell scan state');
+    const arrival = column / geometry.columns +
+        .014 * row / Math.max(1, geometry.rows - 1);
+    if (frame.sweep < arrival)
+        return 0;
+    const distance = frame.sweep - arrival;
+    const peak = Math.exp(-Math.pow(distance / .105, 2));
+    // Small deterministic row differences, not per-frame randomness.
+    const grain = .82 + .18 * ((column * 7 + row * 11) % 9) / 8;
+    return (0.18 + 0.82 * peak) * grain;
 }

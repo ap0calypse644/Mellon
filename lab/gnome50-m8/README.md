@@ -1,43 +1,62 @@
-# Mellon M8.3 — Observatory Arrival Scan (GNOME 50.1 VM only)
+# Mellon M8.3.1 — Full-Screen Grid Sweep (GNOME 50.1 test VM)
 
-**Status:** synthetic tests pending; the actual lock-screen effect needs visual
-review in the dedicated `mellon-gnome50-lab` VM. M8.2 is user-approved.
+**M8.2 is the visually accepted baseline.** M8.3.1 replaces M8.3's
+short corner-only calibration beam with a larger, cinematic *full-screen
+translucent grid* lighting up from left to right. The display returns to the
+existing Observatory and real photographic constellation after one pass.
 
-## One-time arrival sequence
+## New visual
 
-On each new guest lock, after GNOME has allocated the HUD, the existing
-corner panels fade in over the opening of a **1.05-second** calibration
-sequence. A narrow, pale cyan scan line travels left-to-right *inside each
-visible HUD panel*, then vanishes. There is **no full-screen sweep**, no
-artificial constellation stars and no looping radar.
+- A grid of approximately **23 × 14 cells at 1920 × 1080**, sized from
+  the actual guest viewport (12–36 columns, 5–24 rows).
+- The faint cyan grid appears over the **whole screen**, including the
+  central nebula; columns light up consecutively **left to right**,
+  with a subtle stagger inside each column. Already scanned cells retain
+  a soft afterglow until the whole grid disappears.
+- One slightly brighter leading scan line, cool cyan cell borders, and
+  lightly tinted cell fills. The approved photo/stars remain visible
+  throughout; no artificial stars or changes to constellation geometry.
+- The HUD instruments fade in as before and are drawn above the grid.
+  A small rectangular region around **SHOW LOGIN** is deliberately
+  excluded from the grid to preserve immediate visual recovery.
+- Exactly **one 1.85-second intro on each lock**, with a single 50ms
+  transient GLib timer and one St.DrawingArea. No separate actors for
+  each cell, no shader, no perpetual rendering loop.
+- The drawing area is non-interactive and cannot intercept keystrokes,
+  focus, clicks or GNOME authentication. Failed authentication, SHOW LOGIN,
+  resizing or unlocking immediately terminates its timer and hides it.
+- Grid still scans on small viewports even if M8.1's optional corner
+  instruments are hidden. Resizing *during* scanning stops it safely.
 
-- One short GLib timer at 50 ms while the intro is running (~20 frames/s),
-  then completely removed. No idle animation or timer after 1.05 seconds.
-- GNOME's native SHOW LOGIN button stays immediately available and above
-  all ordinary visual content; the central red UNAUTHORIZED ACCESS alert
-  is kept highest in the actor stack.
-- Display resize cancels intro immediately (no positional drift into the
-  central star field). No panels at a tiny resolution means no intro.
-- SHOW LOGIN, unlock/teardown or an authentication failure cancels the
-  decorative intro and returns panels to full opacity.
-- The twelve photographic images, M7.1 ignition/completion, M8.2 eight
-  mapped segments and all GNOME authentication logic remain unchanged.
-- Intro modules are isolated from keys, password buffers and verifier data.
+## Preserved
 
-## Implementation
+M8.2 mapping indicators and completion glint, M7.1 strong star ignition,
+random activation/Backspace and connection geometry, all 12 vetted original
+photographs, native GNOME authentication, read-only failure observation,
+central UNAUTHORIZED ACCESS alert, and manual SHOW LOGIN recovery.
 
-- `hud-intro-state.js` — pure envelope and panel-safe scan positions.
-- `observatory-intro.js` — non-reactive scan actors, single bounded timer,
-  clear-on-complete/cancel/destroy lifecycle.
-- `observatory-hud.js` — creates intro, supplies existing approved layout,
-  stops on hide/destroy without changing the approved mapping panel.
-- `extension.js` — visual-only cancel on failed authentication; native
-  GNOME input and M7.1 effects are unchanged.
-- `test-intro.mjs`, `test-m8-regression.mjs` — synthetic checks for
-  timing, geometry, teardown, no unsupported GNOME signals and auth
-  isolation. GitHub Actions verifies all M8, M7, M6 and M5 checks.
+Original M7.1 stellar-effects, M6 scene-data, and FailureTracker remain
+byte-identical. **Never install on the BlackPearl host GNOME.**
 
-## Deploy from BlackPearl, only to the GNOME 50.1 VM
+## Run synthetic verification
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    node lab/gnome50-m8/test-intro.mjs
+    node lab/gnome50-m8/test-m8-regression.mjs
+    node lab/gnome50-m8/test-mapping.mjs
+    node lab/gnome50-m8/test-hud.mjs
+    bash -n lab/gnome50-m8/deploy-from-blackpearl.sh
+    bash -n lab/gnome50-m8/rollback-last-guest-install.sh
+)
+```
+
+CI runs all above plus earlier M5/M6/M7 regression suites. This
+does **not** substitute for real GNOME 50.1 guest visual testing.
+
+## Deploy from BlackPearl ONLY to the guest
 
 ```bash
 (
@@ -51,30 +70,27 @@ artificial constellation stars and no looping radar.
 )
 ```
 
-The installer verifies VM name, guest identity, GNOME 50.1, original
-12-scene pack hashes, and scene-selection mode before using a checksummed
-staging directory and atomically replacing **only** the test guest's
-`mellon-lab@local`. It backs up the current M8.2 as `pre-m8-*`.
-It never reboots either system by itself or installs into host GNOME.
+The installer verifies guest identity/GNOME 50.1, the VM baseline, all
+original twelve-scene assets with checksums, and existing scene selection.
+It stages and verifies transferred files, backs up the previous VM
+extension under `pre-m8-*`, and atomically swaps only the VM's
+`mellon-lab@local`. It does not touch host GNOME or reboot anything.
 
-## Guest acceptance checklist
+## In-guest acceptance
 
-1. After reboot, log in to `test1` first, then lock the **guest**.
-   The panels should fade in and a faint line should scan *inside them*.
-2. After ~1 second, the animation must stop. The nebula, real stars,
-   source-color glow and eight-stage mapping must look unchanged.
-3. Type through eight stages, Backspace and retry: M8.2 mapping and
-   persistent photographic completion must behave exactly as before.
-4. Trigger a wrong-password warning early: scanning should stop;
-   UNAUTHORIZED ACCESS must be fully legible and appear above HUD.
-5. Press SHOW LOGIN immediately after locking: it must still reveal the
-   native prompt and remove all visible Mellon instruments.
-6. Change guest resolution during an intro: the scan should stop safely
-   and no line should pass into the constellation or recovery button.
-7. Unlock and relock the guest several times: one intro per new lock;
-   no orphan timer, repeated idle scan or stale panel state.
+1. Reboot guest, log into `test1`, then lock the *guest session*.
+2. On lock, see a faint cyan grid across the whole guest screen.
+   Left columns brighten before right columns; rows stagger slightly.
+3. The scan reaches the right edge, fades away and **does not loop**.
+4. The existing photographic nebula and stars remain visible behind it;
+   SHOW LOGIN remains legible and clickable throughout.
+5. Once scanning is done, M8.2 mapping (0–8 stages), Backspace,
+   completed-star bloom, and native wrong-password warning still work.
+6. Lock/relock several times; no stale grid or retained animation.
+7. Resize during the sweep; it must stop without covering recovery or
+   freezing the guest. Verify a narrow viewport still produces a grid.
 
-## Restore screenshot-approved M8.2
+## Recovery: screenshot-approved M8.2
 
 ```bash
 (
@@ -85,9 +101,8 @@ It never reboots either system by itself or installs into host GNOME.
 )
 ```
 
-The `m8.2` rollback selector checks version metadata, the mapping
-module and the GNOME 50 resizing fix. `m8.1` and `m7.1` still exist
-for earlier backup points.
+`m8.2` selects a verified M8.2 backup (not M8.1 or an intermediate M8.3).
+Other `m8.1` and `m7.1` rollback choices remain available.
 
-**BlackPearl's real GNOME lock screen remains off-limits until a future
-explicit approval after M10 safety/performance hardening.**
+**Status:** synthetic source CI validation is required; VM visual acceptance
+is pending. This iteration is for the VM lab only.

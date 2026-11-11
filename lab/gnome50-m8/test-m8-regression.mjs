@@ -93,13 +93,22 @@ assert.ok(hud.includes('this._intro = new ObservatoryIntro(this.actor, this._pan
 assert.ok(hud.includes('this._intro?.onLayout(boxes, width, height)'));
 assert.ok(hud.includes('this._intro?.destroy()'));
 assert.ok(hud.includes('this.cancelIntro()'));
+assert.ok(intro.includes('new St.DrawingArea({reactive: false, can_focus: false})'));
+assert.ok(intro.includes('Clutter.BindCoordinate.SIZE'));
+assert.ok(intro.includes('root.insert_child_below(this._grid, panels.topLeft)'));
+assert.ok(intro.includes("this._grid.connect('repaint'"));
 assert.ok(intro.includes('GLib.timeout_add(GLib.PRIORITY_DEFAULT,'));
 assert.ok(intro.includes('GLib.source_remove(this._timerId)'));
-assert.ok(intro.includes('reactive: false'));
-assert.ok(intro.includes('scan.hide()'));
+assert.ok(intro.includes('this._grid.queue_repaint()'));
+assert.ok(intro.includes('this._grid.hide()'));
+assert.ok(intro.includes('this._grid?.destroy()'));
 assert.ok(intro.includes('this.stop()'));
+assert.ok(!intro.includes('new St.Widget({'));
 assert.ok(!intro.includes("'allocation-changed',"));
+assert.ok(!intro.includes('key-press-event'));
 assert.ok(!introState.includes('gi://'));
-assert.ok(introState.includes('INTRO_DURATION_MS = 1050'));
+assert.ok(introState.includes('INTRO_DURATION_MS = 1850'));
+assert.ok(introState.includes('gridGeometry(width, height)'));
+assert.ok(introState.includes('gridCellStrength(frame, column, row, geometry)'));
 
-console.log('PASS M8.3: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
+console.log('PASS M8.3.1: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
