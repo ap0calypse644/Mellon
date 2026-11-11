@@ -47,8 +47,11 @@ jobs:
           node lab/gnome50-gdm/test-g1-runtime.mjs
           bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh
           bash -n lab/gnome50-gdm/preflight-activation.sh
+          bash -n lab/gnome50-gdm/audit-extension-enablement.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/preflight-activation.sh
-          if grep -En '(^|[[:space:]])(sudo|systemctl[[:space:]]+(restart|stop|start|enable)|virsh.*(destroy|shutdown|reboot)|dconf[[:space:]]+update|gsettings[[:space:]]+set)([[:space:]]|$)' lab/gnome50-gdm/stage-pack-on-blackpearl.sh lab/gnome50-gdm/preflight-activation.sh; then
+          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-extension-enablement.sh
+          grep -Fq 'DCONF_PROFILE=gdm' lab/gnome50-gdm/audit-extension-enablement.sh
+          if grep -En '(^|[[:space:]])(sudo|systemctl[[:space:]]+(restart|stop|start|enable)|virsh.*(destroy|shutdown|reboot)|dconf[[:space:]]+update|gsettings[[:space:]]+set)([[:space:]]|$)' lab/gnome50-gdm/stage-pack-on-blackpearl.sh lab/gnome50-gdm/preflight-activation.sh lab/gnome50-gdm/audit-extension-enablement.sh; then
             echo 'FAIL: G1 preparation/preflight must not enable or restart GDM' >&2
             exit 1
           fi

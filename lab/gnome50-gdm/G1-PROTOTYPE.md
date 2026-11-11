@@ -69,3 +69,42 @@ configuration and build a VM-only reversible installation procedure.
   leave the native GDM background unchanged.
 - An installation/activation stage requires tested emergency uninstall
   over SSH/TTY and a restart plan; no live GDM restarts for early trials.
+
+## G1.0: inspect GNOME 50 greeter extension enablement (required next)
+
+The earlier preflight confirmed that
+`/etc/dconf/profile/gdm` is **absent**. That is not sufficient to
+know the running greeter's actual dconf profile, because Ubuntu also
+ships a system vendor profile. Before enabling the system extension,
+inspect *both* the vendor profile and any existing GDM overrides.
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-gdm/audit-extension-enablement.sh
+)
+```
+
+This is **read-only**: it prints profile locations, vendor file paths,
+admin extension defaults and metadata about the greeter's seat user DB.
+It does NOT edit any profile, run `dconf update`, modify assets,
+restart GDM, or touch either the guest login state or BlackPearl.
+
+Importantly, the output labelled `test1 + DCONF_PROFILE=gdm` is
+**not** the greeter user's effective settings. GNOME 50 uses a dynamic
+`gdm-greeter` account with its own `XDG_CONFIG_HOME`.
+We must not assume a dconf setting read as `test1` applies to the
+actual running greeter.
+
+GNOME admin guidance recommends the GDM profile entries:
+`user-db:user`, `system-db:gdm`, and the correct vendor
+`file-db:...` entry. The vendor file-db entry is particularly critical
+to preserve on GNOME 50; incomplete profiles have caused broken GDM
+login screens. Do NOT create a custom profile without reviewing the
+VM's vendor file-db location.
+
+Only after inspecting that output should we implement a strictly
+VM-only **reversible** system-extension installer and SSH/TTY
+uninstaller, with the verified preinstall qcow2 checkpoint as last resort.
