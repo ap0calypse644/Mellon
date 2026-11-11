@@ -18,6 +18,14 @@
     virsh -c qemu:///system dominfo "$VM" >/dev/null
     # JavaScript syntax is validated on BlackPearl only.
     node --input-type=module --check < "$SOURCE"
+    # G1.2.1's updater replaces ONLY extension.js. Once G1.3 adds
+    # external HUD modules and stylesheet, this legacy updater MUST NOT
+    # deploy newer code without its dependencies. Use a new installer.
+    if ! grep -Fq '[Mellon Greeter G1.2.1] enabled in gdm mode' "$SOURCE"; then
+        echo 'G1.2.1 stage retired: current extension needs newer HUD modules.' >&2
+        echo 'Refusing to stage an incomplete greeter package.' >&2
+        exit 1
+    fi
     grep -Fq 'container.insert_child_below(photo, dialog)' "$SOURCE"
     grep -Fq 'Main.screenShield?._lockDialogGroup' "$SOURCE"
 

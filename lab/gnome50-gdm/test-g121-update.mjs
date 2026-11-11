@@ -41,8 +41,11 @@ assert.ok(restore.includes('No GDM settings modified.'));
 assert.ok(extension.includes('Main.screenShield?._lockDialogGroup'));
 assert.ok(extension.includes('dialog.get_parent() !== container'));
 assert.ok(extension.includes('container.insert_child_below(photo, dialog)'));
-assert.ok(extension.includes('[Mellon Greeter G1.2.1] enabled in gdm mode'));
-assert.ok(extension.includes('mounted photo behind native login dialog'));
+assert.ok(extension.includes('[Mellon Greeter G1.3] enabled in gdm mode'));
+assert.ok(extension.includes('photo, HUD and grid mounted below LoginDialog'));
+assert.ok(stage.includes('G1.2.1 stage retired: current extension needs newer HUD modules.'));
+assert.ok(stage.includes("! grep -Fq '[Mellon Greeter G1.2.1] enabled in gdm mode'"));
+assert.ok(extension.includes("import {ObservatoryHUD} from './observatory-hud.js'"));
 for(const code of [stage,update,restore]){
   for(const bad of ['dconf update', 'gsettings set', 'systemctl restart',
     'virsh -c qemu:///system reboot', 'mellon-lab@local']){
