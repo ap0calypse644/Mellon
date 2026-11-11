@@ -33,7 +33,7 @@ function readJSON(path) {
 function loadM6Library(root) {
     const library = validateLibrary(readJSON(
         GLib.build_filenamev([root, 'library.json'])));
-    // Fail open if ANY of the six scenes is incomplete, never hide native
+    // Fail open if ANY of the twelve scenes is incomplete, never hide native
     // authentication under a partially installed asset pack.
     for (const scene of library.scenes) {
         for (const rel of [scene.image, ...scene.sprites]) {
