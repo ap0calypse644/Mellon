@@ -1,59 +1,88 @@
-# Mellon Greeter G0 — GNOME 50.1 login-screen feasibility
+# Mellon Greeter — G0/G0.1 GNOME 50.1 audit
 
-**Goal:** bring the approved Mellon Observatory to GDM's *pre-login*
-greeter, as well as the existing GNOME `unlock-dialog` scene.
+Goal: the **same visual constellation and Observatory HUD** at both the
+normal session lock screen (`unlock-dialog`) and the pre-login greeter.
 
-GNOME GDM is **not** the same process or account as the logged-in user's
-lock-screen GNOME Shell. Merely adding `gdm` to the existing user's
-`metadata.json` does not install/enable it as a greeter extension.
+Ubuntu 26.04.1 in the Mellon's VM reports GNOME Shell **50.1** and
+`gdm3 50.1-0ubuntu0.1`. The test1 audit showed an active
+`gnome-shell --mode=ubuntu` process; this was **the user's desktop**,
+not proof of the GNOME greeter mode. GDM 50 has changed its special-session
+startup and may allocate a dynamic greeter account, so don't assume the
+old on-disk `gdm` user or dconf profile is actually in use.
 
-## Immediate step (READ ONLY)
+## G0 — Completed read-only inventory
 
-From BlackPearl's shell:
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-gdm/audit-guest-greeter.sh
+)
+```
+
+Checks VM identity; distro, GNOME and GDM versions; system extension
+locations; current GNOME processes; read-only gdm settings. No mutations.
+
+## G0.1 — Verify the **actual live login greeter** (NEXT)
+
+1. Save anything open inside the VM. **Log out of the VM's graphical
+   `test1` desktop using its own GNOME menu.** The GDM login screen
+   should appear in the VM console. Do not log back into the VM GUI yet.
+   (The BlackPearl host itself remains logged in.)
+2. With the VM sitting at that pre-login screen, run the following from
+   BlackPearl. The SSH account `test1` can still log in even though its
+   graphical session is logged out.
 
 ```bash
 (
     set -euo pipefail
     cd "$HOME/go/src/ap0calypse644/Mellon"
     git -c core.hooksPath=/dev/null pull --ff-only origin main
-    bash lab/gnome50-gdm/audit-guest-greeter.sh
+    bash lab/gnome50-gdm/audit-live-greeter.sh
 )
 ```
 
-Paste the output into the conversation. The audit checks only the test VM's
-OS/GDM/GNOME versions, greeter process/account, session modes, service state,
-system-extension locations, and *non-secret* greeter settings. It does NOT
-run sudo, restart GDM, modify dconf, create a snapshot, enable an extension,
-write to either OS, or touch BlackPearl's login/lock screen.
+Paste the output. **PASS** requires an actual running
+`gnome-shell --mode=gdm`. A desktop shell in `--mode=ubuntu`
+is insufficient. The audit deliberately refuses to approve installation
+if the real greeter can't be confirmed.
 
-## Proposed phases
+The script performs only read-only process/session queries and checks
+system-supplied greeter desktop/session files. It does not attempt to
+read password buffers, private greeter environment variables, PAM state,
+GDM's secrets, or any authentication data.
 
-- **G0:** Verify actual Ubuntu 26.04.1 / GNOME 50.1 greeter environment,
-  account, mode and extension activation mechanism; preserve an isolated VM
-  checkpoint before any greeter modification.
-- **G1:** Separate system-scoped `mellon-greeter@local` plugin with a
-  `gdm` session mode, **backdrop + static constellation + HUD**. Reuse
-  common rendering modules only. Mount visuals behind the ORIGINAL GNOME
-  login user-selector and password fields, not on top of a hidden prompt.
-- **G2:** Reuse existing M7/M8 visual state with an audited greeter-specific
-  read-only signal adapter. Never capture password strings, inject keys,
-  replace GDM's verifier, handle PAM, or simulate successful login.
-- **G3:** Reuse M8.3.2's translucent 5-second sweep, accessibility/contrast
-  and predictable actor/timer cleanup; no synchronous photo work on login.
-- **G4:** Test boot/log-out/switch-user/reboot, display-scale changes,
-  missing assets, unsupported GDM APIs, corrupted config and recovery
-  from console or VM snapshot. Only then consider release packaging.
+## Then: G0.2 offline VM checkpoint before system-wide changes
 
-## Non-negotiable constraints
+Once G0.1 confirms the real greeter mode, prepare a **fresh** restorable
+checkpoint of the isolated VM, covering qcow2 disk, libvirt domain XML
+and UEFI variable store (where present). Verify file hashes and document
+the rollback/recovery sequence. A checkpoint must be taken with the
+guest safely **shut off**, not by copying its running qcow2.
 
-- **Only the `mellon-gnome50-lab` VM may be changed**, after a fresh,
-  restorable checkpoint and a verified SSH/TUI recovery path.
-- Do not patch `gnome-shell` source, GDM executables or theme gresources.
-  Prefer an isolated greeter system extension (if confirmed workable).
-- Do not touch PAM, GDM authentication, user lists, keyboard focus or
-  password entries; native GDM must stay immediately usable.
-- The greeter runs in a different security context. Assets must be
-  separately installed under a system-owned, read-only location, without
-  exposing private user files or requiring access to a user's home.
-- The approved **M8.3.2 user lock screen remains unchanged** during GDM
-  development. BlackPearl host installation is NOT authorized.
+Keep an independent SSH and virtual-console recovery method; do not
+restart GDM before backup verification. Do not modify the host.
+
+## Planned subsequent milestones
+
+- **G1**: isolated `mellon-greeter@local` system extension,
+  `"session-modes": ["gdm"]`, installed only into guest system-wide
+  extension directory. Start with source photography, backdrop, static
+  constellation and HUD **behind native GDM controls**. GDM remains
+  immediately usable on any extension error. Preserve M8.3.2 user extension.
+- **G2**: read-only GDM-specific visual activation adapter. Never
+  capture password text, intercept keys, impersonate GNOME's verifier
+  or change PAM, user selection, login or focus. No false "ACCESS GRANTED".
+- **G3**: reuse the 5-second grid and eight-segment stage display with
+  independent, audited greeter timer/callback lifecycle.
+- **G4**: boot/logout/reboot/failed-login/broken asset/crash tests,
+  recovery verification and safe package/uninstall scripts.
+
+No `gdm` metadata or dconf changes to the user extension alone.
+No change to `/usr/share/gdm/greeter/wayland-sessions` or GNOME theme
+gresources. **BlackPearl host GNOME is explicitly out of scope.**
+
+Primary GNOME guidance: system extensions run from
+`/usr/share/gnome-shell/extensions`; only system extensions can use
+the `gdm` session mode. GDM 50 release notes document special-session
+handling changes, so validate the actual running mode before installing.
