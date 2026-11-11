@@ -1,9 +1,49 @@
 # Mellon M6 — Six-Scene Observatory Pilot (GNOME 50.1 VM only)
 
 **Status:** M6.1 behavior was user-tested successfully on the GNOME
-50.1 guest. M6.2 makes a brightness-only change (gain 5.20 → 6.20).
-Automated checks and live guest verification of M6.2 are tracked separately.
-BlackPearl's host lock screen remains untouched.
+50.1 guest. M6.2 added brightness; M6.3 further increases illuminated
+photographic star brightness and size without changing native authentication,
+random star selection or line-connection logic. Automated tests are tracked
+in CI; M6.3 runtime testing in the GNOME VM remains pending. The BlackPearl
+host lock screen remains untouched.
+
+## M6.3: another small brightness and star-size increase (2026-11-11)
+
+The original photographic RGB star residual now uses **gain 7.20** (up
+from 6.20 in M6.2) and **expansion 2.12×** (up from 1.90×). This makes
+each *illuminated* source star modestly brighter and larger, while preserving
+the underlying photograph, the star's red/blue/gold color, its exact
+source-star position and the soft edge feathering. No replacement circles
+or white markers are drawn. The tiny RGBA sprites remain 26×26 pixels.
+
+This is **derived-image regeneration only**, not an astronomy search and
+not a modification to the M6 extension's authentication or star-selection
+logic. Random star activation, random Backspace removal, and connectors
+only between two lit stars continue working as before.
+
+The M6.3 pack is generated separately at
+`~/VMs/Mellon/m6-pilot-pack-v4/`. Older packs remain untouched. The
+guest installer backs up the *currently installed* GNOME extension inside
+the VM before swapping it, and the pack validator rejects stale assets.
+
+Run from **BlackPearl**, installing exclusively into the test VM:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-m6/deploy-from-blackpearl.sh
+)
+```
+
+Then reboot **only** `mellon-gnome50-lab`; do not reboot BlackPearl.
+Verify illuminated stars are a little larger/brighter in both a
+blue/gold and a red-toned scene, and test typing, randomized Backspace,
+two-lit-endpoint line gating, wrong-password alert and manual SHOW LOGIN.
+Synthetic CI tests check source-color preservation, luminosity improvement
+and footprint growth relative to M6.2; live GNOME verification is still
+required.
 
 ## M6.2: a slightly brighter star-light profile (2026-11-11)
 
