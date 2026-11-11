@@ -52,7 +52,8 @@ function harness(mode='gdm', ready=true, imagesExist=true){
     }};
     const dialog={get_parent:()=>group};
     const Main={sessionMode:{currentMode:mode},
-        screenShield:{_lockDialogGroup:group,_dialog:ready?dialog:null}};
+        screenShield:{_lockDialogGroup:group,_dialog:ready?dialog:null,
+            _candidateDialog:dialog}};
     const lib={scenes:Array.from({length:12},(_,i)=>({
         image:'assets/image'+i+'.jpg',id:'scene'+i,
     }))};
@@ -106,7 +107,7 @@ function harness(mode='gdm', ready=true, imagesExist=true){
     h.instance.enable();
     assert.equal(h.added,0);
     assert.equal(h.size,1);
-    h.Main.screenShield._dialog={get_parent:()=>h.Main.screenShield._lockDialogGroup};
+    h.Main.screenShield._dialog=h.Main.screenShield._candidateDialog;
     h.tick();
     assert.ok(h.instance._background);
     assert.equal(h.size,0);

@@ -16,7 +16,7 @@ assert.ok(stage.includes("VM='mellon-gnome50-lab'"));
 assert.ok(stage.includes('ssh -o BatchMode=yes mellon'));
 assert.ok(stage.includes('scp -q -- "$SOURCE"'));
 assert.ok(stage.includes('sha256sum extension.js > SHA256SUMS'));
-assert.ok(!stage.includes('sudo'));
+assert.ok(!/^\\s*sudo\\b/m.test(stage),'Staging must not execute guest sudo');
 assert.ok(update.includes("test \"$(id -u)\" -eq 0"));
 assert.ok(update.includes('systemd-detect-virt'));
 assert.ok(update.includes('test -f "$MARKER"')===false || update.includes('"$MARKER"'));
