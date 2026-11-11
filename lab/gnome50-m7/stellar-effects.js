@@ -11,6 +11,44 @@ const clamp = value => Math.min(1, Math.max(0, value));
 const validTime = now => Number.isFinite(now) && now >= 0;
 const norm = (now, origin, duration) => (now - origin) / duration;
 
+// Static level stays high after the full constellation wave has finished.
+// A partial constellation or a failed authentication has level zero.
+export function completionLevel(frame) {
+    if (frame.settled)
+        return 1;
+    if (frame.completion === null)
+        return 0;
+    return clamp((frame.completion - .24) / .70);
+}
+
+// Unit-testable intensity envelope for the existing photo-derived sprites.
+// Every bloom reuses those same underlying real-star RGB pixels.
+export function starLightProfile(flare, wave, completion) {
+    for (const value of [flare, wave, completion]) {
+        if (!Number.isFinite(value) || value < 0 || value > 1)
+            throw new Error('Invalid M7 star-light envelope');
+    }
+    return {
+        coreScale: 1 + .75 * flare + .48 * wave + .18 * completion,
+        haloScale: 1.35 + 1.30 * flare + 1.15 * wave + .30 * completion,
+        haloStrength: clamp(.98 * flare + 1.05 * wave +
+            .65 * completion, 0, .98),
+    };
+}
+
+export function connectionLightProfile(wave, completion) {
+    for (const value of [wave, completion]) {
+        if (!Number.isFinite(value) || value < 0 || value > 1)
+            throw new Error('Invalid M7 connecting-line envelope');
+    }
+    return {
+        glowAlpha: Math.min(.65, .40 * completion + .58 * wave),
+        glowWidth: 5.6 + 4.2 * wave,
+        lineAlpha: Math.min(.99, .56 + .37 * completion + .42 * wave),
+        lineWidth: 1 + 1.0 * completion + 2.2 * wave,
+    };
+}
+
 export function completionWave(progress, radialFraction) {
     if (!Number.isFinite(progress) || !Number.isFinite(radialFraction) ||
         progress < 0 || progress >= 1 || radialFraction < 0 || radialFraction > 1)
