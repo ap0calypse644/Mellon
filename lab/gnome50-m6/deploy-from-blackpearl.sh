@@ -95,7 +95,7 @@ elif previous.get('mode') == 'fixed' and previous.get('scene_id') in ids:
     current = {'mode': 'fixed', 'scene_id': previous['scene_id'], 'stages': 8}
 else:
     raise SystemExit('Cannot safely preserve current guest M6 scene selection')
-output_path.write_text(json.dumps(current, indent=2) + '\\n')
+output_path.write_text(json.dumps(current, indent=2) + '\n')
 print('Preserved guest M6 scene mode:', current['mode'])
 PY
         rm -- "$STAGING/.previous-scene-config.json"
