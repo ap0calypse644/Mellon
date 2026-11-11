@@ -48,6 +48,11 @@ jobs:
           bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh
           bash -n lab/gnome50-gdm/preflight-activation.sh
           bash -n lab/gnome50-gdm/audit-extension-enablement.sh
+          bash -n lab/gnome50-gdm/audit-effective-greeter-settings.sh
+          bash -n lab/gnome50-gdm/install-g1-in-guest.sh
+          bash -n lab/gnome50-gdm/rollback-g1-in-guest.sh
+          bash -n lab/gnome50-gdm/stage-g1-to-vm.sh
+          node lab/gnome50-gdm/test-g1-install.mjs
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/preflight-activation.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-extension-enablement.sh
           grep -Fq 'DCONF_PROFILE=gdm' lab/gnome50-gdm/audit-extension-enablement.sh

@@ -108,3 +108,102 @@ VM's vendor file-db location.
 Only after inspecting that output should we implement a strictly
 VM-only **reversible** system-extension installer and SSH/TTY
 uninstaller, with the verified preinstall qcow2 checkpoint as last resort.
+
+## G1.0.2: VM-only reversible installation
+
+**Before installing**, verify the actual greeter's dconf settings. The
+`test1 + DCONF_PROFILE=gdm` result in the earlier audit was the WRONG
+account for deciding whether the dynamic `gdm-greeter` account has
+disabled extensions. The new audit obtains the live GNOME Shell process
+UID and its whitelisted dconf config paths, then reads GSettings as that
+specific UID. It requires `sudo -n` in the VM. If sudo credentials
+aren't configured for non-interactive use, STOP; use interactive guest
+sudo rather than weakening permissions or editing the greeter user-db.
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-gdm/audit-effective-greeter-settings.sh
+)
+```
+
+This audit is read-only. **Do not run installer** if it cannot read the
+real greeter's `enabled-extensions`, `disabled-extensions`, and
+`disable-user-extensions` settings, or if they differ from defaults.
+
+The installer is intentionally split into a non-privileged transfer and
+an interactive privileged guest-only operation, avoiding privilege
+escalation on BlackPearl.
+
+Once the audit passes and the recovery checkpoint has been verified,
+upload the verified bundle from BlackPearl into only the TEST VM's
+`test1` staging directory:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-gdm/stage-g1-to-vm.sh
+)
+```
+
+This step is **staging only**, not an install. GDM is unchanged.
+
+To actually install into the VM (sudo may ask for the guest
+`test1` password over SSH TTY):
+
+```bash
+(
+    set -euo pipefail
+    ssh -tt mellon \
+      'sudo bash /home/test1/.local/state/mellon-gdm/g1-incoming/install-g1-in-guest.sh'
+)
+```
+
+Installer hard guards:
+- GNOME Shell 50.1, GDM3 50.1, guest `test1` UID 1000, VM detected,
+  greeter `gdm-greeter` and running `--mode=gdm` verified.
+- The versioned source pack has good checksums, safe unlinked files,
+  GDM system-extension directory is root-owned, and all new install
+  paths were absent.
+- GDM vendor profile is **exactly** Ubuntu 26.04's existing
+  `user-db:user` + `file-db:/var/lib/gdm3/greeter-dconf-defaults`.
+- The new admin profile preserves both lines, adding
+  `system-db:gdm` between them.
+- Creates `/etc/dconf/db/gdm.d/95-mellon-greeter` with only the
+  Mellon UUID in `enabled-extensions`; updates dconf without editing
+  the vendor file-db. Refuses to overwrite existing admin profiles.
+- Greeter GSettings are checked as the LIVE `gdm-greeter` account
+  before any system changes; nondefault settings cause an abort.
+- Installs root-owned readable assets under
+  `/usr/share/gnome-shell/extensions/mellon-greeter@local/`
+  via an atomic directory rename, separate from the user extension.
+- A root-owned emergency rollback command is installed **first** at
+  `/usr/local/sbin/mellon-greeter-g1-rollback`.
+- Does NOT restart GDM or reboot either computer. A restart of the
+  **TEST VM only** is required to assess the greeter extension visually.
+
+### Emergency recovery if the VM's GDM greeter fails
+
+From BlackPearl, still using SSH into `test1`:
+
+```bash
+(
+    set -euo pipefail
+    ssh -tt mellon 'sudo /usr/local/sbin/mellon-greeter-g1-rollback'
+    virsh -c qemu:///system reboot mellon-gnome50-lab
+)
+```
+
+Rollback refuses to delete any unexpected profile/keyfile or extension.
+It removes only known G1 files and reruns `dconf update`, leaving the
+vendor profile and the user's `mellon-lab@local` untouched. If SSH and
+TTY recovery both fail, the verified offline
+`MELLON-GDM-PREINSTALL-001` snapshot remains available; restore is a
+separate deliberate operation, never automatic.
+
+**G1.2 remains a PHOTO-ONLY greeter prototype.** It does not yet
+introduce star activation, edge connections, mapping, HUD or the 5-second
+grid, and has not yet passed an actual GNOME greeter visual test.
