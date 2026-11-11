@@ -1,10 +1,46 @@
 # Mellon M6 — Six-Scene Observatory Pilot (GNOME 50.1 VM only)
 
-**Status:** The six-scene M6.0 pilot was tested successfully in the
-GNOME 50.1 guest. M6.1 adds brighter original-color star light and randomized
-star activation/Backspace removal, with edges gated on BOTH lit endpoints.
-The updated code passes CI synthetic tests; **M6.1 guest testing is pending**.
-No change has been made to BlackPearl's host lock screen.
+**Status:** M6.1 behavior was user-tested successfully on the GNOME
+50.1 guest. M6.2 makes a brightness-only change (gain 5.20 → 6.20).
+Automated checks and live guest verification of M6.2 are tracked separately.
+BlackPearl's host lock screen remains untouched.
+
+## M6.2: a slightly brighter star-light profile (2026-11-11)
+
+M6.1 was confirmed working in the GNOME 50.1 VM. M6.2 is **only** a
+brightness adjustment. In the existing original-photograph pixel renderer:
+
+- Increase hue-preserving RGB residual gain from **5.20 to 6.20** (~19%).
+- Keep expansion at **1.90×**, sprite dimensions at **26×26**, and the
+  same real-star source pixels, feathering, shared RGB clipping, image
+  positions, 8-stage activation and smooth fade.
+- Keep random lit/unlit star selection and the two-active-endpoints
+  line rule completely unchanged.
+- Preserve GNOME-native authentication, manual SHOW LOGIN and centered
+  UNAUTHORIZED ACCESS warning without modification.
+
+The previous installed M6.1 is backed up in the **guest** during
+deployment. M6.2 generates the independent local derived asset directory
+`~/VMs/Mellon/m6-pilot-pack-v3/`; old v1/v2 packs are not overwritten or
+accepted as the new version. No constellation matching/search is rerun.
+
+From BlackPearl (install **only into the Mellon VM**):
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-m6/deploy-from-blackpearl.sh
+)
+```
+
+Then reboot **only** `mellon-gnome50-lab`, lock the VM, type and erase
+several characters, and check that stars are visibly a little brighter
+without losing their original blue/red/gold tint. Lines still require
+**both** stars to be active, and wrong-password/manual-login behavior
+should be unchanged. CI checks compare the synthetic source-light
+profile against the previous M6.1 gain. **Live M6.2 VM QA is pending.**
 
 ## M6.1: brighter original stars, randomized illumination and edge gating
 
