@@ -1,0 +1,52 @@
+name: Mellon M7 stellar animations (synthetic, no VM)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lab/gnome50-m7/**'
+      - '.github/workflows/mellon-m7-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  m7-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout trusted source without credential persistence
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Install Node for isolated JS tests
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+
+      - name: Parse GNOME source without starting GNOME
+        run: |
+          node --input-type=module --check < lab/gnome50-m7/extension.js
+          node --input-type=module --check < lab/gnome50-m7/stellar-effects.js
+          node --input-type=module --check < lab/gnome50-m7/scene-data.js
+          node --input-type=module --check < lab/gnome50-m7/failure-tracker.js
+
+      - name: M7 transitions, direction, cancellation, completion and idle stop
+        run: |
+          node lab/gnome50-m7/test-stellar-effects.mjs
+          node lab/gnome50-m7/test-m7-regression.mjs
+
+      - name: Preserve previously verified M6.4 selection and authentication regressions
+        run: |
+          node lab/gnome50-m6/test-scene-data.mjs
+          node lab/gnome50-m5/test-failure-tracker.mjs
+
+      - name: Verify VM installer and rollback syntax only (NO installation)
+        run: |
+          bash -n lab/gnome50-m7/deploy-from-blackpearl.sh
+          bash -n lab/gnome50-m7/rollback-last-guest-install.sh
+          grep -q "mellon-gnome50-lab" lab/gnome50-m7/deploy-from-blackpearl.sh
+          grep -q "m6-curated-12-v1" lab/gnome50-m7/deploy-from-blackpearl.sh
+          echo 'PASS: M7 unit verification only; no astronomy search, no VM or host GNOME changes.'
