@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Mellon G1.0 pre-install check: GDM greeter extension enablement.
 # Read-only query from BlackPearl -> the known VM via SSH alias mellon.
-# No sudo, config writes, dconf update or service restarts.
+# Read-only queries only; absolutely no privileged or mutating operations.
 (
     set -euo pipefail
     VM='mellon-gnome50-lab'
