@@ -14,7 +14,7 @@ const imports = [
     "import St from 'gi://St';\n",
     "import {INTRO_TICK_MS, INTRO_REPEAT_MS,\n" +
         "    introFrame, gridGeometry, gridCellStrength}\n" +
-        "    from './greeter-extension/hud-intro-state.js';\n",
+        "    from './hud-intro-state.js';\n",
 ];
 let implementation = raw;
 for (const line of imports) {
