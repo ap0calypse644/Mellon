@@ -55,5 +55,5 @@ for (const forbidden of ['os.system(', 'os.chmod(', 'os.chown(',
     'write_text(', 'write_bytes(', 'unlink(', 'sudo -S']) {
     assert.ok(!py.includes(forbidden), 'Read-only greeter Python restriction: '+forbidden);
 }
-assert.ok(a.includes('getpwuid(uid)'));
+assert.ok(py.includes('getpwuid(uid)'));
 console.log('PASS G1 VM install safety: vendor profile preserved, atomic copy, reversible dconf, no user extension changes');
