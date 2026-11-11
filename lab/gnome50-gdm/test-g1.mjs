@@ -36,12 +36,15 @@ assert.ok(source.includes('GLib.source_remove(this._pollId)'));
 assert.ok(source.includes('GREETER_MAX_ATTEMPTS = 90'));
 assert.ok(source.includes('GLib.timeout_add('));
 assert.ok(source.includes("pickScene(this._library, {mode: 'random-on-lock'})"));
+// Static guardrails apply to executable code, not explanatory comments.
+const executable=source.replace(/\/\*[\s\S]*?\*\//g,'')
+    .replace(/^\s*\/\/.*$/gm,'');
 for(const forbidden of [
     '_authPrompt', '_passwordEntry', 'get_buffer', 'get_text()',
     'get_password', 'notify::length', 'key-press-event',
     '_userVerifier', 'PAM', 'insert_child_above(', 'set_child_above_sibling',
     'gnome-extensions enable', 'getenv(', '/home/test1',
-]) assert.ok(!source.includes(forbidden),'GDM visual-only restriction: '+forbidden);
+]) assert.ok(!executable.includes(forbidden),'GDM visual-only restriction: '+forbidden);
 // The curated library validation must be byte-identical to the accepted
 // M8 source. This also prevents introducing a new scene selection backend.
 assert.equal(scene,await readFile(

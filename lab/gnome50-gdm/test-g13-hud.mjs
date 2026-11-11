@@ -30,10 +30,12 @@ assert.ok(source.includes('container.insert_child_below(hud.actor, dialog)'));
 assert.ok(source.includes('container.insert_child_below(photo, dialog)'));
 assert.ok(source.includes('hud?.destroy()'));
 assert.ok(source.includes('this._hud?.destroy()'));
+const executable=source.replace(/\/\*[\s\S]*?\*\//g,'')
+    .replace(/^\s*\/\/.*$/gm,'');
 for(const forbidden of [
   '_authPrompt', '_userVerifier', '_passwordEntry', 'get_text()',
   'get_buffer()', 'notify::length', 'key-press-event',
   'get_password', 'prompted', 'getAnswer(', 'PAM',
   'set_child_above_sibling(', 'insert_child_above('
-]) assert.ok(!source.includes(forbidden),'No GDM authentication touching: '+forbidden);
+]) assert.ok(!executable.includes(forbidden),'No GDM authentication touching: '+forbidden);
 console.log('PASS G1.4: approved GDM HUD and five-second grid remain intact below native GDM login');
