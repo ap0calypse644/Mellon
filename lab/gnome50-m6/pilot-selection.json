@@ -1,15 +1,21 @@
 {
-  "schema": "mellon-m6-pilot-selection-v1",
-  "description": "Six visually reviewed scenes, one per background, all at least eight real source stars. Only the local v9 report is the source of vertex coordinates and edges.",
+  "schema": "mellon-m6-curated-library-v2",
+  "description": "M6.4: twelve visually curated, v9-verified constellation scenes covering all six backgrounds. Every scene has at least eight original photographic source stars. Coordinates/edges come exclusively from local verified matches-v9.json.",
   "pilot_scene_ids": [
     "blue-gold-nebula/02-Leo",
+    "blue-gold-nebula/07-Crt",
     "chromatic-nebula/01-Leo",
+    "cosmic-wings/01-Leo",
     "cosmic-wings/03-Vir",
+    "cosmic-wings/05-Cep",
     "dust-cloud/03-Crt",
+    "dust-cloud/08-And",
     "rosy-rosette/04-Cyg",
-    "veiled-ring/03-Gem"
+    "rosy-rosette/06-Sco",
+    "veiled-ring/03-Gem",
+    "veiled-ring/08-Peg"
   ],
   "default_scene_id": "blue-gold-nebula/02-Leo",
-  "initial_mode": "fixed",
+  "initial_mode": "random-on-lock",
   "activation_stages": 8
 }
