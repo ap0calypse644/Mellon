@@ -64,6 +64,59 @@ export function activationCount(length, n, stages = 8) {
     return Math.min(n, Math.ceil(n * Math.min(amount, stages) / stages));
 }
 
+/**
+ * Randomize which EXISTING real star pixels are lit as input length changes.
+ * No key values, character contents, or input timing are observed.
+ *
+ * A new character turns on as many currently-unlit stars as needed for the
+ * existing eight-stage count; Backspace chooses uniformly from the CURRENTLY
+ * lit stars, not from the tail of a fixed template order.
+ *
+ * Each change samples without replacement, keeping all other star states.
+ * Randomness is visual only; it is not involved in authentication.
+ */
+export function updateActiveStars(previous, desiredCount, random = Math.random) {
+    if (!(previous instanceof Uint8Array) ||
+        previous.length < 8 || previous.length > 24 ||
+        !Number.isInteger(desiredCount) ||
+        desiredCount < 0 || desiredCount > previous.length)
+        throw new Error('Invalid randomized constellation activation state');
+
+    const active = new Uint8Array(previous);
+    const on = [];
+    const off = [];
+    for (let i = 0; i < active.length; i++) {
+        if (active[i] === 1)
+            on.push(i);
+        else if (active[i] === 0)
+            off.push(i);
+        else
+            throw new Error('Constellation activation mask contains invalid values');
+    }
+
+    const adding = desiredCount > on.length;
+    const choices = adding ? off : on;
+    const need = Math.abs(desiredCount - on.length);
+    for (let i = 0; i < need; i++) {
+        const value = random();
+        if (!Number.isFinite(value) || value < 0 || value >= 1)
+            throw new Error('Random visual selection returned invalid value');
+        const index = Math.floor(value * choices.length);
+        const [chosen] = choices.splice(index, 1);
+        active[chosen] = adding ? 1 : 0;
+    }
+    return active;
+}
+
+/**
+ * Only an edge with TWO currently illuminated endpoint stars is eligible
+ * to render. An extinguished endpoint removes its edge immediately, even
+ * while its visual glow is still fading out.
+ */
+export function activeEdges(edges, active) {
+    return edges.filter(([a, b]) => active[a] === 1 && active[b] === 1);
+}
+
 export function pickScene(library, config, lastId = null, random = Math.random) {
     validateLibrary(library);
     if (config?.mode === 'fixed') {
