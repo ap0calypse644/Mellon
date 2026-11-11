@@ -1,6 +1,8 @@
 // M8.1 Observatory HUD: pure pixel geometry, independent of GNOME.
 // The central inset protects the M6/M7 original photographic starfield.
-// Optional instruments disappear on insufficient space; recovery never does.
+// GDM greeter variant: there is NO user-session SHOW LOGIN control in the
+// top-left corner. Unlike M8's unlock screen, don't reserve its rectangle.
+// Keep the central photo-safe inset and all other sizing rules unchanged.
 export const SOURCE_SAFE_INSET = 0.14;
 const intersect = (a, b) => a && b &&
     a.x < b.x + b.width && a.x + a.width > b.x &&
@@ -10,7 +12,7 @@ const inside = (r, w, h) => r &&
     r.y + r.height <= h;
 
 export function hudLayout(width, height,
-    recovery = {x: 26, y: 22, width: 145, height: 46}) {
+    recovery = null) {
     if (!Number.isFinite(width) || !Number.isFinite(height) ||
         width <= 0 || height <= 0)
         return {topLeft: null, topRight: null, bottomLeft: null,
@@ -30,7 +32,7 @@ export function hudLayout(width, height,
         width: w * (1 - 2 * SOURCE_SAFE_INSET),
         height: h * (1 - 2 * SOURCE_SAFE_INSET)};
     const candidate = {
-        topLeft: {x: pad, y: Math.max(78, recovery.y + recovery.height + 12),
+        topLeft: {x: pad, y: 14,
             width: Math.min(270, Math.floor(w * .23)), height: 54},
         topRight: {x: w - pad - Math.min(350, Math.floor(w * .27)),
             y: 14, width: Math.min(350, Math.floor(w * .27)),

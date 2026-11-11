@@ -50,6 +50,11 @@ jobs:
           bash -n lab/gnome50-gdm/install-g13-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g13-in-guest.sh
           node lab/gnome50-gdm/test-g13-deploy.mjs
+          node lab/gnome50-gdm/test-g131-layout.mjs
+          node lab/gnome50-gdm/test-g131-deploy.mjs
+          bash -n lab/gnome50-gdm/stage-g131-to-vm.sh
+          bash -n lab/gnome50-gdm/install-g131-in-guest.sh
+          bash -n lab/gnome50-gdm/rollback-g131-in-guest.sh
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-hud.js
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-intro.js
           bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh

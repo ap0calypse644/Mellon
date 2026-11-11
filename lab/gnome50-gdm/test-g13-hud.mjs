@@ -6,12 +6,20 @@ import {readFile} from 'node:fs/promises';
 const m8=path=>readFile(new URL('../gnome50-m8/'+path,import.meta.url),'utf8');
 const gdm=path=>readFile(new URL('./greeter-extension/'+path,import.meta.url),'utf8');
 for(const file of [
-  'hud-state.js','hud-layout.js','hud-progress.js',
+  'hud-state.js','hud-progress.js',
   'hud-intro-state.js','observatory-hud.js','observatory-intro.js',
   'stylesheet.css','scene-data.js'
 ]){
   assert.equal(await gdm(file),await m8(file),'M8 visual-engine drift: '+file);
 }
+// The GDM-only hud-layout.js intentionally differs from M8's version:
+// native GDM has no top-left SHOW LOGIN recovery button to protect.
+const gdmLayout=await gdm('hud-layout.js');
+const sessionLayout=await m8('hud-layout.js');
+assert.notEqual(gdmLayout,sessionLayout);
+assert.ok(gdmLayout.includes('recovery = null'));
+assert.ok(gdmLayout.includes('topLeft: {x: pad, y: 14,'));
+assert.ok(sessionLayout.includes('recovery = {x: 26, y: 22'));
 const source=await gdm('extension.js');
 const metadata=JSON.parse(await gdm('metadata.json'));
 assert.equal(metadata.uuid,'mellon-greeter@local');
