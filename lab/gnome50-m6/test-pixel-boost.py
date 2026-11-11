@@ -21,6 +21,7 @@ def check(hue: str, rgb: tuple[int,int,int]):
             original[y,x,:] += np.asarray(rgb)*intensity
             dim[y,x,:] += np.asarray(rgb)*.3*intensity
     old_image=star_sprite(dim,original,32,32,gain=2.65,expand=1.60)
+    previous_image=star_sprite(dim,original,32,32,gain=5.20,expand=1.90)
     image=star_sprite(dim,original,32,32)
     assert image.size==(26,26) and image.mode=='RGBA'
     pixel=np.asarray(image,dtype=np.float32)
@@ -35,8 +36,15 @@ def check(hue: str, rgb: tuple[int,int,int]):
     old_pixels=np.asarray(old_image,dtype=np.float32)
     old_alpha=old_pixels[...,3:4]/255.0
     old_composite=baseline*(1-old_alpha)+old_pixels[...,:3]*old_alpha
+    previous_pixels=np.asarray(previous_image,dtype=np.float32)
+    previous_alpha=previous_pixels[...,3:4]/255.0
+    previous_composite=baseline*(1-previous_alpha)+previous_pixels[...,:3]*previous_alpha
+    previous_light=float(np.maximum(0,previous_composite-baseline).sum())
     new_light=float(np.maximum(0,composed-baseline).sum())
     old_light=float(np.maximum(0,old_composite-baseline).sum())
+    assert new_light > previous_light*1.03, (
+        f'New {hue} star is not brighter than M6.1: '
+        f'{new_light:.2f} vs {previous_light:.2f}')
     assert new_light > old_light*1.15, (
         f'New {hue} star is not visibly brighter than M6.0: '
         f'{new_light:.2f} vs {old_light:.2f}')
