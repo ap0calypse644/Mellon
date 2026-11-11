@@ -1,0 +1,30 @@
+name: Mellon G0 Greeter Audit Safety (read-only)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lab/gnome50-gdm/**'
+      - '.github/workflows/mellon-gdm-audit-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate syntax and static read-only guardrails
+        shell: bash
+        run: |
+          bash -n lab/gnome50-gdm/audit-guest-greeter.sh
+          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-guest-greeter.sh
+          grep -Fq 'test "$(id -un)"' lab/gnome50-gdm/audit-guest-greeter.sh
+          if grep -En '(^|[[:space:]])(sudo|rm|mv|cp|systemctl[[:space:]]+(restart|stop|start|enable)|dconf[[:space:]]+update|gsettings[[:space:]]+set|virsh.*(revert|restore|destroy|shutdown))([[:space:]]|$)' lab/gnome50-gdm/audit-guest-greeter.sh; then
+            echo 'Refusing mutation in read-only greeter audit' >&2
+            exit 1
+          fi
+          echo 'PASS: read-only GDM inventory, VM-bound, no greeter changes'
