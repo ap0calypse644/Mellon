@@ -10,22 +10,51 @@ const {
     Buffer.from(source).toString('base64'));
 
 const image = [1920, 1080];
-const makeScene = (slug, n) => ({
-    id: `${slug}/01-Leo`, background:slug, name:'Leo',
-    constellation:'Leo', image_size:image,
-    image:`assets/${slug}/background.jpg`,
-    image_sha256:'a'.repeat(64),
-    star_ids:Array.from({length:n},(_,i)=>`S${String(i+1).padStart(6,'0')}`),
-    vertices:Array.from({length:n},(_,i)=>[.2+.5*i/n,.4+.1*i/n]),
-    edges:Array.from({length:n-1},(_,i)=>[i,i+1]),
-    sprites:Array.from({length:n},(_,i)=>
-        `assets/${slug}/01-Leo/star-${String(i).padStart(2,'0')}.png`),
-    sprite_size:[26,26],
-});
-const names=['blue-gold-nebula','chromatic-nebula','cosmic-wings',
-    'dust-cloud','rosy-rosette','veiled-ring'];
+// This is the ACTUAL pinned M6.4 manifest, not a hand-written imitation
+// of what happens to be selected by the package builder.
+const manifest = JSON.parse(await readFile(
+    new URL('./pilot-selection.json', import.meta.url), 'utf8'));
+assert.equal(manifest.schema, 'mellon-m6-curated-library-v2');
+assert.equal(manifest.initial_mode, 'random-on-lock');
+assert.equal(manifest.activation_stages, 8);
+assert.equal(manifest.pilot_scene_ids.length, 12);
+assert.equal(new Set(manifest.pilot_scene_ids).size, 12);
+
+// Exact source-star counts were previously verified from local v9 QA index.
+const counts = {
+    'blue-gold-nebula/02-Leo': 9,
+    'blue-gold-nebula/07-Crt': 9,
+    'chromatic-nebula/01-Leo': 9,
+    'cosmic-wings/01-Leo': 9,
+    'cosmic-wings/03-Vir': 13,
+    'cosmic-wings/05-Cep': 10,
+    'dust-cloud/03-Crt': 9,
+    'dust-cloud/08-And': 17,
+    'rosy-rosette/04-Cyg': 9,
+    'rosy-rosette/06-Sco': 14,
+    'veiled-ring/03-Gem': 12,
+    'veiled-ring/08-Peg': 14,
+};
+assert.deepEqual(new Set(manifest.pilot_scene_ids),new Set(Object.keys(counts)));
+const makeScene = (id, n) => {
+    const [slug, label] = id.split('/');
+    const code = label.split('-')[1];
+    return {
+        id, background:slug, name:code,
+        constellation:code, image_size:image,
+        image:`assets/${slug}/background.jpg`,
+        image_sha256:'a'.repeat(64),
+        star_ids:Array.from({length:n},(_,i)=>`S${String(i+1).padStart(6,'0')}`),
+        vertices:Array.from({length:n},(_,i)=>[.2+.5*i/n,.4+.1*i/n]),
+        edges:Array.from({length:n-1},(_,i)=>[i,i+1]),
+        sprites:Array.from({length:n},(_,i)=>
+            `assets/${slug}/${label}/star-${String(i).padStart(2,'0')}.png`),
+        sprite_size:[26,26],
+    };
+};
 const lib={schema:'mellon-m6-scene-library-v1',
-    scenes:names.map((s,i)=>makeScene(s,[9,9,13,9,9,12][i]))};
+    scenes:manifest.pilot_scene_ids.map(id=>makeScene(id, counts[id]))};
+assert.equal(new Set(lib.scenes.map(s=>s.background)).size,6);
 assert.equal(validateLibrary(lib),lib);
 for (const scene of lib.scenes) {
     assert.ok(scene.vertices.length>=8);
@@ -116,4 +145,16 @@ lib.scenes[0]=original;
 lib.scenes[0]={...original, image:'assets/../secret'};
 assert.throws(()=>validateLibrary(lib),'Must reject path traversal');
 lib.scenes[0]=original;
-console.log('PASS M6.1: 6 valid scenes, random star addition/removal, two-lit-star edges, 8-stage mapping and path safety');
+// Scene picker must address all twelve unique variants and cannot
+// immediately repeat an identical scene in the same extension lifecycle.
+for (let i=0; i<12; i++) {
+    const id=lib.scenes[i].id;
+    assert.equal(pickScene(lib,{mode:'fixed',scene_id:id}).id,id);
+    const next=pickScene(lib,{mode:'random-on-lock'},id,()=>0.25);
+    assert.notEqual(next.id,id);
+}
+assert.throws(()=>validateLibrary({...lib,scenes:lib.scenes.slice(0,6)}));
+assert.throws(()=>validateLibrary({...lib,
+    scenes:[...lib.scenes.slice(0,11),lib.scenes[0]]}));
+console.log('PASS M6.4: 12 pinned 8+-star scenes, six backgrounds, default random-on-lock and no immediate scene repetition');
+console.log('PASS M6.4: random star add/remove, two-lit-star connectors, 8-stage mapping and path safety');
