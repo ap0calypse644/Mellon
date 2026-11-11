@@ -52,12 +52,12 @@ if meta.get("uuid") != "mellon-lab@local" or not (
     meta.get("name","").startswith("Mellon M7.1") or
     meta.get("name","").startswith("Mellon M8")
 ):
-    raise SystemExit("Not an approved Mellon M6.4/M8 test extension")
+    raise SystemExit("Not an approved Mellon M7.1/M8 test extension")
 print("PASS: Known-good Mellon guest extension identity")
 PY
 
     echo
-    echo '=== BUILD CHECKSUMMED M7 GUEST STAGING AREA ==='
+    echo '=== BUILD CHECKSUMMED M8 GUEST STAGING AREA ==='
     cp -a -- "$PACK/." "$STAGING/"
     for file in extension.js stellar-effects.js scene-data.js \
                 failure-tracker.js metadata.json stylesheet.css \
@@ -141,5 +141,5 @@ GUEST
     echo
     echo 'PASS: Installed M8.1 and the unchanged twelve-scene photographs in TEST VM ONLY.'
     echo 'NEXT: reboot ONLY mellon-gnome50-lab, then test locking/unlocking.'
-    echo 'ROLLBACK: bash lab/gnome50-m7/rollback-last-guest-install.sh'
+    echo 'ROLLBACK: bash lab/gnome50-m8/rollback-last-guest-install.sh'
 )
