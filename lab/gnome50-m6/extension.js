@@ -6,8 +6,8 @@ import St from 'gi://St';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {FailureTracker} from './failure-tracker.js';
-import {validateLibrary, pickScene, activationCount, coverTransform}
-    from './scene-data.js';
+import {validateLibrary, pickScene, activationCount, coverTransform,
+    updateActiveStars, activeEdges} from './scene-data.js';
 
 /**
  * Mellon M6: variable-size photographic constellations above native GNOME UI.
@@ -52,6 +52,7 @@ class MVPScene {
         this._destroyed = false;
         this._target = 0;
         this._energy = new Float32Array(scene.vertices.length);
+        this._active = new Uint8Array(scene.vertices.length);
         this._stages = stages;
         this._spriteViewport = null;
         this._frameTimer = 0;
@@ -171,7 +172,12 @@ class MVPScene {
     setLength(length) {
         if (this._destroyed || this._nativeRevealed)
             return;
-        this._target = activationCount(length, this._energy.length, this._stages);
+        const desired = activationCount(length, this._energy.length, this._stages);
+        // Visually choose from currently unlit/lit REAL photo stars.
+        // Different stars are chosen independently for each character
+        // insertion or deletion, never in fixed template-index order.
+        this._active = updateActiveStars(this._active, desired);
+        this._target = desired;
         if (length > 0) {
             this._deniedUntil = 0;
             this._feedback?.hide();
@@ -186,6 +192,7 @@ class MVPScene {
         // attempts. Never reveal GNOME's native prompt due to an attempt count;
         // the visible SHOW LOGIN control is the user's manual recovery path.
         this._target = 0;
+        this._active.fill(0);
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
         this._deniedUntil = this._deniedStartedAt + 1.5;
         this._feedback.opacity = 255;
@@ -207,7 +214,7 @@ class MVPScene {
                 }
                 let changing = false;
                 for (let i = 0; i < this._energy.length; i++) {
-                    const target = i < this._target ? 1 : 0;
+                    const target = this._active[i] === 1 ? 1 : 0;
                     const v = this._energy[i];
                     const next = v + (target - v) * (target > v ? 0.38 : 0.28);
                     this._energy[i] = Math.abs(target - next) < .012 ? target : next;
@@ -258,7 +265,7 @@ class MVPScene {
         const strokeScale = clamp(Math.min(width / 1920, height / 1080), .6, 2.5);
         const denied = GLib.get_monotonic_time() / 1000000 < this._deniedUntil;
         const rgb = denied ? [1, .37, .48] : [.53, .83, 1];
-        for (const [a, b] of this._scene.edges) {
+        for (const [a, b] of activeEdges(this._scene.edges, this._active)) {
             const intensity = Math.min(this._energy[a], this._energy[b]);
             if (intensity < .01)
                 continue;
@@ -289,6 +296,7 @@ class MVPScene {
         this._recovery = null;
         this._canvas = null;
         this._sprites = null;
+        this._active = null;
         this._spriteViewport = null;
         this._background = null;
         this._dialog = null;
