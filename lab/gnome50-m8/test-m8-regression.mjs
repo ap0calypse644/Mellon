@@ -51,7 +51,16 @@ for(const text of [hud,layout,state]) {
             'Presentation layer must not access GNOME authentication');
 }
 assert.ok(hud.includes('reactive: false'));
-assert.ok(hud.includes('allocation-changed'));
+// A live GNOME 50.1 lock test caught this runtime-incompatible signal.
+assert.ok(!hud.includes("'allocation-changed',"),
+    'Clutter/St.Widget does not expose an allocation-changed signal');
+assert.ok(hud.includes("this.actor.connect('notify::width'"));
+assert.ok(hud.includes("this.actor.connect('notify::height'"));
+assert.ok(hud.includes('GLib.idle_add('),
+    'First layout must occur after HUD actor is parented');
+assert.ok(hud.includes('GLib.source_remove(this._firstLayoutId)'));
+assert.ok(hud.includes('this.actor.disconnect(signalId)'),
+    'Destroy must disconnect both dimension observers');
 assert.ok(hud.includes('GLib.timeout_add_seconds('));
 assert.ok(hud.includes('this._stopClock()'));
 assert.ok(css.includes('.mellon-m8-panel'));

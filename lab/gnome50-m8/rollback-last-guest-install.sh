@@ -3,12 +3,17 @@
 # Does NOT modify the BlackPearl host GNOME lock screen.
 (
     set -euo pipefail
+    MODE="${1:-latest}"
+    case "$MODE" in
+        latest|m7.1) ;;
+        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1]' >&2; exit 2 ;;
+    esac
     virsh -c qemu:///system dominfo 'mellon-gnome50-lab' >/dev/null
     ssh -o BatchMode=yes mellon '
         test "$(id -un)" = test1 &&
         test "$(gnome-shell --version)" = "GNOME Shell 50.1"
     ' || { echo 'Unexpected guest; refusing rollback.' >&2; exit 1; }
-    ssh -o BatchMode=yes mellon 'bash -s' <<'GUEST'
+    ssh -o BatchMode=yes mellon "M8_ROLLBACK_MODE='$MODE' bash -s" <<'GUEST'
 (
     set -euo pipefail
     BACKUPS="$HOME/.local/state/mellon/backups"
@@ -16,9 +21,37 @@
     DEST="$ROOT/mellon-lab@local"
     test -d "$BACKUPS" && test ! -L "$BACKUPS"
     test -d "$DEST" && test ! -L "$DEST"
-    latest="$(find "$BACKUPS" -mindepth 1 -maxdepth 1 \
-        -type d -name 'pre-m8-*' -printf '%f\n' |
-        LC_ALL=C sort | tail -n 1)"
+    if [[ "$M8_ROLLBACK_MODE" == 'm7.1' ]]; then
+        # Multiple M8 deployments back up previous M8 versions. The
+        # explicit M7.1 mode skips those, restoring known-good M7.1.
+        latest="$(python3 - "$BACKUPS" <<'PY'
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+matches=[]
+for folder in root.glob('pre-m8-*'):
+    if not folder.is_dir() or folder.is_symlink():
+        continue
+    meta=folder/'metadata.json'
+    if not meta.is_file() or meta.is_symlink():
+        continue
+    try:
+        data=json.loads(meta.read_text())
+    except (ValueError,OSError):
+        continue
+    if (data.get('uuid') == 'mellon-lab@local' and
+            data.get('name','').startswith('Mellon M7.1')):
+        matches.append(folder.name)
+if not matches:
+    raise SystemExit('No M7.1 guest backup found; refusing rollback')
+print(sorted(matches)[-1])
+PY
+        )"
+    else
+        latest="$(find "$BACKUPS" -mindepth 1 -maxdepth 1 \
+            -type d -name 'pre-m8-*' -printf '%f\n' |
+            LC_ALL=C sort | tail -n 1)"
+    fi
     test -n "$latest" || { echo 'No M8 guest backup found.' >&2; exit 1; }
     SOURCE="$BACKUPS/$latest"
     test ! -L "$SOURCE" && test -f "$SOURCE/extension.js" &&

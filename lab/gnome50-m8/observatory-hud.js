@@ -95,8 +95,23 @@ export class ObservatoryHUD {
         for (const child of Object.values(this._panels))
             this.actor.add_child(child);
 
-        this._allocationSignal = this.actor.connect(
-            'allocation-changed', () => this._reflow());
+        // GNOME 50's St.Widget has no 'allocation-changed' signal.
+        // These are real Clutter.Actor GObject properties; watch only
+        // dimension changes, never use animation-frame or polling updates.
+        this._sizeSignals = [
+            this.actor.connect('notify::width', () => this._reflow()),
+            this.actor.connect('notify::height', () => this._reflow()),
+        ];
+        // The HUD is parented *after* construction by the M7.1 scene.
+        // One idle callback handles the first settled allocation even
+        // when no subsequent size notification is emitted.
+        this._firstLayoutId = GLib.idle_add(
+            GLib.PRIORITY_DEFAULT_IDLE, () => {
+                this._firstLayoutId = 0;
+                if (!this._destroyed)
+                    this._reflow();
+                return GLib.SOURCE_REMOVE;
+            });
         this._updateClock();
         // Only one clock update per minute, never a perpetual rendering loop.
         this._clockTimer = GLib.timeout_add_seconds(
@@ -162,10 +177,13 @@ export class ObservatoryHUD {
             return;
         this._destroyed = true;
         this._stopClock();
-        if (this._allocationSignal) {
-            this.actor.disconnect(this._allocationSignal);
-            this._allocationSignal = 0;
+        if (this._firstLayoutId) {
+            GLib.source_remove(this._firstLayoutId);
+            this._firstLayoutId = 0;
         }
+        for (const signalId of this._sizeSignals ?? [])
+            this.actor.disconnect(signalId);
+        this._sizeSignals = [];
         this.actor.destroy();
         this.actor = null;
         this._panels = null;

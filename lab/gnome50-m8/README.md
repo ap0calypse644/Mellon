@@ -94,9 +94,32 @@ It does NOT reboot either system itself.
 )
 ```
 
-The latest `pre-m8-*` could be an earlier M8 build rather than M7.1 if
-re-deployed multiple times. The rollback script reports the chosen version;
-inspect guest backups before assuming a particular historical version.
+For a **guaranteed M7.1 rollback** after multiple M8 installs, pass
+`m7.1` to the rollback script (the installer saves the original M7.1 in
+`pre-m8-*`, and the option selects its metadata rather than the latest
+broken M8 backup):
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-m8/rollback-last-guest-install.sh m7.1
+    virsh -c qemu:///system reboot mellon-gnome50-lab
+)
+```
+
+The default `latest` mode restores the last `pre-m8-*`, which can be an
+earlier M8 build. Every rollback retains the replaced version in the VM.
+
+## M8.1.1 GNOME 50.1 runtime fix
+
+The first M8.1 guest run failed open with `No signal 'allocation-changed'
+on object 'StWidget'`. The HUD now uses the supported
+`notify::width` and `notify::height` property notifications, plus
+one cancellable idle callback for its first post-parenting layout.
+The regression test forbids the unsupported connection and verifies
+teardown of those observers and the one-shot idle source.
+The actual guest render must still be checked after deployment.
 
 **M8.2** (dynamic stage segments) and **M8.3** (one-shot intro scan) are
 separate future steps requiring M8.1 VM visual approval.
