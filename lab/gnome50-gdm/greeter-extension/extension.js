@@ -153,21 +153,28 @@ export default class MellonGreeter extends Extension {
             if (!this._syncId) {
                 this._syncId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
                     GREETER_LENGTH_SYNC_MS, () => {
-                        if (this._stopped || !this._background ||
+                        if (this._stopped ||
                             Main.sessionMode.currentMode !== 'gdm') {
                             this._syncId = 0;
-                            this._observer?.sync(null, false);
+                            this._unmount();
                             return GLib.SOURCE_REMOVE;
                         }
-                        // The current login dialog may be replaced on
-                        // user selection or a recovery flow.
-                        if (Main.screenShield?._dialog !== this._dialog) {
-                            this._syncId = 0;
+                        // The live LoginDialog may be temporarily absent
+                        // during user-selection / recovery transitions.
+                        // Keep this ONE timer until the replacement is ready;
+                        // never leave a stale observer attached to old input.
+                        if (Main.screenShield?._dialog !== this._dialog ||
+                            !this._background) {
                             this._unmount();
                             this._tryMount();
-                            return GLib.SOURCE_REMOVE;
+                            return GLib.SOURCE_CONTINUE;
                         }
-                        this._syncInput();
+                        try {
+                            this._syncInput();
+                        } catch (error) {
+                            this._warn(error);
+                            this._observer?.sync(null, false);
+                        }
                         return GLib.SOURCE_CONTINUE;
                     });
             }
