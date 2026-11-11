@@ -25,6 +25,7 @@ assert.ok(stage.includes('node "$HERE/test-g15-deploy.mjs"'));
 assert.ok(stage.includes('sha256sum -c SHA256SUMS'));
 assert.ok(stage.includes('Manifest mismatch against BlackPearl'));
 assert.ok(stage.includes('Existing G1.5 staging found: checking without replacement.'));
+assert.ok(stage.includes('G1.5 staging retired; use the versioned G1.6A cover package.'));
 assert.ok(!/^\s*sudo\b/m.test(stage));
 assert.ok(install.includes('systemd-detect-virt'));
 assert.ok(install.includes("test \"$(id -u)\" -eq 0"));

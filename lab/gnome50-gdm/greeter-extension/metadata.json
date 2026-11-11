@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-greeter@local",
-  "name": "Mellon Greeter G1.5 — Observatory Stability (VM only)",
-  "description": "GDM-only photographic starfield and Observatory HUD. Bounded native dialog reattachment, stable scene selection and fail-open read-only observation. VM only.",
+  "name": "Mellon Greeter G1.6A — Lock-Screen-Matched Password Cover (VM only)",
+  "description": "Native GDM user selection preserved; password prompt covered by M8-like nonreactive astronomy and SHOW LOGIN recovery. VM-only prototype.",
   "shell-version": [
     "50"
   ],

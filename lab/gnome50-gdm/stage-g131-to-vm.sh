@@ -18,6 +18,10 @@
     virsh -c qemu:///system dominfo "$VM" >/dev/null
     node "$HERE/test-g13-hud.mjs"
     node "$HERE/test-g131-layout.mjs"
+    if ! grep -Fq '[Mellon Greeter G1.3] enabled in gdm mode' "$HERE/greeter-extension/extension.js"; then
+        echo 'G1.3.1 stage retired for newer greeter builds.' >&2
+        exit 1
+    fi
     node --input-type=module --check < "$SRC"
     for f in "${FILES[@]}"; do
         bash -n "$HERE/$f"

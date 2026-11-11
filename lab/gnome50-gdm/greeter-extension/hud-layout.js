@@ -32,7 +32,8 @@ export function hudLayout(width, height,
         width: w * (1 - 2 * SOURCE_SAFE_INSET),
         height: h * (1 - 2 * SOURCE_SAFE_INSET)};
     const candidate = {
-        topLeft: {x: pad, y: 14,
+        topLeft: {x: pad, y: recovery
+            ? Math.max(78, recovery.y + recovery.height + 12) : 14,
             width: Math.min(270, Math.floor(w * .23)), height: 54},
         topRight: {x: w - pad - Math.min(350, Math.floor(w * .27)),
             y: 14, width: Math.min(350, Math.floor(w * .27)),

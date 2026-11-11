@@ -15,6 +15,7 @@ const imports=[
 "import {ObservatoryHUD} from './observatory-hud.js';",
 "import {GreeterStarfield} from './greeter-starfield.js';",
 "import {GreeterLengthObserver} from './greeter-length-observer.js';",
+"import {GreeterPasswordCover} from './greeter-password-cover.js';",
 ];
 let stripped=source;
 for(const imp of imports){
@@ -82,6 +83,20 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
         clear(){this.cleared=true;}
         destroy(){this.destroyed=true;}
     }
+    class GreeterPasswordCover {
+        constructor(parent,d,photo,stars,hud){
+            assert.equal(parent,group);
+            assert.equal(d,Main.screenShield._dialog);
+            assert.ok(photo && stars && hud);
+            this.isMasked=false;
+            created.push(this);
+        }
+        sync(){}
+        onLength(){}
+        observeFailure(){}
+        revealNative(){this.isMasked=false;}
+        destroy(){this.destroyed=true;}
+    }
     class GreeterLengthObserver {
         constructor(fn){this.fn=fn;created.push(this);}
         sync(value,isGdm){
@@ -94,11 +109,11 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
     }
     const ctor=new Function('Clutter','Gio','GLib','St','Extension','Main',
         'validateLibrary','pickScene','hudMetadata','ObservatoryHUD',
-        'GreeterStarfield','GreeterLengthObserver',
+        'GreeterStarfield','GreeterLengthObserver','GreeterPasswordCover',
         stripped+'\nreturn MellonGreeter;');
     const Greeter=ctor(Clutter,Gio,GLib,St,class{},Main,
         validateLibrary,pickScene,hudMetadata,ObservatoryHUD,
-        GreeterStarfield,GreeterLengthObserver);
+        GreeterStarfield,GreeterLengthObserver,GreeterPasswordCover);
     const instance=new Greeter();
     instance.path='/usr/share/gnome-shell/extensions/mellon-greeter@local';
     instance._warn=()=>warnings++;
@@ -131,7 +146,7 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
     assert.deepEqual(stars.lengths,[3]);
     h.instance.disable();
     assert.equal(h.timers.size,0);
-    assert.equal(h.created.length,3);
+    assert.equal(h.created.length,4);
     assert.ok(h.created.every(x=>x.destroyed));
     assert.equal(h.photoDestroyed,1);
 }
@@ -254,4 +269,4 @@ for(const fail of ['hud','stars','observer']){
     assert.equal(h.instance._background,null);
     h.instance.disable();
 }
-console.log('PASS G1.5 runtime: GDM layering, preserved scenes, bounded rebind and visual-only failure isolation');
+console.log('PASS G1.6A runtime: native GDM account selection, covered password UI, bounded rebind and visual cleanup');

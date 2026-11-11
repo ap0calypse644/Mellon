@@ -33,7 +33,8 @@ assert.ok(rollback.includes('topLeft: {x: pad, y: 14,'));
 assert.ok(rollback.includes('mv -T -- "$TEMP" "$CURRENT"'));
 assert.ok(rollback.includes('restored previous G1.3 HUD layout'));
 assert.ok(layout.includes('recovery = null'));
-assert.ok(layout.includes('topLeft: {x: pad, y: 14,'));
+assert.ok(layout.includes('Math.max(78, recovery.y + recovery.height + 12)'));
+assert.ok(stage.includes('G1.3.1 stage retired for newer greeter builds.'));
 for(const s of [stage,installer,rollback]){
     for(const forbidden of [
         'dconf update', 'gsettings set', 'systemctl restart',

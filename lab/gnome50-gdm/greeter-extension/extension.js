@@ -10,16 +10,15 @@ import {hudMetadata} from './hud-state.js';
 import {ObservatoryHUD} from './observatory-hud.js';
 import {GreeterStarfield} from './greeter-starfield.js';
 import {GreeterLengthObserver} from './greeter-length-observer.js';
+import {GreeterPasswordCover} from './greeter-password-cover.js';
 
-// Mellon G1.5: GDM SESSION LIFECYCLE HARDENING, VM ONLY.
-// G1.4 photograph, starfield, colors, HUD and auth observation stay intact.
-// The GDM adapter observes only the visible native password-field length.
-// No password text, key event, login result, or verifier is accessed.
-// The user selector, GNOME authentication and focus remain native.
-// GNOME 50 LoginDialog has NO _backgroundGroup. Its own vfunc_allocate()
-// only allocates the native login widgets. Mount instead as a NONREACTIVE
-// SIBLING BELOW LoginDialog in screenShield._lockDialogGroup.
-// Never inspect authentication or keyboard events; never cover the prompt.
+// Mellon G1.6A: match the approved M8.3.2 lock-screen password experience.
+// Native user selection, account and session choice remain GNOME-owned.
+// The PASSWORD prompt alone gets the photo, source stars and Observatory
+// foreground above LoginDialog; the real password entry retains focus.
+// SHOW LOGIN manually reveals native GDM, just like the lock screen.
+// All G1.5 bounded lifecycle recovery and visual-only length observation
+// remain intact. No PAM, text, keystroke or authentication changes.
 const GREETER_POLL_MS = 350;
 const GREETER_LENGTH_SYNC_MS = 250;
 const GREETER_MAX_ATTEMPTS = 90;
@@ -39,6 +38,7 @@ export default class MellonGreeter extends Extension {
         this._hud = null;
         this._starfield = null;
         this._observer = null;
+        this._cover = null;
         this._dialog = null;
         this._syncId = 0;
         this._pollId = 0;
@@ -49,7 +49,7 @@ export default class MellonGreeter extends Extension {
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.5] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.6A] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -114,6 +114,7 @@ export default class MellonGreeter extends Extension {
         let hud = null;
         let starfield = null;
         let observer = null;
+        let cover = null;
         try {
             // Retain the single approved photo and actual selected scene.
             // Source-derived star sprites use this identical cover transform.
@@ -141,16 +142,22 @@ export default class MellonGreeter extends Extension {
             const sprites = scene.sprites.map(rel =>
                 GLib.build_filenamev([this.path, rel]));
             starfield = new GreeterStarfield(container, scene, sprites, hud);
-            // Exact compositor stacking: photo < source stars < HUD <
-            // native LoginDialog. Nothing is inserted into LoginDialog.
+            // During native user selection, photo < source stars < HUD
+            // remain BELOW LoginDialog, preserving GDM's account/session UI.
             container.insert_child_below(starfield.actor, dialog);
             container.insert_child_below(hud.actor, dialog);
-            // Keep prompt observation separate from all drawing code.
-            // Only the active native password field length is sampled.
-            observer = new GreeterLengthObserver(
-                length => starfield.setLength(length));
+            // The cover reorders ONLY Mellon's three already-parented actors
+            // above the native password form while it is actually active.
+            // SHOW LOGIN is the only interactive Mellon actor.
+            cover = new GreeterPasswordCover(
+                container, dialog, photo, starfield, hud);
+            observer = new GreeterLengthObserver(length => {
+                starfield.setLength(length);
+                cover.onLength(length);
+            });
             this._hud = hud;
             this._starfield = starfield;
+            this._cover = cover;
             this._observer = observer;
             this._background = photo;
             this._dialog = dialog;
@@ -191,6 +198,13 @@ export default class MellonGreeter extends Extension {
                             // Disable only input-driven decoration and leave
                             // the photograph, HUD and native login accessible.
                             this._syncId = 0;
+                            // Observer not healthy: reveal native controls
+                            // rather than leaving unknown GNOME UI masked.
+                            try {
+                                this._cover?.revealNative();
+                            } catch (_) {
+                                // Native GDM remains unaffected.
+                            }
                             try {
                                 this._observer?.destroy();
                             } catch (_) {
@@ -208,10 +222,11 @@ export default class MellonGreeter extends Extension {
                         return GLib.SOURCE_CONTINUE;
                     });
             }
-            console.log('[Mellon Greeter G1.5] photo, stars and HUD layered below native login');
+            console.log('[Mellon Greeter G1.6A] native selection and covered password mode ready');
         } catch (error) {
             // A failed source-star mount cannot strand native authentication.
             observer?.destroy();
+            cover?.destroy();
             starfield?.destroy();
             hud?.destroy();
             photo?.destroy();
@@ -219,21 +234,28 @@ export default class MellonGreeter extends Extension {
             this._hud = null;
             this._starfield = null;
             this._observer = null;
+            this._cover = null;
             this._dialog = null;
             this._warn(error);
         }
     }
 
     _syncInput() {
-        // The observer owns all access to GNOME's password buffer.
-        // Only a scalar length is handed to the visual starfield.
+        // Never cover account selection, username entry or alternative
+        // authentication challenges. SHOW LOGIN also disables the cosmetic
+        // password observer until a new native password prompt starts.
+        this._cover?.sync();
         this._observer?.sync(this._dialog,
-            Main.sessionMode.currentMode === 'gdm');
+            Main.sessionMode.currentMode === 'gdm' &&
+            this._cover?.isMasked === true);
+        this._cover?.observeFailure();
     }
 
     _unmount() {
         this._observer?.destroy();
         this._observer = null;
+        this._cover?.destroy();
+        this._cover = null;
         this._starfield?.destroy();
         this._starfield = null;
         this._hud?.destroy();
@@ -247,7 +269,7 @@ export default class MellonGreeter extends Extension {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.5] ${key}`);
+            console.warn(`[Mellon Greeter G1.6A] ${key}`);
             this._lastError = key;
         }
     }

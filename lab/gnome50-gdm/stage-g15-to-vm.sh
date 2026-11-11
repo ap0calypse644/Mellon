@@ -23,6 +23,11 @@
     node "$HERE/test-g14-starfield.mjs"
     node "$HERE/test-g14-runtime.mjs"
     node "$HERE/test-g15-deploy.mjs"
+    # This two-file package cannot deploy G1.6A: it omits the cover.
+    if ! grep -Fq '[Mellon Greeter G1.5] enabled in gdm mode' "$SRC/extension.js"; then
+        echo 'G1.5 staging retired; use the versioned G1.6A cover package.' >&2
+        exit 1
+    fi
     grep -Fq '[Mellon Greeter G1.5] enabled in gdm mode' "$SRC/extension.js"
 
     for file in "${FILES[@]}"; do

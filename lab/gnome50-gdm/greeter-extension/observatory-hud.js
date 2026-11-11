@@ -39,6 +39,7 @@ export class ObservatoryHUD {
         this._destroyed = false;
         this._clockTimer = 0;
         this._lastSize = null;
+        this._recoveryLayout = false;
         this._totalStars = info.sourceStars;
         this._stageCapacity = info.stageCapacity;
         this._mappedStage = 0;
@@ -200,6 +201,16 @@ export class ObservatoryHUD {
         this._date.set_text(value.date);
     }
 
+    // Reserve the approved M8 SHOW LOGIN button rectangle only when the
+    // GDM password cover is visible; user selection keeps four HUD panels.
+    setRecoveryLayout(enabled) {
+        if (this._destroyed || this._recoveryLayout === !!enabled)
+            return;
+        this._recoveryLayout = !!enabled;
+        this._lastSize = null;
+        this._reflow();
+    }
+
     _reflow() {
         if (this._destroyed || !this.actor)
             return;
@@ -209,7 +220,9 @@ export class ObservatoryHUD {
             this._lastSize[1] === height)
             return;
         this._lastSize = [width, height];
-        const boxes = hudLayout(width, height);
+        const recovery = this._recoveryLayout
+            ? {x: 26, y: 22, width: 145, height: 46} : null;
+        const boxes = hudLayout(width, height, recovery);
         for (const [key, actor] of Object.entries(this._panels)) {
             const r = boxes[key];
             if (!r) {
