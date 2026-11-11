@@ -1,0 +1,45 @@
+name: Mellon M8.1 Observatory HUD (synthetic, no VM)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lab/gnome50-m8/**'
+      - '.github/workflows/mellon-m8-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  m8-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout with credentials disabled
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Use Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Syntax validation of GNOME source (no GNOME started)
+        run: |
+          for file in lab/gnome50-m8/{extension,scene-data,stellar-effects,failure-tracker,observatory-hud,hud-layout,hud-state}.js; do
+            node --input-type=module --check < "$file"
+          done
+      - name: Four-corner layout, metadata, security and teardown guards
+        run: |
+          node lab/gnome50-m8/test-hud.mjs
+          node lab/gnome50-m8/test-m8-regression.mjs
+      - name: Preserve M7.1 light engine and M6/M5 regression checks
+        run: |
+          node lab/gnome50-m8/test-stellar-effects.mjs
+          node lab/gnome50-m7/test-m7-regression.mjs
+          node lab/gnome50-m6/test-scene-data.mjs
+          node lab/gnome50-m5/test-failure-tracker.mjs
+      - name: Check VM-only install and rollback scripts (do not execute)
+        run: |
+          bash -n lab/gnome50-m8/deploy-from-blackpearl.sh
+          bash -n lab/gnome50-m8/rollback-last-guest-install.sh
+          grep -q 'mellon-gnome50-lab' lab/gnome50-m8/deploy-from-blackpearl.sh
+          grep -q 'm6-curated-12-v1' lab/gnome50-m8/deploy-from-blackpearl.sh
+          echo 'PASS: synthetic tests only; no host or VM GNOME modified.'

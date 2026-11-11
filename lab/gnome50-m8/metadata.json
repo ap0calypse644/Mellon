@@ -1,0 +1,11 @@
+{
+  "uuid": "mellon-lab@local",
+  "name": "Mellon M8.1 — Observatory HUD (VM only)",
+  "description": "Four scene-aware edge instruments, local clock and unlit sequence housing; M7.1 photography and GNOME native authentication unchanged.",
+  "shell-version": [
+    "50"
+  ],
+  "session-modes": [
+    "unlock-dialog"
+  ]
+}
