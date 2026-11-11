@@ -1,4 +1,111 @@
-# Mellon M7 — Stellar Ignition Lab (VM ONLY)
+# Mellon M7.1 — Radiant Stellar Ignition (GNOME 50.1 VM only)
+
+**Status:** M7.1 source and synthetic CI tests implemented; live GNOME 50.1
+guest visual acceptance pending. The M7 code is kept in
+`lab/gnome50-m7/`, and the user-tested M6.4 source remains unchanged.
+
+## M7.1: dramatic ignition, stronger completion, sustained brightness
+
+This changes **only** Mellon animation visuals. Native GNOME password
+entry, retries, failure detection, **UNAUTHORIZED ACCESS**, and manual
+**SHOW LOGIN** are unchanged.
+
+- **Strong initial stellar ignition:** A newly activated photographic star
+  now briefly grows by up to **75%** in its core sprite (previously 22%).
+  A second, much wider translucent copy of the *same real source-star
+  pixels* creates a ~**2.65×** peak bloom. This is NOT a synthetic dot,
+  generic white disk, or retouched photograph; the RGB source remains
+  unchanged. The ignition flare lasts ~**0.72 s**.
+- **Much stronger completion wave:** When all real-star vertices activate,
+  the **1.60 s** center-out wave expands cores by up to **48%**, adds a
+  wide photographic bloom, and dramatically brightens/broadens the
+  original connecting edges. It is triggered by reaching the animation's
+  eighth length stage, **not** by GNOME approving authentication.
+- **Sustained brilliant finished state:** When the wave ends, **every lit
+  star remains visibly larger and brighter** (1.18× core size plus a
+  permanently visible photo-derived bloom). All completed connecting
+  edges remain thick and luminous (roughly **0.93 opacity, 2 px core**,
+  with a soft 5.6 px underglow at native resolution). The drawing timer
+  stops automatically; no pulse/animation runs continuously.
+- **Clear reset semantics:** A Backspace below the complete eight-stage
+  state cancels the completion latch, extinguishes a random active star
+  according to M6.4 rules, and restores normal brightness on remaining
+  partial edges. Completing the figure again triggers a fresh wave.
+  Authentication failure, native SHOW LOGIN, unlocking, and relocking
+  clear/hide the effect state, as appropriate.
+
+Transient glow uses two composited copies of the already-verified tiny
+26×26 **original-color** star sprite. The 12-scene source photo pack
+`~/VMs/Mellon/m6-curated-12-v1/` is reused **without rebuilding**.
+There is no constellation search, no altered star coordinates, and no
+new image generation.
+
+### Install / test inside the isolated VM
+
+Run **only from BlackPearl**, not inside the VM:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-m7/deploy-from-blackpearl.sh
+)
+```
+
+The installer validates the tested 12-scene pack, checks the guest's
+library fingerprint, backs up the currently installed M7/M6 extension
+under `pre-m7-*` inside the VM, verifies transferred files, and replaces
+**only the guest extension**. It preserves your current fixed/random
+scene choice. It does NOT reboot either system.
+
+Reboot **only** the test VM:
+
+```bash
+(
+    virsh -c qemu:///system reboot mellon-gnome50-lab
+)
+```
+
+### M7.1 acceptance
+
+1. Type one character: newly activated stars should flare prominently,
+   then settle back into their usual normal active brightness.
+2. Type through eight stages: the center-out completion wave should be
+   unmistakably stronger, affecting both source stars and connecting lines.
+3. **Wait after the completion animation:** all selected stars and only
+   the correctly connected lines must stay **bright and static**, not
+   return to dim M7 levels. There should be no continuing CPU/fan activity
+   from frame animations.
+4. Press Backspace below eight stages: a random selected star extinguishes,
+   the bright completed state clears, and lines touching unlit stars vanish.
+   Type to completion again: the strong wave should retrigger.
+5. Confirm that **UNAUTHORIZED ACCESS** still appears after each wrong
+   password, while SHOW LOGIN remains manual and exposes GNOME's native
+   prompt. Unlock/relock and confirm no previous animation persists.
+6. Test a 9-star and a 17-star scene; both use the same bounded animation
+   logic. Visually check that the glow retains original blue/red/gold hues.
+
+**Rollback to the previous working guest extension:**
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-m7/rollback-last-guest-install.sh
+    virsh -c qemu:///system reboot mellon-gnome50-lab
+)
+```
+
+The previously installed guest version is restored from its latest
+`pre-m7-*` backup; the replaced version is preserved for debugging.
+**Never install M7.1 on BlackPearl's host GNOME shell.**
+
+---
+
+## M7.0 historical design notes
+
+
 
 **Status:** M7 code and synthetic CI complete; user-testing inside the
 `mellon-gnome50-lab` VM is next. M6.4 is already user-tested and remains
