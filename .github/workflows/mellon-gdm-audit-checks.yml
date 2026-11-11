@@ -57,6 +57,7 @@ jobs:
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/stellar-effects.js
           node lab/gnome50-gdm/test-g14-length.mjs
           node lab/gnome50-gdm/test-g14-starfield.mjs
+          node lab/gnome50-gdm/test-g14-runtime.mjs
           bash -n lab/gnome50-gdm/stage-g131-to-vm.sh
           bash -n lab/gnome50-gdm/install-g131-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g131-in-guest.sh

@@ -4,17 +4,13 @@ import {readFile} from 'node:fs/promises';
 const code=await readFile(
   new URL('./greeter-extension/greeter-length-observer.js',import.meta.url),
   'utf8');
-// Security assertions apply to executable statements, not comments
-// explaining why prohibited APIs must never be used.
-const executable=code.replace(/\/\*[\s\S]*?\*\//g,'')
-    .replace(/^\s*\/\/.*$/gm,'');
 for(const forbidden of [
     'get_text(', '.text', 'getAnswer(', 'key-press-event',
     'text-changed', '_userVerifier', 'password-changed', 'log(',
     'console.', 'get_password(',
 ]){
-    assert.ok(!executable.includes(forbidden),
-        'Forbidden greeter data access: '+forbidden);
+    // "password" may appear in comments; ban actual credential reads.
+    assert.ok(!code.includes(forbidden),'Forbidden greeter data access: '+forbidden);
 }
 const {GreeterLengthObserver}=await import(
     'data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
