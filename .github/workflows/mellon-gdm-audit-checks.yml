@@ -1,4 +1,4 @@
-name: Mellon G0 Greeter Audit Safety (read-only)
+name: Mellon G0/G1 Greeter Audit and Prototype Safety
 on:
   push:
     branches: [main]
@@ -38,3 +38,18 @@ jobs:
           grep -Fq "backing-filename" lab/gnome50-gdm/checkpoint-before-gdm.sh
           grep -Fq "sha256sum -c SHA256SUMS" lab/gnome50-gdm/checkpoint-before-gdm.sh
           echo 'PASS: GDM read-only inventory and powered-off checkpoint helper syntax'
+      - name: Validate G1 source, visual-only guardrails and VM-safe pack prep
+        shell: bash
+        run: |
+          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/extension.js
+          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/scene-data.js
+          node lab/gnome50-gdm/test-g1.mjs
+          node lab/gnome50-gdm/test-g1-runtime.mjs
+          bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh
+          bash -n lab/gnome50-gdm/preflight-activation.sh
+          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/preflight-activation.sh
+          if grep -En '(^|[[:space:]])(sudo|systemctl[[:space:]]+(restart|stop|start|enable)|virsh.*(destroy|shutdown|reboot)|dconf[[:space:]]+update|gsettings[[:space:]]+set)([[:space:]]|$)' lab/gnome50-gdm/stage-pack-on-blackpearl.sh lab/gnome50-gdm/preflight-activation.sh; then
+            echo 'FAIL: G1 preparation/preflight must not enable or restart GDM' >&2
+            exit 1
+          fi
+          echo 'PASS: G1 source-only staged; no GDM modification/activation'
