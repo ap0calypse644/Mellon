@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const from = name => readFile(new URL('./'+name,import.meta.url),'utf8');
 const [source,metadata,scene,lock] = await Promise.all([
-    from('extension.js'),from('metadata.json'),from('scene-data.js'),
+    from('greeter-extension/extension.js'),
+    from('greeter-extension/metadata.json'),
+    from('greeter-extension/scene-data.js'),
     readFile(new URL('../gnome50-m8/extension.js',import.meta.url),'utf8'),
 ]);
 const m=JSON.parse(metadata);
