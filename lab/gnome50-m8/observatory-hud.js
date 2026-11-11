@@ -2,6 +2,7 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 import {hudLayout} from './hud-layout.js';
+import {ObservatoryIntro} from './observatory-intro.js';
 import {mappingStage, mappingStatus, segmentWaveStrength}
     from './hud-progress.js';
 
@@ -105,6 +106,7 @@ export class ObservatoryHUD {
         for (const child of Object.values(this._panels))
             this.actor.add_child(child);
         this._renderMapping();
+        this._intro = new ObservatoryIntro(this.actor, this._panels);
 
         // GNOME 50's St.Widget has no 'allocation-changed' signal.
         // These are real Clutter.Actor GObject properties; watch only
@@ -222,11 +224,17 @@ export class ObservatoryHUD {
                 actor.remove_style_class_name('mellon-m8-compact');
             actor.show();
         }
+        this._intro?.onLayout(boxes, width, height);
+    }
+
+    cancelIntro() {
+        this._intro?.stop();
     }
 
     hide() {
         if (this._destroyed)
             return;
+        this.cancelIntro();
         this.actor.hide();
         this._stopClock();
     }
@@ -243,6 +251,8 @@ export class ObservatoryHUD {
             return;
         this._destroyed = true;
         this._stopClock();
+        this._intro?.destroy();
+        this._intro = null;
         if (this._firstLayoutId) {
             GLib.source_remove(this._firstLayoutId);
             this._firstLayoutId = 0;

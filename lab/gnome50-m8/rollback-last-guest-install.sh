@@ -5,8 +5,8 @@
     set -euo pipefail
     MODE="${1:-latest}"
     case "$MODE" in
-        latest|m7.1|m8.1) ;;
-        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1|m8.1]' >&2; exit 2 ;;
+        latest|m7.1|m8.1|m8.2) ;;
+        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1|m8.1|m8.2]' >&2; exit 2 ;;
     esac
     virsh -c qemu:///system dominfo 'mellon-gnome50-lab' >/dev/null
     ssh -o BatchMode=yes mellon '
@@ -22,7 +22,8 @@
     test -d "$BACKUPS" && test ! -L "$BACKUPS"
     test -d "$DEST" && test ! -L "$DEST"
     if [[ "$M8_ROLLBACK_MODE" == 'm7.1' ||
-          "$M8_ROLLBACK_MODE" == 'm8.1' ]]; then
+          "$M8_ROLLBACK_MODE" == 'm8.1' ||
+          "$M8_ROLLBACK_MODE" == 'm8.2' ]]; then
         # Explicit version selection avoids restoring an intermediate
         # broken M8.2 revision after repeated guest-only deployments.
         latest="$(python3 - "$BACKUPS" <<'PY'
@@ -45,6 +46,16 @@ for folder in root.glob('pre-m8-*'):
     mode = os.environ.get('M8_ROLLBACK_MODE')
     if mode == 'm7.1' and data.get('name','').startswith('Mellon M7.1'):
         matches.append(folder.name)
+    elif mode == 'm8.2' and data.get('name','').startswith('Mellon M8.2'):
+        # Restore the visually accepted M8.2, not an intermediate M8.1
+        # or M8.3. Require mapping logic and original GNOME 50 resize fix.
+        hud = folder / 'observatory-hud.js'
+        progress = folder / 'hud-progress.js'
+        if (hud.is_file() and not hud.is_symlink() and
+                progress.is_file() and not progress.is_symlink() and
+                "this.actor.connect('notify::width'" in hud.read_text() and
+                not (folder / 'observatory-intro.js').exists()):
+            matches.append(folder.name)
     elif mode == 'm8.1' and data.get('name','').startswith('Mellon M8.1'):
         # The earlier broken M8.1 had an unsupported GNOME 50 signal,
         # even though the metadata carries the same version number.

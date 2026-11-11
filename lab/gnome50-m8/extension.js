@@ -14,7 +14,7 @@ import {StellarEffects, completionWave, completionLevel,
     starLightProfile, connectionLightProfile} from './stellar-effects.js';
 
 /**
- * Mellon M8.2: M7.1 visuals plus scene-derived eight-stage mapping HUD (VM ONLY).
+ * Mellon M8.3: M8.2 mapping plus bounded one-shot edge-panel scan (VM ONLY).
  * Native authentication, password entry, focus, retries and locking remain
  * entirely GNOME-owned. We inspect only buffer length, never text or keys.
  * SHOW LOGIN manually reveals native UI. Each failed password shows an alert;
@@ -243,6 +243,8 @@ class MVPScene {
         // A failed authentication cancels ALL pending light effects.
         this._effects.reset();
         this._hud?.setMapping(this._active);
+        // Cancel decorative scan during a native authentication warning.
+        this._hud?.cancelIntro();
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
         this._deniedUntil = this._deniedStartedAt + 1.5;
         this._feedback.opacity = 255;

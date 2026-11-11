@@ -96,3 +96,9 @@
     border-radius: 2px;
     box-shadow: 0px 0px 13px rgba(110, 215, 255, 0.94);
 }
+/* M8.3: a subtle translucent scan within each existing HUD panel only. */
+.mellon-m8-intro-scan {
+    background-color: rgba(135, 222, 247, 0.50);
+    border-radius: 1px;
+    box-shadow: 0px 0px 6px rgba(101, 212, 247, 0.44);
+}

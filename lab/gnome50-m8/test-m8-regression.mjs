@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const read=p=>readFile(new URL(p,import.meta.url),'utf8');
 const [m8,m7,hud,layout,state,css,m8Effects,m7Effects,m8Scene,m7Scene,
-    m8Tracker,m7Tracker,progress]=await Promise.all([
+    m8Tracker,m7Tracker,progress,intro,introState]=await Promise.all([
     read('./extension.js'),read('../gnome50-m7/extension.js'),
     read('./observatory-hud.js'),read('./hud-layout.js'),
     read('./hud-state.js'),read('./stylesheet.css'),
@@ -11,6 +11,7 @@ const [m8,m7,hud,layout,state,css,m8Effects,m7Effects,m8Scene,m7Scene,
     read('./scene-data.js'),read('../gnome50-m7/scene-data.js'),
     read('./failure-tracker.js'),read('../gnome50-m7/failure-tracker.js'),
     read('./hud-progress.js'),
+    read('./observatory-intro.js'),read('./hud-intro-state.js'),
 ]);
 for(const [name,a,b] of [['stellar effects',m8Effects,m7Effects],
     ['scene data',m8Scene,m7Scene], ['failure tracker',m8Tracker,m7Tracker]]) {
@@ -29,7 +30,9 @@ for(const [start,end] of [
 ]) {
     const visualBridgeOnly = block(m8,start,end)
         .split('\n')
-        .filter(line => !line.includes('this._hud?.setMapping(') &&
+        .filter(line => !line.includes('this._hud?.cancelIntro();') &&
+            !line.includes('// Cancel decorative scan during a native authentication warning.') &&
+            !line.includes('this._hud?.setMapping(') &&
             !line.includes('this._hud?.setCompletion(') &&
             !line.includes('// The HUD sees ONLY') &&
             !line.includes('// the password buffer length or any input event.') &&
@@ -51,12 +54,13 @@ for(const fragment of [
     `this._hud?.hide();`, `this._hud?.destroy();`,
     `this._hud?.setMapping(this._active);`,
     `this._hud?.setCompletion(fx);`,
+    `this._hud?.cancelIntro();`,
 ]) assert.ok(m8.includes(fragment),`Missing auth/HUD invariant: ${fragment}`);
 for(const forbidden of [
     'key-press-event','key-release-event','get_text()','get_password',
     'set_password','PAM','cr.arc(','ACCESS GRANTED',
 ]) assert.ok(!m8.includes(forbidden),`Forbidden M8 input/auth behavior: ${forbidden}`);
-for(const text of [hud,layout,state,progress]) {
+for(const text of [hud,layout,state,progress,intro,introState]) {
     for(const forbidden of ['get_buffer','notify::length','_failCounter',
         'key-press-event','_userVerifier','get_password','get_text()'])
         assert.ok(!text.includes(forbidden),
@@ -85,5 +89,17 @@ assert.ok(hud.includes('segmentWaveStrength(progress, i, this._stageCapacity)'))
 assert.ok(!hud.includes('GLib.timeout_add(GLib.PRIORITY_DEFAULT, FRAME_MS'));
 assert.ok(!progress.includes('gi://'));
 assert.ok(!progress.includes('GLib'));
+assert.ok(hud.includes('this._intro = new ObservatoryIntro(this.actor, this._panels)'));
+assert.ok(hud.includes('this._intro?.onLayout(boxes, width, height)'));
+assert.ok(hud.includes('this._intro?.destroy()'));
+assert.ok(hud.includes('this.cancelIntro()'));
+assert.ok(intro.includes('GLib.timeout_add(GLib.PRIORITY_DEFAULT,'));
+assert.ok(intro.includes('GLib.source_remove(this._timerId)'));
+assert.ok(intro.includes('reactive: false'));
+assert.ok(intro.includes('scan.hide()'));
+assert.ok(intro.includes('this.stop()'));
+assert.ok(!intro.includes("'allocation-changed',"));
+assert.ok(!introState.includes('gi://'));
+assert.ok(introState.includes('INTRO_DURATION_MS = 1050'));
 
-console.log('PASS M8.2: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
+console.log('PASS M8.3: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
