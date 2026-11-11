@@ -142,7 +142,7 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
     h.tick(250);
     assert.equal(h.syncs.length,2);
     const stars=h.created.find(x=>x.actor?.name==='stars');
-    h.created.find(x=>typeof x.sync==='function').fn(3);
+    h.created.find(x=>typeof x.fn==='function').fn(3);
     assert.deepEqual(stars.lengths,[3]);
     h.instance.disable();
     assert.equal(h.timers.size,0);
