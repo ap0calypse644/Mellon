@@ -80,8 +80,8 @@ const steady = updateActiveStars(backspace,2,
     () => { throw new Error('Repeated length must not resample'); });
 assert.deepEqual([...steady],[...backspace]);
 assert.equal(updateActiveStars(second,0,()=>0.99).reduce((a,b)=>a+b,0),0);
-assert.throws(()=>updateActiveStars(first,2,()=>1));
-assert.throws(()=>updateActiveStars(first,2,()=>-0.1));
+assert.throws(()=>updateActiveStars(first,3,()=>1));
+assert.throws(()=>updateActiveStars(first,3,()=>-0.1));
 
 // All 8/9/12/13/18 star constellations use exactly the same random
 // activation/removal logic, with one-to-one selection and no duplicates.
