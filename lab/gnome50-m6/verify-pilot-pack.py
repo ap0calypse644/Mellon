@@ -17,6 +17,14 @@ def validate(pack: Path):
     config = json.loads((pack/'scene-config.json').read_text())
     if library.get('schema') != 'mellon-m6-scene-library-v1':
         raise ValueError('Unexpected M6 scene library schema')
+    provenance = library.get('provenance') or {}
+    if provenance.get('star_light_renderer') != 'mellon-m6-photo-light-v2':
+        raise ValueError('Old M6 star pack detected; rebuild with the brighter v2 renderer')
+    gain = provenance.get('enhance_gain')
+    expand = provenance.get('expand_factor')
+    if (not isinstance(gain,(int,float)) or not 4.5 <= gain <= 7.0 or
+        not isinstance(expand,(int,float)) or not 1.75 <= expand <= 2.3):
+        raise ValueError('Unexpected M6.1 brightness/expansion settings')
     scenes = library.get('scenes')
     if not isinstance(scenes,list) or len(scenes)!=6:
         raise ValueError('M6 pilot must contain six scene records')
@@ -64,7 +72,7 @@ def validate(pack: Path):
     elif config.get('mode')!='random-on-lock':
         raise ValueError('Unknown scene selection mode')
     print('PASS: exactly six vetted, >=8-star source-photographic scenes')
-    print('PASS: image SHA256, all source-colored RGBA sprites, geometry and paths')
+    print('PASS: brighter v2 photo-derived sprites, image SHA256, geometry and paths')
     print('PASS: fixed scene or per-lock random configuration valid')
     return scenes
 
