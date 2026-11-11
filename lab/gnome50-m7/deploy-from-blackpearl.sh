@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mellon M7: install ONLY in mellon-gnome50-lab, never BlackPearl host GNOME.
+# Mellon M7.1: install ONLY in mellon-gnome50-lab, never BlackPearl host GNOME.
 # Reuses the user's already-verified and user-tested M6.4 photo pack; NO search.
 (
     set -euo pipefail
@@ -14,7 +14,7 @@
     STAGING="$(mktemp -d "$HOME/VMs/Mellon/.m7-copy.XXXXXXXX")"
     trap 'rm -rf -- "$STAGING"' EXIT
 
-    echo 'MELLON M7 // GNOME 50.1 TEST VM ONLY // BLACKPEARL HOST UNTOUCHED'
+    echo 'MELLON M7.1 // GNOME 50.1 TEST VM ONLY // BLACKPEARL HOST UNTOUCHED'
     cd "$ROOT"
     test -d "$PACK" && test ! -L "$PACK" || {
         echo "Missing tested M6.4 image pack: $PACK" >&2; exit 1;
@@ -104,7 +104,7 @@ PY
         "cd '.local/share/gnome-shell/extensions/$STAGE_NAME' && sha256sum -c checksums.sha256"
 
     echo
-    echo '=== BACK UP CURRENT GUEST M6.4 AND INSTALL M7 (ATOMIC RENAME) ==='
+    echo '=== BACK UP CURRENT GUEST M7.0/M6.4 AND INSTALL M7.1 (ATOMIC RENAME) ==='
     ssh -o BatchMode=yes mellon \
         "M7_STAGING='$STAGE_NAME' bash -s" <<'GUEST'
 (
@@ -137,7 +137,7 @@ GUEST
 )
 GUEST
     echo
-    echo 'PASS: Installed M7 source and same six photographic backgrounds in TEST VM ONLY.'
+    echo 'PASS: Installed M7.1 and the unchanged twelve-scene photographs in TEST VM ONLY.'
     echo 'NEXT: reboot ONLY mellon-gnome50-lab, then test locking/unlocking.'
     echo 'ROLLBACK: bash lab/gnome50-m7/rollback-last-guest-install.sh'
 )
