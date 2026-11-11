@@ -41,7 +41,7 @@ assert.ok(restore.includes('No GDM settings modified.'));
 assert.ok(extension.includes('Main.screenShield?._lockDialogGroup'));
 assert.ok(extension.includes('dialog.get_parent() !== container'));
 assert.ok(extension.includes('container.insert_child_below(photo, dialog)'));
-assert.ok(extension.includes('[Mellon Greeter G1.6A.1] enabled in gdm mode'));
+assert.ok(extension.includes('[Mellon Greeter G1.6B] enabled in gdm mode'));
 assert.ok(extension.includes('native selection and covered password mode ready'));
 assert.ok(extension.includes("import {GreeterStarfield} from './greeter-starfield.js'"));
 assert.ok(stage.includes('G1.2.1 stage retired: current extension needs newer HUD modules.'));

@@ -8,12 +8,16 @@ const gdm=path=>readFile(new URL('./greeter-extension/'+path,import.meta.url),'u
 for(const file of [
   'hud-state.js','hud-progress.js',
   'hud-intro-state.js',
-  'stylesheet.css','scene-data.js'
+  'scene-data.js'
 ]){
   assert.equal(await gdm(file),await m8(file),'M8 visual-engine drift: '+file);
 }
 // Only GDM's HUD geometry and recovery-layout switch intentionally differ
 // from approved M8.3.2; all cosmetic panels and effects stay unchanged.
+const style=await gdm('stylesheet.css');
+assert.ok(style.startsWith(await m8('stylesheet.css')),
+    'M8 original styling unchanged; G1.6B adds selector CSS only');
+assert.ok(style.includes('.mellon-gdm-account-panel'));
 const gdmLayout=await gdm('hud-layout.js');
 const sessionLayout=await m8('hud-layout.js');
 assert.notEqual(gdmLayout,sessionLayout);

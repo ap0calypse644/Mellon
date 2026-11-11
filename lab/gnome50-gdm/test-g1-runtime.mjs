@@ -16,6 +16,7 @@ const imports=[
 "import {GreeterStarfield} from './greeter-starfield.js';",
 "import {GreeterLengthObserver} from './greeter-length-observer.js';",
 "import {GreeterPasswordCover} from './greeter-password-cover.js';",
+"import {GreeterAccountChooser} from './greeter-account-chooser.js';",
 ];
 let stripped=source;
 for(const imp of imports){
@@ -97,6 +98,16 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
         revealNative(){this.isMasked=false;}
         destroy(){this.destroyed=true;}
     }
+    class GreeterAccountChooser {
+        constructor(parent,d,photo,stars,hud){
+            assert.equal(parent,group);
+            assert.equal(d,Main.screenShield._dialog);
+            assert.ok(photo && stars && hud);
+            created.push(this);
+        }
+        sync(){}
+        destroy(){this.destroyed=true;}
+    }
     class GreeterLengthObserver {
         constructor(fn){this.fn=fn;created.push(this);}
         sync(value,isGdm){
@@ -110,10 +121,11 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
     const ctor=new Function('Clutter','Gio','GLib','St','Extension','Main',
         'validateLibrary','pickScene','hudMetadata','ObservatoryHUD',
         'GreeterStarfield','GreeterLengthObserver','GreeterPasswordCover',
-        stripped+'\nreturn MellonGreeter;');
+        'GreeterAccountChooser',stripped+'\nreturn MellonGreeter;');
     const Greeter=ctor(Clutter,Gio,GLib,St,class{},Main,
         validateLibrary,pickScene,hudMetadata,ObservatoryHUD,
-        GreeterStarfield,GreeterLengthObserver,GreeterPasswordCover);
+        GreeterStarfield,GreeterLengthObserver,GreeterPasswordCover,
+        GreeterAccountChooser);
     const instance=new Greeter();
     instance.path='/usr/share/gnome-shell/extensions/mellon-greeter@local';
     instance._warn=()=>warnings++;
@@ -146,7 +158,7 @@ function harness(mode='gdm',dialogReady=true,assetMissing=false, failAt=''){
     assert.deepEqual(stars.lengths,[3]);
     h.instance.disable();
     assert.equal(h.timers.size,0);
-    assert.equal(h.created.length,4);
+    assert.equal(h.created.length,5);
     assert.ok(h.created.every(x=>x.destroyed));
     assert.equal(h.photoDestroyed,1);
 }
@@ -269,4 +281,4 @@ for(const fail of ['hud','stars','observer']){
     assert.equal(h.instance._background,null);
     h.instance.disable();
 }
-console.log('PASS G1.6A runtime: native GDM account selection, covered password UI, bounded rebind and visual cleanup');
+console.log('PASS G1.6B runtime: native GDM account selection, covered password UI, bounded rebind and visual cleanup');

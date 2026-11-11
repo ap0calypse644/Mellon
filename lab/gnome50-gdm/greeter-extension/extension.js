@@ -11,9 +11,11 @@ import {ObservatoryHUD} from './observatory-hud.js';
 import {GreeterStarfield} from './greeter-starfield.js';
 import {GreeterLengthObserver} from './greeter-length-observer.js';
 import {GreeterPasswordCover} from './greeter-password-cover.js';
+import {GreeterAccountChooser} from './greeter-account-chooser.js';
 
-// Mellon G1.6A: match the approved M8.3.2 lock-screen password experience.
-// Native user selection, account and session choice remain GNOME-owned.
+// Mellon G1.6B: Astronomical GDM account selection + M8 password.
+// Account choice goes through GNOME's existing native UserListItem
+// activation signal. Session choice and authentication remain GNOME-owned.
 // The PASSWORD prompt alone gets the photo, source stars and Observatory
 // foreground above LoginDialog; the real password entry retains focus.
 // SHOW LOGIN manually reveals native GDM, just like the lock screen.
@@ -39,6 +41,7 @@ export default class MellonGreeter extends Extension {
         this._starfield = null;
         this._observer = null;
         this._cover = null;
+        this._accounts = null;
         this._dialog = null;
         this._syncId = 0;
         this._pollId = 0;
@@ -49,7 +52,7 @@ export default class MellonGreeter extends Extension {
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.6A.1] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.6B] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -115,6 +118,7 @@ export default class MellonGreeter extends Extension {
         let starfield = null;
         let observer = null;
         let cover = null;
+        let accounts = null;
         try {
             // Retain the single approved photo and actual selected scene.
             // Source-derived star sprites use this identical cover transform.
@@ -155,9 +159,12 @@ export default class MellonGreeter extends Extension {
                 starfield.setLength(length);
                 cover.onLength(length);
             });
+            accounts = new GreeterAccountChooser(
+                container, dialog, photo, starfield, hud);
             this._hud = hud;
             this._starfield = starfield;
             this._cover = cover;
+            this._accounts = accounts;
             this._observer = observer;
             this._background = photo;
             this._dialog = dialog;
@@ -222,10 +229,11 @@ export default class MellonGreeter extends Extension {
                         return GLib.SOURCE_CONTINUE;
                     });
             }
-            console.log('[Mellon Greeter G1.6A.1] native selection and covered password mode ready');
+            console.log('[Mellon Greeter G1.6B] Mellon account selection and covered password mode ready');
         } catch (error) {
             // A failed source-star mount cannot strand native authentication.
             observer?.destroy();
+            accounts?.destroy();
             cover?.destroy();
             starfield?.destroy();
             hud?.destroy();
@@ -235,6 +243,7 @@ export default class MellonGreeter extends Extension {
             this._starfield = null;
             this._observer = null;
             this._cover = null;
+            this._accounts = null;
             this._dialog = null;
             this._warn(error);
         }
@@ -245,6 +254,7 @@ export default class MellonGreeter extends Extension {
         // authentication challenges. SHOW LOGIN also disables the cosmetic
         // password observer until a new native password prompt starts.
         this._cover?.sync();
+        this._accounts?.sync();
         this._observer?.sync(this._dialog,
             Main.sessionMode.currentMode === 'gdm' &&
             this._cover?.isMasked === true);
@@ -254,6 +264,8 @@ export default class MellonGreeter extends Extension {
     _unmount() {
         this._observer?.destroy();
         this._observer = null;
+        this._accounts?.destroy();
+        this._accounts = null;
         this._cover?.destroy();
         this._cover = null;
         this._starfield?.destroy();
@@ -269,7 +281,7 @@ export default class MellonGreeter extends Extension {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.6A.1] ${key}`);
+            console.warn(`[Mellon Greeter G1.6B] ${key}`);
             this._lastError = key;
         }
     }
