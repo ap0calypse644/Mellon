@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Package M6 pilot scenes from the user's verified local v9 database.
+"""Package the M6.4 twelve-scene library from the locally verified v9 database.
 
 NEVER search for new stars, move existing coordinates, or touch host/guest GNOME.
 Uses only v9's exact star IDs, vertices and edges plus original photo pixels.
-Outputs six photographs, sparse RGBA per-star overlays, JSON library/config.
+Outputs six photographs, twelve source-star scene graphs, sparse RGBA sprites, and config.
 """
 from __future__ import annotations
 
@@ -105,13 +105,13 @@ def build(selection: Path, index: Path, database: Path, corpus: Path,
     config = json.loads(selection.read_text())
     qa_index = json.loads(index.read_text())
     report = json.loads(database.read_text())
-    if config['schema'] != 'mellon-m6-pilot-selection-v1':
+    if config['schema'] != 'mellon-m6-curated-library-v2':
         raise ValueError('Unknown M6 selection schema')
     if report.get('schema') != 'mellon-quality-constellation-matches-v9':
         raise ValueError('Not a verified v9 constellation database')
     ids = config['pilot_scene_ids']
-    if len(ids) != 6 or len(set(ids)) != 6:
-        raise ValueError('Exactly six distinct pilot scenes required')
+    if len(ids) != 12 or len(set(ids)) != 12 or len({x.split('/')[0] for x in ids}) != 6:
+        raise ValueError('Exactly twelve distinct scenes across all six backgrounds required')
     if dest.exists():
         raise FileExistsError(f'Pack already exists; refusing overwrite: {dest}')
     if not (1.0 <= gain <= 8.0 and 1.0 <= expand <= 2.3):
@@ -207,6 +207,7 @@ def build(selection: Path, index: Path, database: Path, corpus: Path,
         library = {
             'schema':'mellon-m6-scene-library-v1',
             'provenance':{
+                'library_release':'mellon-m6.4-curated-12-v1',
                 'database_schema':report['schema'],
                 'database_sha256':sha256(database),
                 'qa_index_sha256':sha256(index),
@@ -219,13 +220,17 @@ def build(selection: Path, index: Path, database: Path, corpus: Path,
             'scenes':scenes,
         }
         (staging/'library.json').write_text(json.dumps(library,indent=2)+'\n')
+        if config['default_scene_id'] not in ids or config['activation_stages'] != 8:
+            raise ValueError('Invalid default scene or animation-stage count')
+        if config['initial_mode'] != 'random-on-lock':
+            raise ValueError('M6.4 requires random-on-lock to be the default')
         (staging/'scene-config.json').write_text(json.dumps({
-            'mode':'fixed', 'scene_id':config['default_scene_id'],
+            'mode':'random-on-lock',
             'stages':config['activation_stages'],
         },indent=2)+'\n')
         dest.parent.mkdir(parents=True,exist_ok=True)
         staging.rename(dest)
-        print(f'PASS: six pilot scenes assembled from verified v9 at {dest}',flush=True)
+        print(f'PASS: 12 vetted 8+ star scenes assembled from verified v9 at {dest}',flush=True)
     except BaseException:
         # Do not silently delete potentially useful output on a failure.
         print(f'Pack incomplete; inspect/remove this staging directory before retry: {staging}')
