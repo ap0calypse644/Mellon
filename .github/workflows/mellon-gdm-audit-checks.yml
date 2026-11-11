@@ -57,6 +57,10 @@ jobs:
           bash -n lab/gnome50-gdm/diagnose-g1-greeter.sh
           python3 -c 'import ast,pathlib; ast.parse(pathlib.Path("lab/gnome50-gdm/diagnose-g1-greeter.py").read_text())'
           node lab/gnome50-gdm/test-g1-diagnostics.mjs
+          bash -n lab/gnome50-gdm/stage-g121-update-to-vm.sh
+          bash -n lab/gnome50-gdm/update-g121-in-guest.sh
+          bash -n lab/gnome50-gdm/rollback-g121-in-guest.sh
+          node lab/gnome50-gdm/test-g121-update.mjs
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/preflight-activation.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-extension-enablement.sh
           grep -Fq 'DCONF_PROFILE=gdm' lab/gnome50-gdm/audit-extension-enablement.sh

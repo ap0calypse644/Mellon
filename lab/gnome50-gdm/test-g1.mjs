@@ -13,8 +13,11 @@ assert.equal(m.uuid,'mellon-greeter@local');
 assert.deepEqual(m['session-modes'],['gdm']);
 assert.deepEqual(m['shell-version'],['50']);
 assert.ok(source.includes("Main.sessionMode.currentMode !== 'gdm'"));
-assert.ok(source.includes('dialog?._backgroundGroup'));
-assert.ok(source.includes('container.add_child(photo)'));
+assert.ok(source.includes('Main.screenShield?._lockDialogGroup'));
+assert.ok(source.includes('dialog.get_parent() !== container'));
+assert.ok(!source.includes('dialog?._backgroundGroup'));
+assert.ok(source.includes('container.insert_child_below(photo, dialog)'));
+assert.ok(source.includes('source: container, coordinate: Clutter.BindCoordinate.SIZE'));
 assert.ok(source.includes('reactive: false, can_focus: false'));
 assert.ok(source.includes('Clutter.BindCoordinate.SIZE'));
 assert.ok(source.includes('photo?.destroy()'));
@@ -36,4 +39,4 @@ assert.equal(scene,await readFile(
 // The existing user lock extension is a separate module and need not be
 // adapted to accept the gdm mode.
 assert.ok(lock.includes("Main.sessionMode.currentMode !== 'unlock-dialog'"));
-console.log('PASS G1: GDM-only extension, photo in native background group, no authentication interception, bounded cleanup');
+console.log('PASS G1.2.1: GDM-only extension, photo sibling below native LoginDialog, no authentication interception, bounded cleanup');

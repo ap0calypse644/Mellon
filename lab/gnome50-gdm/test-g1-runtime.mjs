@@ -20,7 +20,7 @@ code=code.replace('export default class MellonGreeter','class MellonGreeter');
 assert.ok(!/^import /m.test(code));
 
 function harness(mode='gdm', ready=true, imagesExist=true){
-    let timerID=0, warnings=0, added=0, destroyed=0;
+    let timerID=0, warnings=0, added=0, destroyed=0, above=false;
     const timers=new Map();
     const GLib={
         PRIORITY_DEFAULT:0,
@@ -46,9 +46,13 @@ function harness(mode='gdm', ready=true, imagesExist=true){
         set_style(style){ assert.ok(style.includes('background-image')); }
         destroy(){destroyed++;}
     }};
-    const group={add_child:function(){added++;}};
+    const group={insert_child_below:function(photo,sibling){
+        assert.equal(sibling,dialog,'Must layer photo BELOW actual native dialog');
+        added++;
+    }};
+    const dialog={get_parent:()=>group};
     const Main={sessionMode:{currentMode:mode},
-        screenShield:{_dialog:ready?{_backgroundGroup:group}:null}};
+        screenShield:{_lockDialogGroup:group,_dialog:ready?dialog:null}};
     const lib={scenes:Array.from({length:12},(_,i)=>({
         image:'assets/image'+i+'.jpg',id:'scene'+i,
     }))};
@@ -66,7 +70,7 @@ function harness(mode='gdm', ready=true, imagesExist=true){
         validateLibrary,pickScene);
     const instance=new Klass();
     instance.path='/usr/share/gnome-shell/extensions/mellon-greeter@local';
-    const orig=console.warn;
+
     instance._warn = () => {warnings++;};
     const tick=()=>{
         for (const [id,callback] of [...timers]) {
@@ -102,7 +106,7 @@ function harness(mode='gdm', ready=true, imagesExist=true){
     h.instance.enable();
     assert.equal(h.added,0);
     assert.equal(h.size,1);
-    h.Main.screenShield._dialog={_backgroundGroup:{add_child(){}}};
+    h.Main.screenShield._dialog={get_parent:()=>h.Main.screenShield._lockDialogGroup};
     h.tick();
     assert.ok(h.instance._background);
     assert.equal(h.size,0);
@@ -125,4 +129,4 @@ function harness(mode='gdm', ready=true, imagesExist=true){
     assert.ok(h.warnings>0);
     h.instance.disable();
 }
-console.log('PASS G1 runtime: native GDM backdrop layering, bounded retry, fail-open and teardown');
+console.log('PASS G1.2.1 runtime: native GDM dialog sibling layering, bounded retry, fail-open and teardown');
