@@ -21,6 +21,14 @@ assert.ok(python.includes('dconf'));
 assert.ok(python.includes('user=uid, group=gid'));
 assert.ok(python.includes('extra_groups=[]'));
 assert.ok(python.includes('G1 diagnosis complete; no settings, files or sessions changed.'));
+assert.ok(python.includes("NO ACTIVE GREETER:"));
+assert.ok(python.includes("PARTIAL: Static inventory done."));
+assert.ok(python.includes("Log out of the test VM's graphical test1 desktop"));
+assert.ok(python.includes('sys.exit(0)'));
+assert.ok(python.includes('if len(pids) > 1:'));
+assert.ok(python.includes('"_COMM=gnome-shell"'));
+assert.ok(python.includes('read_expected(KEYFILE)'));
+
 for(const forbidden of [
   'os.system(', 'os.chmod(', 'os.chown(', 'write_text(', 'write_bytes(',
   '.unlink(', '.mkdir(', 'shutil.', 'gsettings", "set"', 'dconf", "write"',

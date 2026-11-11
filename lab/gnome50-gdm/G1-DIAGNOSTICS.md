@@ -67,3 +67,22 @@ Known G1 emergency rollback if a later test breaks login:
 The G1 login screen currently remains usable, so **do not rollback
 merely because the backdrop is dark** until the diagnosis establishes
 why it did not appear.
+
+## G1.1 diagnosis when no live greeter process is found
+
+If the test VM has been logged into graphically, GNOME may terminate
+`gnome-shell --mode=gdm`; the original diagnostic incorrectly aborted
+before inspecting any installed G1 files. The audit now reports the
+static extension installation, dconf admin files, matching current-boot
+GNOME Shell extension logs and the session-process overview as **PARTIAL**.
+
+To inspect *effective* greeter settings and photo readability, **log out
+of the graphical `test1` session INSIDE the VM** using the guest's GNOME
+menu. The native GDM login screen should be visible. Do not log back in
+until the audit completes. The host's terminal / `ssh mellon` continue
+to work independently. Run `diagnose-g1-greeter.sh` again from BlackPearl.
+
+No restart or GDM install/rollback is required just to activate the GDM
+screen. Do **not** confuse a normal user login session with the GDM
+pre-login greeter, and do not infer extension failure from absent GDM
+processes during a logged-in desktop session.

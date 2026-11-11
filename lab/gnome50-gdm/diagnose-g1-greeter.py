@@ -85,7 +85,73 @@ for proc in Path("/proc").iterdir():
 
 print("========== LIVE GREETER PROCESS ==========")
 if len(pids) != 1:
-    raise SystemExit(f"Expected exactly one GDM shell, found {len(pids)}")
+    if len(pids) > 1:
+        raise SystemExit(f"Expected at most one GDM Shell, found {len(pids)}")
+    print("NO ACTIVE GREETER: GDM may have exited after a graphical login.")
+    print("Live greeter UID, dconf overrides, and photo readability as the")
+    print("ephemeral greeter account CANNOT be verified in this session.")
+    print()
+    print("========== STATIC G1 INSTALLATION INVENTORY ==========")
+    for path in (BASE, BASE / "metadata.json", BASE / "extension.js",
+                 BASE / "library.json", PROFILE, KEYFILE, COMPILED,
+                 MARKER, ROLLBACK):
+        info(path)
+    if (BASE / "metadata.json").is_file() and not (BASE / "metadata.json").is_symlink():
+        try:
+            metadata = json.loads((BASE / "metadata.json").read_text())
+            print("Extension UUID:", metadata.get("uuid"))
+            print("Session modes:", metadata.get("session-modes"))
+        except (ValueError, OSError) as err:
+            print("Metadata read error:", type(err).__name__)
+    print()
+    print("========== GDM PROFILE (STATIC) ==========")
+    read_expected(PROFILE)
+    read_expected(KEYFILE)
+    print("Vendor profile:")
+    read_expected(Path("/usr/share/dconf/profile/gdm"))
+    print()
+    print("========== GNOME SHELL SESSION PROCESSES (METADATA) ==========")
+    try:
+        sessions = subprocess.run(
+            ["/usr/bin/ps", "-eo", "user:24,pid,comm,args", "--no-headers"],
+            capture_output=True, text=True, timeout=8, check=False)
+        if sessions.returncode == 0:
+            for line in sessions.stdout.splitlines():
+                fields = line.split(None, 3)
+                if len(fields) >= 3 and fields[2] in ("gnome-shell", "gdm3"):
+                    print(line[:240])
+    except (OSError, subprocess.TimeoutExpired):
+        print("Unable to list GNOME processes")
+    print()
+    print("========== RECENT GNOME SHELL EXTENSION JOURNAL (CURRENT BOOT) ==========")
+    try:
+        result = subprocess.run(
+            ["/usr/bin/journalctl", "-b", "--no-pager", "-o", "cat",
+             "_COMM=gnome-shell", "-n", "2500"],
+            capture_output=True, text=True, timeout=15, check=False)
+        if result.returncode == 0:
+            pattern = re.compile(
+                r"mellon|extension.*(load|fail|error)|"
+                r"(load|fail|error).*extension|js error|typeerror",
+                re.IGNORECASE)
+            matches = [
+                line[:300].strip() for line in result.stdout.splitlines()
+                if pattern.search(line)
+            ]
+            for line in matches[-45:]:
+                print(line)
+            if not matches:
+                print("No matching Shell extension errors in available journal.")
+        else:
+            print("Journal read unavailable:", result.stderr.strip()[:200])
+    except (OSError, subprocess.TimeoutExpired) as err:
+        print("Journal query failed:", type(err).__name__)
+    print()
+    print("PARTIAL: Static inventory done. Live GDM checks NOT performed.")
+    print("ACTION: Log out of the test VM's graphical test1 desktop,")
+    print("leave its real GDM login screen visible, then rerun this audit")
+    print("from BlackPearl over SSH. Do not reboot or reinstall Mellon.")
+    sys.exit(0)
 proc = pids[0]
 pid = int(proc.name)
 uid = proc.stat().st_uid
