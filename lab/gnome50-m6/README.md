@@ -1,4 +1,127 @@
-# Mellon M6 — Six-Scene Observatory Pilot (GNOME 50.1 VM only)
+# Mellon M6.4 — Twelve-Scene Observatory (GNOME 50.1 VM only)
+
+**Status:** GitHub source and synthetic CI checks only. The user-verified M6.3
+guest remains unchanged until the VM deployment below is run. **Do not
+install the extension on BlackPearl's actual lock screen.**
+
+## M6.4 — the curated constellation library
+
+M6.4 promotes the prior six-scene pilot to a 12-scene library. **All selected
+figures have eight or more real photographed source stars.** Coordinates,
+source-star identities, connecting edges, and brightness metadata are read
+only from the previously verified local v9 database; there is **no
+constellation search**, no new placements, and no fabricated nodes.
+
+| Background | Pinned constellation | Stars |
+| --- | --- | ---: |
+| Blue Gold Nebula | Leo (02-Leo) | 9 |
+| Blue Gold Nebula | Crater (07-Crt) | 9 |
+| Chromatic Nebula | Leo (01-Leo) | 9 |
+| Cosmic Wings | Leo (01-Leo) | 9 |
+| Cosmic Wings | Virgo (03-Vir) | 13 |
+| Cosmic Wings | Cepheus (05-Cep) | 10 |
+| Dust Cloud | Crater (03-Crt) | 9 |
+| Dust Cloud | Andromeda (08-And) | 17 |
+| Rosy Rosette | Cygnus (04-Cyg) | 9 |
+| Rosy Rosette | Scorpius (06-Sco) | 14 |
+| Veiled Ring | Gemini (03-Gem) | 12 |
+| Veiled Ring | Pegasus (08-Peg) | 14 |
+
+The scene pack includes the **same M6.3 photographic-light renderer**:
+source-pixel gain 7.20, expansion 2.12×, RGB-preserving transparent
+26×26 sprites, thin lines drawn only between **both currently lit** stars,
+and nonsequential random star activation/removal as password length changes.
+The approved GNOME native authentication, flashing **UNAUTHORIZED ACCESS**
+warning, and manual **SHOW LOGIN** recovery are unchanged.
+
+### Random selection by default
+
+The freshly generated M6.4 configuration sets `random-on-lock`, and
+the existing random selector chooses one of all twelve scene IDs. In
+one extension lifetime it excludes the immediately previous scene ID
+if available. There is no input/password logging or secret handling.
+You can still choose any specific scene using the existing
+`select-scene-in-guest.sh` tool.
+
+**Intentional upgrade behavior:** unlike previous visual-only M6 upgrades,
+M6.4 changes the default scene mode to `random-on-lock` even when the
+previous guest was left in fixed mode. To keep an intentionally fixed
+scene during installation, set `MELLON_M64_PRESERVE_MODE=1` when running
+the deployer.
+
+### Build a separate, verifiable 12-scene pack and install it in the VM
+
+Run on BlackPearl's terminal (this does **not** install an extension on
+BlackPearl):
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-m6/deploy-from-blackpearl.sh
+)
+```
+
+M6.4 first verifies the existing `matches-v9.json` and source files
+without running any placements. It builds only derived photo sprites
+and scene JSON in the **new** directory
+`~/VMs/Mellon/m6-curated-12-v1/`, without overwriting M6.3's pack.
+It refuses missing, under-eight-star, duplicated, stale, or improperly
+aligned scenes. It validates the whole pack and its SHA256 checksums,
+backs up the installed guest extension inside the VM under
+`~/.local/state/mellon/backups/pre-m6-*`, then installs the twelve-scene
+version into **only** the GNOME 50.1 guest. **No automatic reboot**.
+
+Reboot only `mellon-gnome50-lab`:
+
+```bash
+(
+    virsh -c qemu:///system reboot mellon-gnome50-lab
+)
+```
+
+Lock/unlock the guest repeatedly to sample the library. Check that its
+six original pilot scenes still work, that Andromeda (17), Pegasus (14)
+and Scorpius (14) illuminate fully in eight password-length stages,
+that star-on/Backspace choices remain randomized, and that lines never
+connect to an unlit star. Verify red wrong-password warning, native
+SHOW LOGIN and normal unlocking unchanged.
+
+To choose a particular scene for the **next** lock:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-m6/select-scene-in-guest.sh dust-cloud/08-And
+)
+```
+
+To return to library-wide random mode:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-m6/select-scene-in-guest.sh random-on-lock
+)
+```
+
+To restore the previous guest version, use the copied
+`pre-m6-*` backup in the guest, or check out the last known-good
+M6.3 version in a separate trusted local worktree and deploy its
+VM-only installer. Do not update BlackPearl's host extension.
+
+**Orion's eighteen-star bow is not included automatically.** It didn't
+pass into the top-eight v9 matches for any background. Its original
+per-template checkpoints remain available for a future visual review;
+this release does not arbitrarily promote a lower-ranked Orion.
+
+---
+
+## Historical M6.0–M6.3 documentation (superseded for installation)
+
 
 **Status:** M6.1 behavior was user-tested successfully on the GNOME
 50.1 guest. M6.2 added brightness; M6.3 further increases illuminated
