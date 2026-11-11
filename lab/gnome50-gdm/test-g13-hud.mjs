@@ -7,7 +7,7 @@ const m8=path=>readFile(new URL('../gnome50-m8/'+path,import.meta.url),'utf8');
 const gdm=path=>readFile(new URL('./greeter-extension/'+path,import.meta.url),'utf8');
 for(const file of [
   'hud-state.js','hud-progress.js',
-  'hud-intro-state.js','observatory-intro.js',
+  'hud-intro-state.js',
   'stylesheet.css','scene-data.js'
 ]){
   assert.equal(await gdm(file),await m8(file),'M8 visual-engine drift: '+file);
@@ -19,6 +19,10 @@ const sessionLayout=await m8('hud-layout.js');
 assert.notEqual(gdmLayout,sessionLayout);
 assert.ok(gdmLayout.includes('recovery = null'));
 assert.ok(gdmLayout.includes('Math.max(78, recovery.y + recovery.height + 12)'));
+const gdmIntro=await gdm('observatory-intro.js');
+assert.ok(gdmIntro.includes('this._finishSweep(false)'));
+assert.ok(gdmIntro.includes('this._everStarted = true'));
+assert.ok(!gdmIntro.includes('this.stop(); // No distorted grid'));
 const gdmHud=await gdm('observatory-hud.js');
 assert.ok(gdmHud.includes('setRecoveryLayout(enabled)'));
 assert.ok(gdmHud.includes('hudLayout(width, height, recovery)'));

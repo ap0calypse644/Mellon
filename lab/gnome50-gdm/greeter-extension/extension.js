@@ -49,7 +49,7 @@ export default class MellonGreeter extends Extension {
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.6A] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.6A.1] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -222,7 +222,7 @@ export default class MellonGreeter extends Extension {
                         return GLib.SOURCE_CONTINUE;
                     });
             }
-            console.log('[Mellon Greeter G1.6A] native selection and covered password mode ready');
+            console.log('[Mellon Greeter G1.6A.1] native selection and covered password mode ready');
         } catch (error) {
             // A failed source-star mount cannot strand native authentication.
             observer?.destroy();
@@ -269,7 +269,7 @@ export default class MellonGreeter extends Extension {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.6A] ${key}`);
+            console.warn(`[Mellon Greeter G1.6A.1] ${key}`);
             this._lastError = key;
         }
     }

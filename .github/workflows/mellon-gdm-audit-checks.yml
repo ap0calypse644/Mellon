@@ -68,6 +68,11 @@ jobs:
           node lab/gnome50-gdm/test-g15-deploy.mjs
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/greeter-password-cover.js
           node lab/gnome50-gdm/test-g16a-cover.mjs
+          node lab/gnome50-gdm/test-g16a-scan.mjs
+          node lab/gnome50-gdm/test-g16a1-deploy.mjs
+          bash -n lab/gnome50-gdm/stage-g16a1-to-vm.sh
+          bash -n lab/gnome50-gdm/install-g16a1-in-guest.sh
+          bash -n lab/gnome50-gdm/rollback-g16a1-in-guest.sh
           node --input-type=module --check < lab/gnome50-gdm/greeter-extension/failure-tracker.js
           node lab/gnome50-gdm/test-g16a-deploy.mjs
           bash -n lab/gnome50-gdm/stage-g16a-to-vm.sh

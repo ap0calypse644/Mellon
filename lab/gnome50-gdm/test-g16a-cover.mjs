@@ -140,7 +140,8 @@ function frame(ms){
     h.prompt._userVerifier._failCounter=1;
     h.cover.observeFailure();
     assert.equal(h.stars.clearCount,1);
-    assert.ok(h.hud.cancelled);
+    assert.ok(!h.hud.cancelled,
+        'Wrong password must not disable all future 5s scans');
     assert.equal(h.cover._feedback.visible,true);
     assert.equal(timers.size,1);
     frame(200);

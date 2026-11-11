@@ -136,7 +136,8 @@ export class GreeterPasswordCover {
         if (result.failures === 0)
             return;
         this._starfield.clear();
-        this._hud.cancelIntro();
+        // Keep the recurring scan alive across failed passwords; its
+        // visual layer stays beneath the red native-auth failure warning.
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
         this._deniedUntil = this._deniedStartedAt + 1.5;
         this._feedback.opacity = 255;

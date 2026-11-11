@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-greeter@local",
-  "name": "Mellon Greeter G1.6A — Lock-Screen-Matched Password Cover (VM only)",
-  "description": "Native GDM user selection preserved; password prompt covered by M8-like nonreactive astronomy and SHOW LOGIN recovery. VM-only prototype.",
+  "name": "Mellon Greeter G1.6A.1 — GDM Password Cover + Resilient Scan (VM only)",
+  "description": "VM-only GNOME 50 test greeter: M8-style password cover, safely restored native UI, resilient repeating Observatory grid scan.",
   "shell-version": [
     "50"
   ],

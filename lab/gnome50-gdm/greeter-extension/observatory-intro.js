@@ -14,6 +14,7 @@ export class ObservatoryIntro {
         this._root = root;
         this._panels = panels;
         this._started = false;
+        this._everStarted = false;
         this._stopped = false;
         this._sweeping = false;
         this._destroyed = false;
@@ -54,14 +55,24 @@ export class ObservatoryIntro {
             width < 320 || height < 240)
             return;
         if (this._started) {
-            if (width !== this._screenSize[0] ||
-                height !== this._screenSize[1])
-                this.stop(); // No distorted grid after a display resize.
-            return;
+            if (width === this._screenSize[0] &&
+                height === this._screenSize[1])
+                return;
+            // GDM may allocate the same HUD at intermediate sizes while
+            // switching the login prompt or the display mode. Never call
+            // stop() here: it permanently disables all later 5s sweeps.
+            if (this._repeatTimerId) {
+                GLib.source_remove(this._repeatTimerId);
+                this._repeatTimerId = 0;
+            }
+            this._finishSweep(false);
+            this._started = false;
         }
+        const firstSweep = !this._everStarted;
+        this._everStarted = true;
         this._started = true;
         this._screenSize = [width, height];
-        this._startSweep(true);
+        this._startSweep(firstSweep);
 
         // From the first sweep START, begin another one every five seconds.
         // This source only WAKES at 5s intervals; it never redraws while idle.
