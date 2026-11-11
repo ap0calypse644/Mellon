@@ -16,8 +16,8 @@ function isUnitPoint(point) {
 }
 export function validateLibrary(library) {
     if (library?.schema !== LIBRARY_SCHEMA ||
-        !Array.isArray(library.scenes) || library.scenes.length !== 6)
-        throw new Error('M6 requires exactly six pilot scenes');
+        !Array.isArray(library.scenes) || library.scenes.length !== 12)
+        throw new Error('M6.4 requires exactly twelve curated scenes');
     const seen = new Set(), backgrounds = new Set();
     for (const scene of library.scenes) {
         const n = scene.vertices?.length;
@@ -51,7 +51,7 @@ export function validateLibrary(library) {
             throw new Error(`Malformed scene: ${scene.id}`);
     }
     if (backgrounds.size !== 6)
-        throw new Error('One constellation required for each of six backgrounds');
+        throw new Error('At least one constellation required on each of six backgrounds');
     return library;
 }
 
