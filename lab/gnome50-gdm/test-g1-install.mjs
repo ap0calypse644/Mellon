@@ -40,6 +40,20 @@ for(const forbidden of ['systemctl restart','virsh reboot','virsh destroy',
     assert.ok(![i,r,s,a].some(f=>f.includes(forbidden)),
         'Unsafe system-changing command in G1 scripts: '+forbidden);
 }
-assert.ok(a.includes("if ! sudo -n true"));
+assert.ok(a.includes("ssh -tt -o BatchMode=yes mellon"));
+assert.ok(a.includes("sudo python3 -c"));
+assert.ok(!a.includes("sudo -n"));
+assert.ok(a.includes("VM='mellon-gnome50-lab'"));
+const py=await read('./read-effective-greeter-settings.py');
+assert.ok(py.includes('greeter.pw_name != "gdm-greeter"'));
+assert.ok(py.includes('"DCONF_PROFILE": profile'));
+assert.ok(py.includes('user=uid,'));
+assert.ok(py.includes('group=greeter.pw_gid,'));
+assert.ok(py.includes('extra_groups=[]'));
+assert.ok(py.includes('No GDM changes made.'));
+for (const forbidden of ['os.system(', 'os.chmod(', 'os.chown(',
+    'write_text(', 'write_bytes(', 'unlink(', 'sudo -S']) {
+    assert.ok(!py.includes(forbidden), 'Read-only greeter Python restriction: '+forbidden);
+}
 assert.ok(a.includes('getpwuid(uid)'));
 console.log('PASS G1 VM install safety: vendor profile preserved, atomic copy, reversible dconf, no user extension changes');

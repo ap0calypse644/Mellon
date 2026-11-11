@@ -49,6 +49,7 @@ jobs:
           bash -n lab/gnome50-gdm/preflight-activation.sh
           bash -n lab/gnome50-gdm/audit-extension-enablement.sh
           bash -n lab/gnome50-gdm/audit-effective-greeter-settings.sh
+          python3 -c 'import ast,pathlib; ast.parse(pathlib.Path("lab/gnome50-gdm/read-effective-greeter-settings.py").read_text())'
           bash -n lab/gnome50-gdm/install-g1-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g1-in-guest.sh
           bash -n lab/gnome50-gdm/stage-g1-to-vm.sh

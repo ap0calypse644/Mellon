@@ -116,9 +116,13 @@ uninstaller, with the verified preinstall qcow2 checkpoint as last resort.
 account for deciding whether the dynamic `gdm-greeter` account has
 disabled extensions. The new audit obtains the live GNOME Shell process
 UID and its whitelisted dconf config paths, then reads GSettings as that
-specific UID. It requires `sudo -n` in the VM. If sudo credentials
-aren't configured for non-interactive use, STOP; use interactive guest
-sudo rather than weakening permissions or editing the greeter user-db.
+specific UID. It uses a standard interactive `sudo` prompt inside the guest
+through `ssh -tt`. Enter the **test VM's** `test1` password when
+prompted; no sudo policy modification or stored password is needed.
+The Bash wrapper sends only read-only Python source over SSH as a
+base64-encoded command argument, avoiding any file writes to the VM.
+It does NOT run privileged commands on BlackPearl. If the greeter
+settings are not the expected defaults, stop and inspect before install.
 
 ```bash
 (
