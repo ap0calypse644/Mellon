@@ -40,7 +40,9 @@ Every constellation still has eight or more source stars.
 **Privacy and recovery remain unchanged:** GNOME exclusively owns
 password text, focus, verification, retries, and unlock. Mellon observes
 only native buffer length changes and GNOME's failure counter. It does not
-inspect or record keys, timestamps of typing, or entered characters.
+inspect raw keys or entered characters. The effects module holds transient
+monotonic timestamps for *visual animation scheduling only*; it never logs
+or persists password contents, lengths or typing times.
 `SHOW LOGIN` reveals the untouched native prompt on demand.
 No number of invalid attempts automatically reveals the prompt.
 A broken/missing asset must fail open.
