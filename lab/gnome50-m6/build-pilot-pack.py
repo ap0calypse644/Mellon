@@ -39,7 +39,7 @@ def bilinear(image: np.ndarray, x: float, y: float) -> np.ndarray:
 
 
 def star_sprite(dim: np.ndarray, original: np.ndarray, x: float, y: float,
-                gain: float = 5.20, expand: float = 1.90) -> Image.Image:
+                gain: float = 6.20, expand: float = 1.90) -> Image.Image:
     """Recover real photographed light; make a sparse alpha patch for St.Widget.
 
     Alpha inversion produces a transparent texture which, composited at 100%
@@ -101,7 +101,7 @@ def star_sprite(dim: np.ndarray, original: np.ndarray, x: float, y: float,
 
 
 def build(selection: Path, index: Path, database: Path, corpus: Path,
-          dest: Path, *, gain: float = 5.20, expand: float = 1.90):
+          dest: Path, *, gain: float = 6.20, expand: float = 1.90):
     config = json.loads(selection.read_text())
     qa_index = json.loads(index.read_text())
     report = json.loads(database.read_text())
@@ -212,7 +212,7 @@ def build(selection: Path, index: Path, database: Path, corpus: Path,
                 'qa_index_sha256':sha256(index),
                 'pilot_selection_sha256':sha256(selection),
                 'status':'pilot-only-not-validated-in-GNOME',
-                'star_light_renderer':'mellon-m6-photo-light-v2',
+                'star_light_renderer':'mellon-m6-photo-light-v3',
                 'enhance_gain':gain,
                 'expand_factor':expand,
             },
@@ -239,7 +239,7 @@ if __name__=='__main__':
     p.add_argument('--database',type=Path,required=True)
     p.add_argument('--corpus',type=Path,default=Path('assets/starfield/corpus-v1/catalogs'))
     p.add_argument('--out',type=Path,required=True)
-    p.add_argument('--gain',type=float,default=5.20)
+    p.add_argument('--gain',type=float,default=6.20)
     p.add_argument('--expand',type=float,default=1.90)
     a=p.parse_args()
     build(a.selection,a.index,a.database,a.corpus,a.out,gain=a.gain,expand=a.expand)
