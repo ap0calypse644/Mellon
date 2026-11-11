@@ -118,6 +118,20 @@ pass into the top-eight v9 matches for any background. Its original
 per-template checkpoints remain available for a future visual review;
 this release does not arbitrarily promote a lower-ranked Orion.
 
+To inspect the previously saved Orion bow quality scores (READ ONLY; no search):
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    python3 lab/gnome50-m6/audit-orion-checkpoints.py
+)
+```
+
+This reports any saved 18-star Orion candidates and their original
+geometric/brightness ranks. A higher score still requires full-size
+visual inspection before Orion joins the curated library.
+
 ---
 
 ## Historical M6.0–M6.3 documentation (superseded for installation)
