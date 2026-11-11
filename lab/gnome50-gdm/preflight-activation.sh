@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # G1 read-only preflight for system greeter extension activation.
-# Uses SSH alias 'mellon' but performs no sudo or file writes.
+# Uses SSH alias 'mellon' and performs no privileged operations or file writes.
 (
     set -euo pipefail
     VM='mellon-gnome50-lab'
