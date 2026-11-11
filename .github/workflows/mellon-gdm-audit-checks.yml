@@ -23,6 +23,7 @@ jobs:
           bash -n lab/gnome50-gdm/audit-guest-greeter.sh
           bash -n lab/gnome50-gdm/audit-live-greeter.sh
           bash -n lab/gnome50-gdm/checkpoint-before-gdm.sh
+          bash lab/gnome50-gdm/test-checkpoint-state.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-guest-greeter.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-live-greeter.sh
           grep -Fq "gnome-shell" lab/gnome50-gdm/audit-live-greeter.sh

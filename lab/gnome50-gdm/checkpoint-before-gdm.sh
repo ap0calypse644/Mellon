@@ -75,7 +75,10 @@ PY
         echo "Then verify: virsh -c $URI domstate $VM" >&2
         exit 1
     fi
-    if virsh -c "$URI" domstate "$VM" | grep -viqx 'shut off'; then
+    # virsh domstate may print an extra empty line. grep -v previously
+    # interpreted that blank line as an unexpected VM state, rejecting an
+    # otherwise fully powered-off VM. Compare only the canonical first line.
+    if [[ "$(virsh -c "$URI" domstate "$VM" | head -n 1)" != 'shut off' ]]; then
         echo 'VM state changed during preflight; refusing.' >&2
         exit 1
     fi
