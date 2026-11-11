@@ -108,10 +108,20 @@ To return to library-wide random mode:
 )
 ```
 
-To restore the previous guest version, use the copied
-`pre-m6-*` backup in the guest, or check out the last known-good
-M6.3 version in a separate trusted local worktree and deploy its
-VM-only installer. Do not update BlackPearl's host extension.
+To restore the previous guest version from the most recent
+`pre-m6-*` backup, run this **guest-only** rollback script from BlackPearl:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    bash lab/gnome50-m6/rollback-last-guest-install.sh
+    virsh -c qemu:///system reboot mellon-gnome50-lab
+)
+```
+
+The replaced M6.4 extension is preserved as another guest-local backup.
+Do not update BlackPearl's host extension.
 
 **Orion's eighteen-star bow is not included automatically.** It didn't
 pass into the top-eight v9 matches for any background. Its original
