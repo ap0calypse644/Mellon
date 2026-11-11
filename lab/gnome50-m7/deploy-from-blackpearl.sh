@@ -43,7 +43,7 @@
         echo 'Guest scene library differs from the approved M6.4 pack; refusing.' >&2
         exit 1
     fi
-    ssh -o BatchMode=yes mellon 'python3 - <<'\''PY'\''
+    ssh -o BatchMode=yes mellon 'python3 -' <<'PY'
 import json
 from pathlib import Path
 p=Path.home()/".local/share/gnome-shell/extensions/mellon-lab@local/metadata.json"
@@ -54,7 +54,7 @@ if meta.get("uuid") != "mellon-lab@local" or not (
 ):
     raise SystemExit("Not an approved Mellon M6.4/M7 test extension")
 print("PASS: Known-good Mellon guest extension identity")
-PY'
+PY
 
     echo
     echo '=== BUILD CHECKSUMMED M7 GUEST STAGING AREA ==='
