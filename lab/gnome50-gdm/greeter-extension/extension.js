@@ -8,16 +8,19 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {validateLibrary, pickScene} from './scene-data.js';
 import {hudMetadata} from './hud-state.js';
 import {ObservatoryHUD} from './observatory-hud.js';
+import {GreeterStarfield} from './greeter-starfield.js';
+import {GreeterLengthObserver} from './greeter-length-observer.js';
 
-// Mellon G1.3: PHOTO + OBSERVATORY HUD, GNOME 50.1 test VM.
-// The source-approved M8.3.2 HUD includes a subtle 5-second grid scan.
-// All mapping segments remain unlit until a future separate GDM
-// read-only visual adapter is reviewed and explicitly integrated.
+// Mellon G1.4: PHOTO + HUD + SOURCE-PHOTOGRAPHIC CONSTELLATION, VM ONLY.
+// The GDM adapter observes only the visible native password-field length.
+// No password text, key event, login result, or verifier is accessed.
+// The user selector, GNOME authentication and focus remain native.
 // GNOME 50 LoginDialog has NO _backgroundGroup. Its own vfunc_allocate()
 // only allocates the native login widgets. Mount instead as a NONREACTIVE
 // SIBLING BELOW LoginDialog in screenShield._lockDialogGroup.
 // Never inspect authentication or keyboard events; never cover the prompt.
 const GREETER_POLL_MS = 350;
+const GREETER_LENGTH_SYNC_MS = 250;
 const GREETER_MAX_ATTEMPTS = 90;
 
 function readJSON(path) {
@@ -31,13 +34,17 @@ export default class MellonGreeter extends Extension {
     enable() {
         this._background = null;
         this._hud = null;
+        this._starfield = null;
+        this._observer = null;
+        this._dialog = null;
+        this._syncId = 0;
         this._pollId = 0;
         this._attempts = 0;
         this._stopped = false;
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.3] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.4] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -45,13 +52,15 @@ export default class MellonGreeter extends Extension {
             this._library = validateLibrary(readJSON(GLib.build_filenamev([
                 this.path, 'library.json',
             ])));
-            // Validate *all* source photos before changing GDM visuals.
-            // A missing asset leaves the native greeter completely intact.
+            // Verify all twelve photographs AND every original star sprite.
+            // A single missing source asset fails open to native GDM.
             for (const scene of this._library.scenes) {
-                const image = Gio.File.new_for_path(
-                    GLib.build_filenamev([this.path, scene.image]));
-                if (!image.query_exists(null))
-                    throw new Error('Missing greeter photo in approved pack');
+                for (const rel of [scene.image, ...scene.sprites]) {
+                    const asset = Gio.File.new_for_path(
+                        GLib.build_filenamev([this.path, rel]));
+                    if (!asset.query_exists(null))
+                        throw new Error('Missing G1.4 source photograph or sprite');
+                }
             }
         } catch (error) {
             this._warn(error);
@@ -98,10 +107,11 @@ export default class MellonGreeter extends Extension {
 
         let photo = null;
         let hud = null;
+        let starfield = null;
+        let observer = null;
         try {
-            // The original 12-scene curated library is read-only. GDM
-            // selects one scene at startup; future G1.3 will draw original
-            // star sprites and validated connectors over this same photo.
+            // Retain the single approved photo and actual selected scene.
+            // Source-derived star sprites use this identical cover transform.
             const scene = pickScene(this._library, {mode: 'random-on-lock'});
             const file = Gio.File.new_for_path(
                 GLib.build_filenamev([this.path, scene.image]));
@@ -120,27 +130,87 @@ export default class MellonGreeter extends Extension {
             // A sibling BELOW the native LoginDialog. No auth actor moves,
             // no changes to its custom vfunc_allocate(), and no focus grab.
             container.insert_child_below(photo, dialog);
-            // Reuse the M8.3.2 instrument cluster and bounded grid scan.
-            // The entire HUD remains NONREACTIVE and below the native
-            // LoginDialog. It sees photographic metadata only, not input.
+            // Visual-only HUD: same approved M8.3.2 instrument cluster.
             hud = new ObservatoryHUD(container, hudMetadata(scene));
+            const sprites = scene.sprites.map(rel =>
+                GLib.build_filenamev([this.path, rel]));
+            starfield = new GreeterStarfield(container, scene, sprites, hud);
+            // Exact compositor stacking: photo < source stars < HUD <
+            // native LoginDialog. Nothing is inserted into LoginDialog.
+            container.insert_child_below(starfield.actor, dialog);
             container.insert_child_below(hud.actor, dialog);
+            // Keep prompt observation separate from all drawing code.
+            // Only the active native password field length is sampled.
+            observer = new GreeterLengthObserver(
+                length => starfield.setLength(length));
             this._hud = hud;
+            this._starfield = starfield;
+            this._observer = observer;
             this._background = photo;
+            this._dialog = dialog;
             this._sceneId = scene.id;
-            console.log('[Mellon Greeter G1.3] photo, HUD and grid mounted below LoginDialog');
+            this._syncInput();
+            if (!this._syncId) {
+                this._syncId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+                    GREETER_LENGTH_SYNC_MS, () => {
+                        if (this._stopped || !this._background ||
+                            Main.sessionMode.currentMode !== 'gdm') {
+                            this._syncId = 0;
+                            this._observer?.sync(null, false);
+                            return GLib.SOURCE_REMOVE;
+                        }
+                        // The current login dialog may be replaced on
+                        // user selection or a recovery flow.
+                        if (Main.screenShield?._dialog !== this._dialog) {
+                            this._syncId = 0;
+                            this._unmount();
+                            this._tryMount();
+                            return GLib.SOURCE_REMOVE;
+                        }
+                        this._syncInput();
+                        return GLib.SOURCE_CONTINUE;
+                    });
+            }
+            console.log('[Mellon Greeter G1.4] photo, stars and HUD layered below native login');
         } catch (error) {
+            // A failed source-star mount cannot strand native authentication.
+            observer?.destroy();
+            starfield?.destroy();
             hud?.destroy();
             photo?.destroy();
+            this._background = null;
+            this._hud = null;
+            this._starfield = null;
+            this._observer = null;
+            this._dialog = null;
             this._warn(error);
         }
+    }
+
+    _syncInput() {
+        // The observer owns all access to GNOME's password buffer.
+        // Only a scalar length is handed to the visual starfield.
+        this._observer?.sync(this._dialog,
+            Main.sessionMode.currentMode === 'gdm');
+    }
+
+    _unmount() {
+        this._observer?.destroy();
+        this._observer = null;
+        this._starfield?.destroy();
+        this._starfield = null;
+        this._hud?.destroy();
+        this._hud = null;
+        this._background?.destroy();
+        this._background = null;
+        this._dialog = null;
     }
 
     _warn(error) {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.3] ${key}`);
+            console.warn(`[Mellon Greeter G1.4] ${key}`);
             this._lastError = key;
         }
     }
@@ -151,10 +221,11 @@ export default class MellonGreeter extends Extension {
             GLib.source_remove(this._pollId);
             this._pollId = 0;
         }
-        this._hud?.destroy();
-        this._hud = null;
-        this._background?.destroy();
-        this._background = null;
+        if (this._syncId) {
+            GLib.source_remove(this._syncId);
+            this._syncId = 0;
+        }
+        this._unmount();
         this._library = null;
         this._sceneId = null;
     }

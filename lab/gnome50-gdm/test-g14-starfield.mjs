@@ -31,9 +31,11 @@ assert.ok(extra.includes('buffer.get_length()'));
 assert.ok(extra.includes('this._onLength(amount)'));
 assert.ok(extra.includes('this._onLength(0)'));
 const activeGDM=await gdm('extension.js');
-assert.ok(!activeGDM.includes('greeter-starfield.js'));
-assert.ok(!activeGDM.includes('greeter-length-observer.js'));
-assert.ok(!activeGDM.includes('new GreeterStarfield('));
+assert.ok(activeGDM.includes("from './greeter-starfield.js'"));
+assert.ok(activeGDM.includes("from './greeter-length-observer.js'"));
+assert.ok(activeGDM.includes('new GreeterStarfield('));
+assert.ok(activeGDM.includes('new GreeterLengthObserver('));
+assert.ok(activeGDM.includes('GREETER_LENGTH_SYNC_MS = 250'));
 for(const source of [star,extra]){
     for(const forbidden of [
         'get_text()', 'get_text(', 'getAnswer(', 'get_password(',
@@ -43,4 +45,4 @@ for(const source of [star,extra]){
     ]) assert.ok(!source.includes(forbidden),
         'G1.4 modules must not read auth data: '+forbidden);
 }
-console.log('PASS G1.4: source-only photo-derived stars, M8 effects parity, no GDM auth data, G1.3.1 runtime unchanged');
+console.log('PASS G1.4: source-only photo-derived stars, M8 effects parity, no GDM auth data, G1.4 integration limited to visual adapters');

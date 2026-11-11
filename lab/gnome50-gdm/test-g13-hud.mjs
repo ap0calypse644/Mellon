@@ -35,4 +35,4 @@ for(const forbidden of [
   'get_password', 'prompted', 'getAnswer(', 'PAM',
   'set_child_above_sibling(', 'insert_child_above('
 ]) assert.ok(!source.includes(forbidden),'No GDM authentication touching: '+forbidden);
-console.log('PASS G1.3: unchanged approved M8 HUD + five-second grid; mounted under native GDM login, no auth code');
+console.log('PASS G1.4: approved GDM HUD and five-second grid remain intact below native GDM login');

@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-greeter@local",
-  "name": "Mellon Greeter G1.3 — Observatory HUD + Photo (VM only)",
-  "description": "Non-interactive approved photo, scene metadata HUD and 5s grid behind GDM LoginDialog. No GDM authentication access. VM only.",
+  "name": "Mellon Greeter G1.4 — Photo Constellation and Observatory (VM only)",
+  "description": "GDM-only photographic constellation stars and connecting edges synchronized to native password-field length, with Observatory HUD. Never reads password text.",
   "shell-version": [
     "50"
   ],

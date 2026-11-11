@@ -18,6 +18,11 @@ assert.ok(source.includes('dialog.get_parent() !== container'));
 assert.ok(!source.includes('dialog?._backgroundGroup'));
 assert.ok(source.includes('container.insert_child_below(photo, dialog)'));
 assert.ok(source.includes('container.insert_child_below(hud.actor, dialog)'));
+assert.ok(source.includes('container.insert_child_below(starfield.actor, dialog)'));
+assert.ok(source.includes('new GreeterLengthObserver('));
+assert.ok(source.includes('new GreeterStarfield('));
+assert.ok(source.includes('this._observer?.destroy()'));
+assert.ok(source.includes('this._starfield?.destroy()'));
 assert.ok(source.includes('new ObservatoryHUD(container, hudMetadata(scene))'));
 assert.ok(source.includes("import {hudMetadata} from './hud-state.js'"));
 assert.ok(source.includes("import {ObservatoryHUD} from './observatory-hud.js'"));
@@ -44,4 +49,4 @@ assert.equal(scene,await readFile(
 // The existing user lock extension is a separate module and need not be
 // adapted to accept the gdm mode.
 assert.ok(lock.includes("Main.sessionMode.currentMode !== 'unlock-dialog'"));
-console.log('PASS G1.3: GDM-only photo+Observatory HUD below LoginDialog, no authentication interception, bounded cleanup');
+console.log('PASS G1.4: source-photo starfield+HUD below native LoginDialog, observer isolated, bounded cleanup');
