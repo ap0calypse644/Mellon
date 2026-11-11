@@ -21,9 +21,13 @@ jobs:
         shell: bash
         run: |
           bash -n lab/gnome50-gdm/audit-guest-greeter.sh
+          bash -n lab/gnome50-gdm/audit-live-greeter.sh
           grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-guest-greeter.sh
+          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-live-greeter.sh
+          grep -Fq "gnome-shell" lab/gnome50-gdm/audit-live-greeter.sh
+          grep -Fq -- "--mode=gdm" lab/gnome50-gdm/audit-live-greeter.sh
           grep -Fq 'test "$(id -un)"' lab/gnome50-gdm/audit-guest-greeter.sh
-          if grep -En '(^|[[:space:]])(sudo|rm|mv|cp|systemctl[[:space:]]+(restart|stop|start|enable)|dconf[[:space:]]+update|gsettings[[:space:]]+set|virsh.*(revert|restore|destroy|shutdown))([[:space:]]|$)' lab/gnome50-gdm/audit-guest-greeter.sh; then
+          if grep -En '(^|[[:space:]])(sudo|rm|mv|cp|systemctl[[:space:]]+(restart|stop|start|enable)|dconf[[:space:]]+update|gsettings[[:space:]]+set|virsh.*(revert|restore|destroy|shutdown))([[:space:]]|$)' lab/gnome50-gdm/audit-guest-greeter.sh lab/gnome50-gdm/audit-live-greeter.sh; then
             echo 'Refusing mutation in read-only greeter audit' >&2
             exit 1
           fi
