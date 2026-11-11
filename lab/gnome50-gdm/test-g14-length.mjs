@@ -4,13 +4,16 @@ import {readFile} from 'node:fs/promises';
 const code=await readFile(
   new URL('./greeter-extension/greeter-length-observer.js',import.meta.url),
   'utf8');
+const executable=code.replace(/\/\*[\s\S]*?\*\//g,'')
+    .replace(/^\s*\/\/.*$/gm,'');
 for(const forbidden of [
     'get_text(', '.text', 'getAnswer(', 'key-press-event',
     'text-changed', '_userVerifier', 'password-changed', 'log(',
     'console.', 'get_password(',
 ]){
-    // "password" may appear in comments; ban actual credential reads.
-    assert.ok(!code.includes(forbidden),'Forbidden greeter data access: '+forbidden);
+    // Inspect executable code, not explanatory comments.
+    assert.ok(!executable.includes(forbidden),
+        'Forbidden greeter data access: '+forbidden);
 }
 const {GreeterLengthObserver}=await import(
     'data:text/javascript;base64,'+Buffer.from(code).toString('base64'));

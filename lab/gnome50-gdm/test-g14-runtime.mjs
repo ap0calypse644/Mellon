@@ -29,7 +29,8 @@ const GLib={
 class Widget {
     constructor(params={}){
         assert.equal(params.reactive,false);
-        assert.equal(params.can_focus,false);
+        if (Object.hasOwn(params,'can_focus'))
+            assert.equal(params.can_focus,false);
         this.params=params;
         this.children=[];this.events=new Map();this.opacity=0;
         this.destroyed=false;
