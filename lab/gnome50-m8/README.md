@@ -1,50 +1,50 @@
-# Mellon M8.3.1 — Full-Screen Grid Sweep (GNOME 50.1 test VM)
+# Mellon M8.3.2 — Grid sweep every five seconds (GNOME 50.1 VM only)
 
-**M8.2 is the visually accepted baseline.** M8.3.1 replaces M8.3's
-short corner-only calibration beam with a larger, cinematic *full-screen
-translucent grid* lighting up from left to right. The display returns to the
-existing Observatory and real photographic constellation after one pass.
+**Status:** code and synthetic tests ready for a new guest visual test.
+M8.3.1's visually approved full-screen cyan grid remains exactly the same
+in appearance. **Only its scheduling changes.**
 
-## New visual
+## Behavior
 
-- A grid of approximately **23 × 14 cells at 1920 × 1080**, sized from
-  the actual guest viewport (12–36 columns, 5–24 rows).
-- The faint cyan grid appears over the **whole screen**, including the
-  central nebula; columns light up consecutively **left to right**,
-  with a subtle stagger inside each column. Already scanned cells retain
-  a soft afterglow until the whole grid disappears.
-- One slightly brighter leading scan line, cool cyan cell borders, and
-  lightly tinted cell fills. The approved photo/stars remain visible
-  throughout; no artificial stars or changes to constellation geometry.
-- The HUD instruments fade in as before and are drawn above the grid.
-  A small rectangular region around **SHOW LOGIN** is deliberately
-  excluded from the grid to preserve immediate visual recovery.
-- Exactly **one 1.85-second intro on each lock**, with a single 50ms
-  transient GLib timer and one St.DrawingArea. No separate actors for
-  each cell, no shader, no perpetual rendering loop.
-- The drawing area is non-interactive and cannot intercept keystrokes,
-  focus, clicks or GNOME authentication. Failed authentication, SHOW LOGIN,
-  resizing or unlocking immediately terminates its timer and hides it.
-- Grid still scans on small viewports even if M8.1's optional corner
-  instruments are hidden. Resizing *during* scanning stops it safely.
+The first full-screen sweep starts when the lock scene appears. Subsequent
+sweeps **start every 5 seconds**, measured from the start of the previous
+sweep: 0, 5, 10, 15 seconds, etc. Each complete left-to-right grid pass
+runs for **1.85 seconds**, leaving approximately **3.15 seconds idle** with
+the grid actor hidden and no animation-frame timer.
 
-## Preserved
+On the FIRST sweep only, the existing corner instruments fade in as before.
+On all following sweeps, the Observatory HUD remains fully visible and
+opaque; the translucent grid moves across the photo behind the panels,
+except for the deliberately excluded SHOW LOGIN visibility region.
 
-M8.2 mapping indicators and completion glint, M7.1 strong star ignition,
-random activation/Backspace and connection geometry, all 12 vetted original
-photographs, native GNOME authentication, read-only failure observation,
-central UNAUTHORIZED ACCESS alert, and manual SHOW LOGIN recovery.
+This uses **one lightweight recurring 5,000ms GLib scheduling source**
+and a **short-lived 50ms GLib animation source active only during a sweep**.
+There is no continuous 20fps idle render loop and no new star processing.
 
-Original M7.1 stellar-effects, M6 scene-data, and FailureTracker remain
-byte-identical. **Never install on the BlackPearl host GNOME.**
+The grid remains a *single*, non-reactive `St.DrawingArea`, not hundreds
+of cell actors. The 23×14 grid at 1920×1080 keeps its existing geometry,
+cool cyan lighting, left-to-right order, trailing afterglow and fade.
 
-## Run synthetic verification
+### Safety and lifecycle
+
+- `SHOW LOGIN`, guest unlock, extension destroy, an incorrect-password
+  warning or resizing **cancels both timers permanently** for that lock.
+  No repeat sources are left running after the native login is exposed.
+- The native GNOME password prompt is untouched. M8.2's mapping stages,
+  M7.1 source-photo sprites and connectors, and the red center warning
+  are unmodified. No keyboard or password data enters the grid code.
+- Subsequent lock sessions create a fresh sequence as usual.
+- BlackPearl host GNOME is **never modified**; test only in
+  `mellon-gnome50-lab`.
+
+## Verification
 
 ```bash
 (
     set -euo pipefail
     cd "$HOME/go/src/ap0calypse644/Mellon"
     node lab/gnome50-m8/test-intro.mjs
+    node lab/gnome50-m8/test-intro-runtime.mjs
     node lab/gnome50-m8/test-m8-regression.mjs
     node lab/gnome50-m8/test-mapping.mjs
     node lab/gnome50-m8/test-hud.mjs
@@ -53,56 +53,62 @@ byte-identical. **Never install on the BlackPearl host GNOME.**
 )
 ```
 
-CI runs all above plus earlier M5/M6/M7 regression suites. This
-does **not** substitute for real GNOME 50.1 guest visual testing.
+`test-intro-runtime.mjs` simulates GNOME's GLib timers and an inert
+drawing-area actor. It checks 0/5/10s starts, disappearance at 1.85s,
+no high-frequency work in the 3.15s idle interval, stable HUD opacity
+after the first sweep, and cancellation during scans, between scans,
+on resize and on extension destruction.
 
-## Deploy from BlackPearl ONLY to the guest
+GitHub Actions runs all M8 tests plus the earlier M7/M6/M5 regression
+suite. Passing CI does not replace an actual GNOME 50.1 guest test.
+
+## Deploy to test VM only
 
 ```bash
 (
     set -euo pipefail
     cd "$HOME/go/src/ap0calypse644/Mellon"
     git -c core.hooksPath=/dev/null pull --ff-only origin main
-    node lab/gnome50-m8/test-intro.mjs
+    node lab/gnome50-m8/test-intro-runtime.mjs
     node lab/gnome50-m8/test-m8-regression.mjs
     bash lab/gnome50-m8/deploy-from-blackpearl.sh
     virsh -c qemu:///system reboot mellon-gnome50-lab
 )
 ```
 
-The installer verifies guest identity/GNOME 50.1, the VM baseline, all
-original twelve-scene assets with checksums, and existing scene selection.
-It stages and verifies transferred files, backs up the previous VM
-extension under `pre-m8-*`, and atomically swaps only the VM's
-`mellon-lab@local`. It does not touch host GNOME or reboot anything.
+Installer checks guest identity/version and original 12-scene photo pack,
+transfers checksum-verified runtime sources, and backs up the previous
+guest M8 release. It does not touch the host GNOME lock screen.
 
-## In-guest acceptance
+## Guest acceptance
 
-1. Reboot guest, log into `test1`, then lock the *guest session*.
-2. On lock, see a faint cyan grid across the whole guest screen.
-   Left columns brighten before right columns; rows stagger slightly.
-3. The scan reaches the right edge, fades away and **does not loop**.
-4. The existing photographic nebula and stars remain visible behind it;
-   SHOW LOGIN remains legible and clickable throughout.
-5. Once scanning is done, M8.2 mapping (0–8 stages), Backspace,
-   completed-star bloom, and native wrong-password warning still work.
-6. Lock/relock several times; no stale grid or retained animation.
-7. Resize during the sweep; it must stop without covering recovery or
-   freezing the guest. Verify a narrow viewport still produces a grid.
+1. Log into `test1` inside the VM, then lock that guest session.
+2. Observe sweeps beginning on lock, then around 5s, 10s and 15s.
+   Each is identical to the approved left-to-right full-screen grid.
+3. Verify the HUD is *not* repeatedly faded out; it remains steady
+   and legible after its initial appearance.
+4. Wait between sweeps: the grid must completely disappear for about
+   3.15s and no continuous frame rendering should persist.
+5. Click SHOW LOGIN or submit a wrong password early in a sweep:
+   the grid disappears and never restarts during that lock.
+6. Verify Backspace, eight-stage constellation completion, the red
+   failure overlay and native GNOME login are unchanged.
+7. Resize the guest during a sweep: both animation and repetition
+   should stop safely rather than covering the center or recovery.
 
-## Recovery: screenshot-approved M8.2
+## Roll back directly to the previous one-shot M8.3.1
 
 ```bash
 (
     set -euo pipefail
     cd "$HOME/go/src/ap0calypse644/Mellon"
-    bash lab/gnome50-m8/rollback-last-guest-install.sh m8.2
+    bash lab/gnome50-m8/rollback-last-guest-install.sh m8.3.1
     virsh -c qemu:///system reboot mellon-gnome50-lab
 )
 ```
 
-`m8.2` selects a verified M8.2 backup (not M8.1 or an intermediate M8.3).
-Other `m8.1` and `m7.1` rollback choices remain available.
+The `m8.3.1` selector validates both the metadata and absence of the new
+repeat-timer code. The screenshot-approved M8.2 fallback is still
+available as `.../rollback-last-guest-install.sh m8.2`.
 
-**Status:** synthetic source CI validation is required; VM visual acceptance
-is pending. This iteration is for the VM lab only.
+**Approval for BlackPearl host deployment has NOT been given.**

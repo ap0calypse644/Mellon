@@ -1,16 +1,20 @@
 #!/usr/bin/env node
-// M8.3.1 synthetic full-screen grid-sweep verification (no GNOME/VM).
+// M8.3.2 synthetic full-screen grid-sweep verification (no GNOME/VM).
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const source = path => readFile(new URL(path, import.meta.url), 'utf8');
 const load = async path => import('data:text/javascript;base64,' +
     Buffer.from(await source(path)).toString('base64'));
-const {INTRO_DURATION_MS, INTRO_TICK_MS, introFrame,
+const {INTRO_DURATION_MS, INTRO_TICK_MS, INTRO_REPEAT_MS, introFrame,
     gridGeometry, gridCellStrength} = await load('./hud-intro-state.js');
 const {hudLayout} = await load('./hud-layout.js');
 
 assert.equal(INTRO_DURATION_MS, 1850);
 assert.equal(INTRO_TICK_MS, 50);
+assert.equal(INTRO_REPEAT_MS, 5000);
+assert.ok(INTRO_REPEAT_MS > INTRO_DURATION_MS,
+    'Recurring sweeps must have an idle period');
+assert.equal(INTRO_REPEAT_MS - INTRO_DURATION_MS,3150);
 assert.deepEqual(introFrame(0), {
     done: false, progress: 0, sweep: 0,
     gridOpacity: 0, panelOpacity: 0,
@@ -81,4 +85,4 @@ for(let elapsed=0;elapsed<=INTRO_DURATION_MS+100;elapsed+=INTRO_TICK_MS) {
     ticks++;
 }
 assert.ok(ticks<=Math.ceil(INTRO_DURATION_MS/INTRO_TICK_MS));
-console.log('PASS M8.3.1: 23x14 full-screen grid, left-to-right columns, deterministic mosaic, finite 1.85s lifetime');
+console.log('PASS M8.3.2: 23x14 full-screen grid, left-to-right columns, deterministic mosaic, finite 1.85s sweep with 5s start-to-start cadence');

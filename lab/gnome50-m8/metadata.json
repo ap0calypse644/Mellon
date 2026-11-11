@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-lab@local",
-  "name": "Mellon M8.3.1 — Full-Screen Grid Sweep (VM only)",
-  "description": "One-time 1.85-second left-to-right full-screen translucent grid; M8.2 mapping, M7.1 photos and native GNOME authentication unchanged.",
+  "name": "Mellon M8.3.2 — Recurring Observatory Grid Sweep (VM only)",
+  "description": "Full-screen cyan grid sweeps every five seconds (1.85s animation; 3.15s idle); M8.2 mapping, M7.1 photo effects, and native GNOME authentication unchanged.",
   "shell-version": [
     "50"
   ],

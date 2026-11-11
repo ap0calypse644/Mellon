@@ -1,4 +1,4 @@
-name: Mellon M8.3 Observatory HUD (synthetic, no VM)
+name: Mellon M8.3.2 Recurring Observatory Grid (synthetic, no VM)
 on:
   push:
     branches: [main]
@@ -31,6 +31,7 @@ jobs:
           node lab/gnome50-m8/test-hud.mjs
           node lab/gnome50-m8/test-mapping.mjs
           node lab/gnome50-m8/test-intro.mjs
+          node lab/gnome50-m8/test-intro-runtime.mjs
           node lab/gnome50-m8/test-m8-regression.mjs
       - name: Preserve M7.1 light engine and M6/M5 regression checks
         run: |

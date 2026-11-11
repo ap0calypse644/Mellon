@@ -108,7 +108,17 @@ assert.ok(!intro.includes("'allocation-changed',"));
 assert.ok(!intro.includes('key-press-event'));
 assert.ok(!introState.includes('gi://'));
 assert.ok(introState.includes('INTRO_DURATION_MS = 1850'));
+assert.ok(introState.includes('INTRO_REPEAT_MS = 5000'));
+assert.ok(intro.includes('this._repeatTimerId = GLib.timeout_add('));
+assert.ok(intro.includes('INTRO_REPEAT_MS, () =>'));
+assert.ok(intro.includes('this._startSweep(false)'));
+assert.ok(intro.includes('this._startSweep(true)'));
+assert.ok(intro.includes('this._finishSweep(true)'));
+assert.ok(intro.includes('GLib.source_remove(this._repeatTimerId)'));
+assert.ok(intro.includes('this._finishSweep(false)'));
+assert.ok(intro.includes('if (firstSweep)'));
+assert.ok(!intro.includes('this._finished = true'));
 assert.ok(introState.includes('gridGeometry(width, height)'));
 assert.ok(introState.includes('gridCellStrength(frame, column, row, geometry)'));
 
-console.log('PASS M8.3.1: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
+console.log('PASS M8.3.2: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');

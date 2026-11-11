@@ -5,8 +5,8 @@
     set -euo pipefail
     MODE="${1:-latest}"
     case "$MODE" in
-        latest|m7.1|m8.1|m8.2) ;;
-        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1|m8.1|m8.2]' >&2; exit 2 ;;
+        latest|m7.1|m8.1|m8.2|m8.3.1) ;;
+        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1|m8.1|m8.2|m8.3.1]' >&2; exit 2 ;;
     esac
     virsh -c qemu:///system dominfo 'mellon-gnome50-lab' >/dev/null
     ssh -o BatchMode=yes mellon '
@@ -23,7 +23,8 @@
     test -d "$DEST" && test ! -L "$DEST"
     if [[ "$M8_ROLLBACK_MODE" == 'm7.1' ||
           "$M8_ROLLBACK_MODE" == 'm8.1' ||
-          "$M8_ROLLBACK_MODE" == 'm8.2' ]]; then
+          "$M8_ROLLBACK_MODE" == 'm8.2' ||
+          "$M8_ROLLBACK_MODE" == 'm8.3.1' ]]; then
         # Explicit version selection avoids restoring an intermediate
         # broken M8.2 revision after repeated guest-only deployments.
         latest="$(python3 - "$BACKUPS" <<'PY'
@@ -56,6 +57,20 @@ for folder in root.glob('pre-m8-*'):
                 "this.actor.connect('notify::width'" in hud.read_text() and
                 not (folder / 'observatory-intro.js').exists()):
             matches.append(folder.name)
+    elif mode == 'm8.3.1' and data.get('name','').startswith('Mellon M8.3.1'):
+        # Restore the exact user-accepted one-shot grid, never a later
+        # repeating version or older corner-only scanner.
+        renderer = folder / 'observatory-intro.js'
+        envelope = folder / 'hud-intro-state.js'
+        if (renderer.is_file() and not renderer.is_symlink() and
+                envelope.is_file() and not envelope.is_symlink()):
+            js = renderer.read_text()
+            helper = envelope.read_text()
+            if ('new St.DrawingArea({' in js and
+                    'INTRO_DURATION_MS = 1850' in helper and
+                    'INTRO_REPEAT_MS' not in helper and
+                    '_repeatTimerId' not in js):
+                matches.append(folder.name)
     elif mode == 'm8.1' and data.get('name','').startswith('Mellon M8.1'):
         # The earlier broken M8.1 had an unsupported GNOME 50 signal,
         # even though the metadata carries the same version number.

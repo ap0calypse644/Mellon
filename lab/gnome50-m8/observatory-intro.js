@@ -1,20 +1,24 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
-import {INTRO_TICK_MS, introFrame, gridGeometry, gridCellStrength}
+import {INTRO_TICK_MS, INTRO_REPEAT_MS,
+    introFrame, gridGeometry, gridCellStrength}
     from './hud-intro-state.js';
 
 // One GNOME DrawingArea renders the entire grid: no cell actors, no shaders,
-// no repeating idle animation, and no access to the password or key events.
+// and no access to password or key events. A low-frequency 5s cadence
+// activates short-lived 50ms frame updates ONLY during each 1.85s sweep.
 // The overlay is non-reactive; native SHOW LOGIN remains fully clickable.
 export class ObservatoryIntro {
     constructor(root, panels) {
         this._root = root;
         this._panels = panels;
         this._started = false;
-        this._finished = false;
+        this._stopped = false;
+        this._sweeping = false;
         this._destroyed = false;
         this._timerId = 0;
+        this._repeatTimerId = 0;
         this._startedAt = 0;
         this._screenSize = null;
         this._frame = introFrame(0);
@@ -23,7 +27,7 @@ export class ObservatoryIntro {
             source: root, coordinate: Clutter.BindCoordinate.SIZE,
         }));
         this._grid.connect('repaint', area => {
-            if (this._destroyed || this._finished)
+            if (this._destroyed || this._stopped || !this._sweeping)
                 return;
             const [width, height] = area.get_surface_size();
             if (width < 320 || height < 240)
@@ -45,29 +49,58 @@ export class ObservatoryIntro {
     }
 
     onLayout(_rects, width, height) {
-        if (this._destroyed || this._finished ||
+        if (this._destroyed || this._stopped ||
             !Number.isFinite(width) || !Number.isFinite(height) ||
             width < 320 || height < 240)
             return;
         if (this._started) {
             if (width !== this._screenSize[0] ||
                 height !== this._screenSize[1])
-                this.stop(); // Cancel on resize rather than distort the grid.
+                this.stop(); // No distorted grid after a display resize.
             return;
         }
         this._started = true;
         this._screenSize = [width, height];
+        this._startSweep(true);
+
+        // From the first sweep START, begin another one every five seconds.
+        // This source only WAKES at 5s intervals; it never redraws while idle.
+        this._repeatTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+            INTRO_REPEAT_MS, () => {
+                if (this._destroyed || this._stopped) {
+                    this._repeatTimerId = 0;
+                    return GLib.SOURCE_REMOVE;
+                }
+                try {
+                    if (!this._sweeping)
+                        this._startSweep(false);
+                } catch (_) {
+                    this._repeatTimerId = 0; // Current callback self-removes.
+                    this.stop();  // Never strand a guest behind decoration.
+                    return GLib.SOURCE_REMOVE;
+                }
+                return GLib.SOURCE_CONTINUE;
+            });
+    }
+
+    _startSweep(firstSweep) {
+        if (this._destroyed || this._stopped || this._sweeping)
+            return;
+        this._sweeping = true;
         this._startedAt = GLib.get_monotonic_time() / 1000;
         this._frame = introFrame(0);
-        // Begin the instrument fade in the same frame as the grid start;
-        // avoid briefly flashing fully opaque panels before the first tick.
-        for (const panel of Object.values(this._panels))
-            panel.opacity = 0;
+
+        // Only the very FIRST sweep fades in instrument panels.
+        // All later sweeps leave the approved M8.2 HUD fully visible.
+        if (firstSweep)
+            for (const panel of Object.values(this._panels))
+                panel.opacity = 0;
+
         this._grid.show();
         this._grid.queue_repaint();
         this._timerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
             INTRO_TICK_MS, () => {
-                if (this._finished || this._destroyed) {
+                if (this._destroyed || this._stopped || !this._sweeping) {
                     this._timerId = 0;
                     return GLib.SOURCE_REMOVE;
                 }
@@ -76,16 +109,19 @@ export class ObservatoryIntro {
                         this._startedAt;
                     const next = introFrame(elapsed);
                     if (next.done) {
-                        this._finish(true);
+                        this._finishSweep(true);
                         return GLib.SOURCE_REMOVE;
                     }
                     this._frame = next;
-                    for (const panel of Object.values(this._panels))
-                        panel.opacity = next.panelOpacity;
+                    if (firstSweep) {
+                        for (const panel of Object.values(this._panels))
+                            panel.opacity = next.panelOpacity;
+                    }
                     this._grid.queue_repaint();
                     return GLib.SOURCE_CONTINUE;
                 } catch (_) {
-                    this._finish(true);
+                    this._timerId = 0; // Current callback self-removes.
+                    this.stop();
                     return GLib.SOURCE_REMOVE;
                 }
             });
@@ -160,24 +196,34 @@ export class ObservatoryIntro {
         cr.restore();
     }
 
-    _finish(inCallback) {
-        if (this._finished)
+    _finishSweep(inCallback) {
+        if (!this._sweeping)
             return;
-        this._finished = true;
+        this._sweeping = false;
         if (this._timerId) {
             if (!inCallback)
                 GLib.source_remove(this._timerId);
             this._timerId = 0;
         }
-        if (this._grid)
-            this._grid.hide();
+        this._grid?.hide();
         for (const panel of Object.values(this._panels))
             panel.opacity = 255;
         this._frame = introFrame(0);
     }
 
     stop() {
-        this._finish(false);
+        if (this._stopped)
+            return;
+        this._stopped = true;
+        if (this._repeatTimerId) {
+            GLib.source_remove(this._repeatTimerId);
+            this._repeatTimerId = 0;
+        }
+        // Cancels a frame timer immediately, without leaving the 5s source.
+        this._finishSweep(false);
+        this._grid?.hide();
+        for (const panel of Object.values(this._panels))
+            panel.opacity = 255;
     }
 
     destroy() {

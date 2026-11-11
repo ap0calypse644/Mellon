@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mellon M8.3.1: install ONLY in mellon-gnome50-lab, never BlackPearl host GNOME.
+# Mellon M8.3.2: install ONLY in mellon-gnome50-lab, never BlackPearl host GNOME.
 # Reuses the user's already-verified and user-tested M6.4 photo pack; NO search.
 (
     set -euo pipefail
@@ -14,7 +14,7 @@
     STAGING="$(mktemp -d "$HOME/VMs/Mellon/.m8-copy.XXXXXXXX")"
     trap 'rm -rf -- "$STAGING"' EXIT
 
-    echo 'MELLON M8.3.1 // GNOME 50.1 TEST VM ONLY // BLACKPEARL HOST UNTOUCHED'
+    echo 'MELLON M8.3.2 // GNOME 50.1 TEST VM ONLY // BLACKPEARL HOST UNTOUCHED'
     cd "$ROOT"
     test -d "$PACK" && test ! -L "$PACK" || {
         echo "Missing tested M6.4 image pack: $PACK" >&2; exit 1;
@@ -106,7 +106,7 @@ PY
         "cd '.local/share/gnome-shell/extensions/$STAGE_NAME' && sha256sum -c checksums.sha256"
 
     echo
-    echo '=== BACK UP CURRENT GUEST M7.1/M8 AND INSTALL M8.3.1 (ATOMIC RENAME) ==='
+    echo '=== BACK UP CURRENT GUEST M7.1/M8 AND INSTALL M8.3.2 (ATOMIC RENAME) ==='
     ssh -o BatchMode=yes mellon \
         "M8_STAGING='$STAGE_NAME' bash -s" <<'GUEST'
 (
@@ -143,7 +143,7 @@ GUEST
 )
 GUEST
     echo
-    echo 'PASS: Installed M8.3.1 and the unchanged twelve-scene photographs in TEST VM ONLY.'
+    echo 'PASS: Installed M8.3.2 and the unchanged twelve-scene photographs in TEST VM ONLY.'
     echo 'NEXT: reboot ONLY mellon-gnome50-lab, then test locking/unlocking.'
-    echo 'ROLLBACK: bash lab/gnome50-m8/rollback-last-guest-install.sh m8.2'
+    echo 'ROLLBACK: bash lab/gnome50-m8/rollback-last-guest-install.sh m8.3.1'
 )

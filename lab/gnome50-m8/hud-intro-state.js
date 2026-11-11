@@ -1,7 +1,10 @@
-// Mellon M8.3.1 — Full-screen grid arrival, pure visual math only.
+// Mellon M8.3.2 — Repeating full-screen grid sweep, pure visual math only.
 // No GNOME, keyboard, authentication, passwords, sensors, timers or I/O.
 export const INTRO_DURATION_MS = 1850;
 export const INTRO_TICK_MS = 50;
+// Sweep start-to-start cadence. During the remaining 3.15s, the grid is
+// hidden and there is no high-frequency repaint source.
+export const INTRO_REPEAT_MS = 5000;
 
 // Sized by screen, not by photographic constellation or HUD visibility.
 export function gridGeometry(width, height) {
@@ -20,7 +23,7 @@ export function gridGeometry(width, height) {
 const clamp = value => Math.max(0, Math.min(1, value));
 const smooth = value => value * value * (3 - 2 * value);
 
-// A single sweep crosses the whole display from left to right.
+// Each bounded sweep crosses the display from left to right.
 // The left-hand cells retain a faint afterglow until the grid fades away.
 export function introFrame(elapsedMs) {
     if (!Number.isFinite(elapsedMs) || elapsedMs < 0)
