@@ -123,10 +123,24 @@ class MVPScene {
             sprite.set_pivot_point(0.5, 0.5);
             return sprite;
         });
+        // A second copy of each ORIGINAL photographic sprite provides
+        // the ignition burst and permanent post-completion bloom. The
+        // texture is identical; no synthetic dots, disks or colors.
+        this._halos = spritePaths.map(path => {
+            const spriteFile = Gio.File.new_for_path(path);
+            const halo = new St.Widget({reactive: false, can_focus: false});
+            halo.set_style(
+                `background-image: url("${spriteFile.get_uri()}"); ` +
+                'background-size: contain; background-repeat: no-repeat;');
+            halo.opacity = 0;
+            halo.set_pivot_point(0.5, 0.5);
+            return halo;
+        });
         let previous = this._canvas;
-        for (const sprite of this._sprites) {
-            dialog.insert_child_above(sprite, previous);
-            previous = sprite;
+        for (let i = 0; i < this._sprites.length; i++) {
+            dialog.insert_child_above(this._halos[i], previous);
+            dialog.insert_child_above(this._sprites[i], this._halos[i]);
+            previous = this._sprites[i];
         }
 
         // The only interactive Mellon actor. It never accepts keyboard focus.
@@ -172,6 +186,7 @@ class MVPScene {
         this._background?.hide();
         this._canvas?.hide();
         this._sprites?.forEach(sprite => sprite.hide());
+        this._halos?.forEach(halo => halo.hide());
         this._recovery?.hide();
         this._feedback?.hide();
         try {
@@ -231,6 +246,12 @@ class MVPScene {
                 }
                 const now = GLib.get_monotonic_time() / 1000000;
                 const fx = this._effects.sample(now);
+                // Latch sustained brightness only AFTER the entire
+                // constellation has completed its spectacular wave.
+                // Backspace/reset clears it through StellarEffects.
+                const persistent = fx.settled ? 1 :
+                    fx.completion === null ? 0 :
+                        clamp((fx.completion - .24) / .70, 0, 1);
                 let changing = fx.busy;
                 // Keep the original M6 125ms fade time constant despite
                 // increasing transient animation frequency to ~16fps.
@@ -245,8 +266,23 @@ class MVPScene {
                     this._sprites[i].opacity = Math.round(255 * this._energy[i]);
                     const wave = fx.completion === null ? 0 :
                         completionWave(fx.completion, this._radialFractions[i]);
-                    const scale = 1 + .22 * fx.ignition[i] + .11 * wave;
+                    const flare = fx.ignition[i];
+                    // Strong flash: the *photographed* star expands and a
+                    // wide translucent copy of the same source pixels
+                    // blooms behind it, without adding a drawn star marker.
+                    const scale = 1 + .75 * flare + .48 * wave +
+                        .18 * persistent;
                     this._sprites[i].set_scale(scale, scale);
+                    const haloScale = 1.35 + 1.30 * flare +
+                        1.15 * wave + .30 * persistent;
+                    this._halos[i].set_scale(haloScale, haloScale);
+                    // The transient flare begins before the base star
+                    // reaches maximum opacity. The settled halo remains
+                    // on while the constellation is fully illuminated.
+                    const bloom = clamp(.98 * flare + 1.05 * wave +
+                        .65 * persistent, 0, .98);
+                    this._halos[i].opacity = Math.round(255 * bloom *
+                        (this._active[i] ? 1 : this._energy[i]));
                     changing ||= this._energy[i] !== target;
                 }
                 this._canvas.queue_repaint();
@@ -285,6 +321,10 @@ class MVPScene {
                     points[i][0] - spriteW * scale / 2,
                     points[i][1] - spriteH * scale / 2);
                 this._sprites[i].set_size(spriteW * scale, spriteH * scale);
+                this._halos[i].set_position(
+                    points[i][0] - spriteW * scale / 2,
+                    points[i][1] - spriteH * scale / 2);
+                this._halos[i].set_size(spriteW * scale, spriteH * scale);
             }
             this._spriteViewport = {width, height};
         }
@@ -293,6 +333,9 @@ class MVPScene {
         const denied = GLib.get_monotonic_time() / 1000000 < this._deniedUntil;
         const rgb = denied ? [1, .37, .48] : [.53, .83, 1];
         const fx = this._effects.sample(GLib.get_monotonic_time() / 1000000);
+        const persistent = fx.settled ? 1 :
+            fx.completion === null ? 0 :
+                clamp((fx.completion - .24) / .70, 0, 1);
         for (const [a, b] of activeEdges(this._scene.edges, this._active)) {
             const intensity = Math.min(this._energy[a], this._energy[b]);
             if (intensity < .01)
@@ -302,8 +345,23 @@ class MVPScene {
             const wave = fx.completion === null ? 0 :
                 .5 * (completionWave(fx.completion, this._radialFractions[a]) +
                       completionWave(fx.completion, this._radialFractions[b]));
-            cr.setSourceRGBA(...rgb, Math.min(.84, (.56 + .22 * wave) * intensity));
-            cr.setLineWidth(Math.max(.6, (1.0 + .38 * wave) * strokeScale));
+            // Completion wave: dramatic broad luminous underlay + strong
+            // concentrated line, using only genuine constellation edges.
+            // After settling, keep both strokes bright and stationary.
+            const glow = Math.max(wave, persistent);
+            if (glow > .01) {
+                cr.setSourceRGBA(...rgb, Math.min(.65,
+                    (.40 * persistent + .58 * wave) * intensity));
+                cr.setLineWidth(Math.max(2.4,
+                    (5.6 + 4.2 * wave) * strokeScale));
+                cr.moveTo(...points[a]);
+                cr.lineTo(...points[b]);
+                cr.stroke();
+            }
+            cr.setSourceRGBA(...rgb, Math.min(.99,
+                (.56 + .37 * persistent + .42 * wave) * intensity));
+            cr.setLineWidth(Math.max(.65,
+                (1.0 + 1.0 * persistent + 2.2 * wave) * strokeScale));
             cr.moveTo(...points[a]);
             cr.lineTo(...points[b]);
             cr.stroke();
@@ -339,11 +397,13 @@ class MVPScene {
         this._recovery?.destroy();
         this._canvas?.destroy();
         this._sprites?.forEach(sprite => sprite.destroy());
+        this._halos?.forEach(halo => halo.destroy());
         this._background?.destroy();
         this._feedback = null;
         this._recovery = null;
         this._canvas = null;
         this._sprites = null;
+        this._halos = null;
         this._active = null;
         this._effects?.reset();
         this._effects = null;
