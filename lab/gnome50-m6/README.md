@@ -1,9 +1,88 @@
 # Mellon M6 — Six-Scene Observatory Pilot (GNOME 50.1 VM only)
 
-**Status:** Built and pushed to GitHub; GJS syntax checks, scene/selection
-unit tests, M5 failure-observer regressions, and synthetic red/blue
-photographic-pixel tests pass. **Not yet loaded or tested in a GNOME VM.**
-No change has been made to the BlackPearl host lock screen.
+**Status:** The six-scene M6.0 pilot was tested successfully in the
+GNOME 50.1 guest. M6.1 adds brighter original-color star light and randomized
+star activation/Backspace removal, with edges gated on BOTH lit endpoints.
+The updated code passes CI synthetic tests; **M6.1 guest testing is pending**.
+No change has been made to BlackPearl's host lock screen.
+
+## M6.1: brighter original stars, randomized illumination and edge gating
+
+M6.0 passed guest testing. These are intentional cosmetic-only follow-ups:
+
+- **Stronger source-photographic illumination.** The generated transparent
+  26×26-pixel star textures now use an RGB-residual gain of **5.20** (was
+  2.65) and original-pixel sampling expansion of **1.90** (was 1.60).
+  Shared RGB scaling prevents independent channel clipping that could make
+  a blue/red star turn white. The tiny PNG remains based on the *real*
+  photographed light profile; it is **not** a drawn white disk or an
+  invented brighter source catalog star. The actual source JPG is unchanged.
+- **Randomize newly lit stars.** On each GNOME password-*length* increase,
+  sample from currently inactive real-star indices *without replacement*.
+  With nine stars, the first character can light any two positions (for
+  example indices 3 and 7), not always stars 0 and 1.
+- **Randomly remove lit stars on Backspace.** On each password-*length*
+  decrease, sample only from **currently active** stars, not the last
+  activated one. Other illuminated stars remain unchanged. Each subsequent
+  insertion is a fresh random choice among the remaining inactive stars.
+- **Only connect two illuminated stars.** Connector rendering now checks
+  the current active mask on **both** endpoints. A line disappears
+  immediately when either endpoint is switched off, even while the source
+  star's light smoothly fades. A line is never drawn to an unlit star.
+- **Same eight stages.** The number of illuminated stars still depends on
+  password **length only**; complex constellations illuminate multiple
+  randomly chosen stars on each early keystroke. After eight characters
+  all selected source stars are on; deleting characters past that stage
+  doesn't extinguish a star until the count drops below eight.
+- **Same authentication and recovery.** Never intercept key codes or raw
+  password content; no input history or random choices are persisted.
+  The GNOME-native password verification, centered flashing
+  `UNAUTHORIZED ACCESS` alert, and **manual-only SHOW LOGIN** remain
+  unchanged. The original M5.4 source is untouched.
+
+### Rebuild only the derived photo assets and upgrade the VM
+
+Because the earlier `m6-pilot-pack` already exists, M6.1 creates
+`~/VMs/Mellon/m6-pilot-pack-v2`. The installer **rejects** an old
+pack even if `MELLON_M6_PACK` points to it. It does **not** rerun
+constellation matching, overwrite v9, or modify the host shell.
+
+Run on BlackPearl:
+
+```bash
+(
+    set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
+    git -c core.hooksPath=/dev/null pull --ff-only origin main
+    bash lab/gnome50-m6/deploy-from-blackpearl.sh
+)
+```
+
+This checks the existing v9 library, generates stronger original-color
+sprites only once, validates the pack, and backs up the currently working
+guest extension under `~/.local/state/mellon/backups/pre-m6-*`
+**inside the VM**. The new pack defaults to the fixed Blue Gold / Leo
+scene; reselect `random-on-lock` if desired. Reboot **only the guest**.
+
+After reboot, lock the VM and perform these acceptance checks in order:
+
+1. Type one character: two randomly chosen source stars should light,
+   noticeably brighter than M6.0; try multiple locks for different pairs.
+2. Continue typing: existing lit stars remain lit as new random stars
+   illuminate. Check that no duplicate/drawn markers appear.
+3. Backspace: randomly selected currently lit stars fade out; their
+   removal is not the reverse of the original activation order.
+4. Only lines joining **both lit stars** appear. Extinguishing either end
+   removes its line immediately. No edge points to an unlit source star.
+5. Try a larger constellation (e.g., 13-star Virgo); it completes in the
+   existing eight stages, with nonsequential/randomized star picks.
+6. Deliberately submit wrong passwords; verify the large centered alert
+   still appears, no number of failed attempts automatically exposes
+   GNOME, and manual SHOW LOGIN still works. Confirm normal unlock/relock.
+
+**Rollback:** repeat the M6.0 deployment from a trusted previous Git
+revision or restore the guest-local `pre-m6-*` backup. Do not install
+either version on BlackPearl's host GNOME shell.
 
 ## Scope
 
