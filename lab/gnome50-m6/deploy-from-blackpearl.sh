@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# M6 VM-only installer: NEVER install on BlackPearl's GNOME shell.
+# M6.4 VM-only installer: NEVER install on BlackPearl's GNOME shell.
 # Builds the six-scene pack from BlackPearl's already-verified local v9 JSON.
-# Backs up currently working guest M6.0 before replacing it; guest reboot is manual.
+# Backs up the installed guest M6.3 before replacing it; guest reboot is manual.
 (
     set -euo pipefail
 
@@ -10,14 +10,14 @@
     VM='mellon-gnome50-lab'
     UUID='mellon-lab@local'
     V9="$HOME/VMs/Mellon/constellation-quality-v9"
-    PACK="${MELLON_M6_PACK:-$HOME/VMs/Mellon/m6-pilot-pack-v4}"
+    PACK="${MELLON_M6_PACK:-$HOME/VMs/Mellon/m6-curated-12-v1}"
     PYTHON="${MELLON_PYTHON:-$HOME/.local/share/mellon-constellations-venv/bin/python}"
     STAGE_NAME=".mellon-m6-stage-$(date +%Y%m%d-%H%M%S)-$$"
     STAGING="$(mktemp -d "$HOME/VMs/Mellon/.m6-copy.XXXXXXXX")"
     trap 'rm -rf -- "$STAGING"' EXIT
 
     cd "$ROOT"
-    echo 'MELLON M6.3 // GNOME 50.1 GUEST ONLY // HOST GNOME UNTOUCHED'
+    echo 'MELLON M6.4 // GNOME 50.1 GUEST ONLY // HOST GNOME UNTOUCHED'
     if [[ ! -x "$PYTHON" ]]; then
         echo "Missing Mellon Python venv: $PYTHON" >&2
         exit 1
@@ -50,7 +50,7 @@
 
     if [[ ! -d "$PACK" ]]; then
         echo
-        echo '=== BUILD SIX-SCENE SOURCE-PIXEL PACK ==='
+        echo '=== BUILD TWELVE-SCENE SOURCE-PIXEL PACK ==='
         "$PYTHON" "$HERE/build-pilot-pack.py" \
             --index "$V9/qa-index.json" \
             --database "$V9/matches-v9.json" \
@@ -70,11 +70,11 @@
     done
     cp -a -- "$PACK/." "$STAGING/"
 
-    # This is a visual-only upgrade: preserve the guest's previously chosen
-    # fixed scene / random-on-lock setting rather than silently resetting it
-    # to the new pack's default Blue Gold / Leo selection. Validate BEFORE
-    # replacing any guest files; the source is JSON only, never executed.
-    if ssh -o BatchMode=yes mellon \
+    # M6.4 intentionally changes the DEFAULT from fixed to random-on-lock.
+    # An explicit opt-in can preserve a guest's previous fixed selection:
+    # MELLON_M64_PRESERVE_MODE=1 bash lab/gnome50-m6/deploy-from-blackpearl.sh
+    # Validate prior JSON before copying it; never evaluate or execute it.
+    if [[ "${MELLON_M64_PRESERVE_MODE:-0}" == "1" ]] && ssh -o BatchMode=yes mellon \
         'test -f "$HOME/.local/share/gnome-shell/extensions/mellon-lab@local/scene-config.json"'; then
         ssh -o BatchMode=yes mellon \
             'cat "$HOME/.local/share/gnome-shell/extensions/mellon-lab@local/scene-config.json"' \
@@ -99,6 +99,8 @@ output_path.write_text(json.dumps(current, indent=2) + '\n')
 print('Preserved guest M6 scene mode:', current['mode'])
 PY
         rm -- "$STAGING/.previous-scene-config.json"
+    else
+        echo 'M6.4 guest selection: random-on-lock (default).'
     fi
 
     if find "$STAGING" -type l -print -quit | grep -q .; then
@@ -120,7 +122,7 @@ PY
     ssh -o BatchMode=yes mellon \
         "cd '$REMOTE_PARENT/$STAGE_NAME' && sha256sum -c checksums.sha256"
     echo
-    echo '=== BACK UP WORKING GUEST M6.2 AND INSTALL M6.3 ==='
+    echo '=== BACK UP WORKING GUEST M6.3 AND INSTALL M6.4 ==='
     ssh -o BatchMode=yes mellon \
         "M6_STAGING='$STAGE_NAME' bash -s" <<'GUEST'
 (
@@ -164,7 +166,7 @@ GUEST
 )
 GUEST
     echo
-    echo 'PASS: M6.3 copied and checksummed ONLY inside mellon-gnome50-lab.'
+    echo 'PASS: M6.4 twelve-scene library installed ONLY inside mellon-gnome50-lab.'
     echo 'NEXT: reboot the GUEST, never BlackPearl; lock the guest and test.'
     echo 'ROLLBACK: bash lab/gnome50-m5/deploy-from-blackpearl.sh'
 )
