@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # M6 VM-only installer: NEVER install on BlackPearl's GNOME shell.
 # Builds the six-scene pack from BlackPearl's already-verified local v9 JSON.
-# Backs up guest M5.4 before replacing it; guest reboot is deliberately manual.
+# Backs up currently working guest M6.0 before replacing it; guest reboot is manual.
 (
     set -euo pipefail
 
@@ -10,14 +10,14 @@
     VM='mellon-gnome50-lab'
     UUID='mellon-lab@local'
     V9="$HOME/VMs/Mellon/constellation-quality-v9"
-    PACK="${MELLON_M6_PACK:-$HOME/VMs/Mellon/m6-pilot-pack}"
+    PACK="${MELLON_M6_PACK:-$HOME/VMs/Mellon/m6-pilot-pack-v2}"
     PYTHON="${MELLON_PYTHON:-$HOME/.local/share/mellon-constellations-venv/bin/python}"
     STAGE_NAME=".mellon-m6-stage-$(date +%Y%m%d-%H%M%S)-$$"
     STAGING="$(mktemp -d "$HOME/VMs/Mellon/.m6-copy.XXXXXXXX")"
     trap 'rm -rf -- "$STAGING"' EXIT
 
     cd "$ROOT"
-    echo 'MELLON M6 // GNOME 50.1 GUEST ONLY // HOST GNOME UNTOUCHED'
+    echo 'MELLON M6.1 // GNOME 50.1 GUEST ONLY // HOST GNOME UNTOUCHED'
     if [[ ! -x "$PYTHON" ]]; then
         echo "Missing Mellon Python venv: $PYTHON" >&2
         exit 1
@@ -88,7 +88,7 @@
     ssh -o BatchMode=yes mellon \
         "cd '$REMOTE_PARENT/$STAGE_NAME' && sha256sum -c checksums.sha256"
     echo
-    echo '=== BACK UP WORKING GUEST M5.4 AND INSTALL M6 ==='
+    echo '=== BACK UP WORKING GUEST M6.0 AND INSTALL M6.1 ==='
     ssh -o BatchMode=yes mellon \
         "M6_STAGING='$STAGE_NAME' bash -s" <<'GUEST'
 (
@@ -132,7 +132,7 @@ GUEST
 )
 GUEST
     echo
-    echo 'PASS: M6 copied and checksummed ONLY inside mellon-gnome50-lab.'
+    echo 'PASS: M6.1 copied and checksummed ONLY inside mellon-gnome50-lab.'
     echo 'NEXT: reboot the GUEST, never BlackPearl; lock the guest and test.'
     echo 'ROLLBACK: bash lab/gnome50-m5/deploy-from-blackpearl.sh'
 )
