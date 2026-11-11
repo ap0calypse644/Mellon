@@ -12,7 +12,7 @@
         exit 1
     }
     EXT='/usr/share/gnome-shell/extensions/mellon-greeter@local'
-    SOURCE='/home/test1/.local/state/mellon-gdm/g1-update-002'
+    SOURCE='/home/test1/.local/state/mellon-gdm/g1-update-003'
     PROFILE='/etc/dconf/profile/gdm'
     KEYFILE='/etc/dconf/db/gdm.d/95-mellon-greeter'
     MARKER='/var/lib/mellon-greeter-g1-installed'
@@ -63,7 +63,8 @@ PY
     }
     grep -Fq 'const container = Main.screenShield?._lockDialogGroup;' "$SOURCE/extension.js"
     grep -Fq 'container.insert_child_below(photo, dialog)' "$SOURCE/extension.js"
-    node --input-type=module --check < "$SOURCE/extension.js"
+    # JavaScript syntax was checked on BlackPearl and in CI.
+    # Guest verifies SHA256 and expected source signatures instead.
 
     # Root-only recovery is published BEFORE the change to active code.
     install -d -m 700 "$BACKUP"

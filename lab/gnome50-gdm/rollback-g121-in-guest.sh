@@ -18,7 +18,7 @@
     grep -Fq 'const container = Main.screenShield?._lockDialogGroup;' "$NEW" || {
         echo 'Unexpected running greeter extension: refusing.' >&2; exit 1;
     }
-    node --input-type=module --check < "$OLD"
+    # Restore only the known original source (checked by signature).
     TMP="$(mktemp "$EXT/.restore-g121.XXXXXXXX")"
     trap 'if test -n "${TMP:-}" && test -f "$TMP"; then rm -f -- "$TMP"; fi' EXIT
     cp -- "$OLD" "$TMP"

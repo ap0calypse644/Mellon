@@ -6,7 +6,7 @@
     VM='mellon-gnome50-lab'
     ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
     SOURCE="$ROOT/greeter-extension/extension.js"
-    REMOTE_DIR='/home/test1/.local/state/mellon-gdm/g1-update-002'
+    REMOTE_DIR='/home/test1/.local/state/mellon-gdm/g1-update-003'
     BACKUP="$HOME/VMs/Mellon/checkpoints/MELLON-GDM-PREINSTALL-001"
     test -d "$BACKUP" && test -f "$BACKUP/SHA256SUMS" || {
         echo 'GDM backup checkpoint missing: refusing update staging' >&2
@@ -16,6 +16,7 @@
     test -f "$ROOT/update-g121-in-guest.sh"
     test -f "$ROOT/rollback-g121-in-guest.sh"
     virsh -c qemu:///system dominfo "$VM" >/dev/null
+    # JavaScript syntax is validated on BlackPearl only.
     node --input-type=module --check < "$SOURCE"
     grep -Fq 'container.insert_child_below(photo, dialog)' "$SOURCE"
     grep -Fq 'Main.screenShield?._lockDialogGroup' "$SOURCE"
@@ -31,7 +32,7 @@
     test -f /var/lib/mellon-greeter-g1-installed
     # An interrupted earlier staging run may have already copied all
     # three files. It is safe to inspect, but NEVER overwrite unknown files.
-    TARGET="$HOME/.local/state/mellon-gdm/g1-update-002"
+    TARGET="$HOME/.local/state/mellon-gdm/g1-update-003"
     if test -e "$TARGET" || test -L "$TARGET"; then
         test -d "$TARGET" && test ! -L "$TARGET" || {
             echo "Unsafe pre-existing staging path: $TARGET" >&2; exit 1;
@@ -45,13 +46,13 @@ GUEST
     # For crash-resume, never overwrite an already staged update: compare
     # each file against the reviewed host source before trusting it.
     if ssh -o BatchMode=yes mellon \
-        'test -e "$HOME/.local/state/mellon-gdm/g1-update-002" || test -L "$HOME/.local/state/mellon-gdm/g1-update-002"'; then
+        'test -e "$HOME/.local/state/mellon-gdm/g1-update-003" || test -L "$HOME/.local/state/mellon-gdm/g1-update-003"'; then
         echo 'Previous staging directory exists; verifying in place without overwriting.'
     else
         ssh -o BatchMode=yes mellon \
             'mkdir -p "$HOME/.local/state/mellon-gdm"'
         ssh -o BatchMode=yes mellon \
-            'mkdir "$HOME/.local/state/mellon-gdm/g1-update-002"'
+            'mkdir "$HOME/.local/state/mellon-gdm/g1-update-003"'
         scp -q -- "$SOURCE" "$ROOT/update-g121-in-guest.sh" \
             "$ROOT/rollback-g121-in-guest.sh" "mellon:$REMOTE_DIR/"
     fi
@@ -67,7 +68,7 @@ GUEST
 (
     set -euo pipefail
     test "$(id -un)" = 'test1'
-    TARGET="$HOME/.local/state/mellon-gdm/g1-update-002"
+    TARGET="$HOME/.local/state/mellon-gdm/g1-update-003"
     test -d "$TARGET" && test ! -L "$TARGET"
     test "$(stat -c '%U' "$TARGET")" = 'test1' || {
         echo 'Staging directory is not owned by test1; refusing.' >&2
