@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-lab@local",
-  "name": "Mellon M6 — Six-Scene Observatory (VM only)",
-  "description": "Variable-size photo-derived constellation illumination; same GNOME-native authentication and manual SHOW LOGIN as M5.4.",
+  "name": "Mellon M6.4 — Twelve-Scene Observatory (VM only)",
+  "description": "Twelve 8+ real-star constellations, randomized per lock, source-color star light and GNOME-native authentication; VM only.",
   "shell-version": [
     "50"
   ],
