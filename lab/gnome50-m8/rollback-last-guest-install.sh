@@ -5,8 +5,8 @@
     set -euo pipefail
     MODE="${1:-latest}"
     case "$MODE" in
-        latest|m7.1) ;;
-        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1]' >&2; exit 2 ;;
+        latest|m7.1|m8.1) ;;
+        *) echo 'Usage: rollback-last-guest-install.sh [latest|m7.1|m8.1]' >&2; exit 2 ;;
     esac
     virsh -c qemu:///system dominfo 'mellon-gnome50-lab' >/dev/null
     ssh -o BatchMode=yes mellon '
@@ -21,11 +21,12 @@
     DEST="$ROOT/mellon-lab@local"
     test -d "$BACKUPS" && test ! -L "$BACKUPS"
     test -d "$DEST" && test ! -L "$DEST"
-    if [[ "$M8_ROLLBACK_MODE" == 'm7.1' ]]; then
-        # Multiple M8 deployments back up previous M8 versions. The
-        # explicit M7.1 mode skips those, restoring known-good M7.1.
+    if [[ "$M8_ROLLBACK_MODE" == 'm7.1' ||
+          "$M8_ROLLBACK_MODE" == 'm8.1' ]]; then
+        # Explicit version selection avoids restoring an intermediate
+        # broken M8.2 revision after repeated guest-only deployments.
         latest="$(python3 - "$BACKUPS" <<'PY'
-import json,sys
+import json,os,sys
 from pathlib import Path
 root=Path(sys.argv[1])
 matches=[]
@@ -39,11 +40,23 @@ for folder in root.glob('pre-m8-*'):
         data=json.loads(meta.read_text())
     except (ValueError,OSError):
         continue
-    if (data.get('uuid') == 'mellon-lab@local' and
-            data.get('name','').startswith('Mellon M7.1')):
+    if data.get('uuid') != 'mellon-lab@local':
+        continue
+    mode = os.environ.get('M8_ROLLBACK_MODE')
+    if mode == 'm7.1' and data.get('name','').startswith('Mellon M7.1'):
         matches.append(folder.name)
+    elif mode == 'm8.1' and data.get('name','').startswith('Mellon M8.1'):
+        # The earlier broken M8.1 had an unsupported GNOME 50 signal,
+        # even though the metadata carries the same version number.
+        source = folder / 'observatory-hud.js'
+        if source.is_file() and not source.is_symlink():
+            js = source.read_text()
+            if ("this.actor.connect('notify::width'" in js and
+                    "this.actor.connect('notify::height'" in js and
+                    "'allocation-changed'," not in js):
+                matches.append(folder.name)
 if not matches:
-    raise SystemExit('No M7.1 guest backup found; refusing rollback')
+    raise SystemExit('No verified matching guest backup found; refusing rollback')
 print(sorted(matches)[-1])
 PY
         )"

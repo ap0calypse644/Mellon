@@ -16,7 +16,7 @@ const info = hudMetadata(scene);
 assert.deepEqual(info, {
     constellation: 'SCORPIUS', sourceStars: 14,
     connections: 13, status: 'STAR MAP READY',
-    mapping: 'VISUAL ARRAY STANDBY', stageCapacity: 8,
+    mapping: 'AWAITING INPUT', stageCapacity: 8,
 });
 assert.ok(Object.isFrozen(info));
 assert.throws(() => hudMetadata({...scene, name:'', vertices: []}));

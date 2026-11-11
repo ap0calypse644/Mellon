@@ -2,6 +2,8 @@ import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 import {hudLayout} from './hud-layout.js';
+import {mappingStage, mappingStatus, segmentWaveStrength}
+    from './hud-progress.js';
 
 // Actor-only presentation. No password buffer, verifier, key signals,
 // sensor polling, or invented coordinates. SHOW LOGIN is handled by M7.
@@ -36,6 +38,12 @@ export class ObservatoryHUD {
         this._destroyed = false;
         this._clockTimer = 0;
         this._lastSize = null;
+        this._totalStars = info.sourceStars;
+        this._stageCapacity = info.stageCapacity;
+        this._mappedStage = 0;
+        this._settled = false;
+        this._segmentModes = [];
+        this._segments = [];
         this.actor = new St.Widget({
             reactive: false, can_focus: false,
             layout_manager: new Clutter.FixedLayout(),
@@ -84,16 +92,19 @@ export class ObservatoryHUD {
                 style_class: 'mellon-m8-unlit-segment',
             });
             segment.set_size(23, 5);
+            this._segments.push(segment);
             segments.add_child(segment);
         }
         bottomRight.add_child(segments);
-        bottomRight.add_child(label(info.mapping, 'mellon-m8-status'));
+        this._mappingLabel = label(info.mapping, 'mellon-m8-status');
+        bottomRight.add_child(this._mappingLabel);
         this._bottomRight = bottomRight;
 
         this._panels = {topLeft: left, topRight: right,
             bottomLeft, bottomRight};
         for (const child of Object.values(this._panels))
             this.actor.add_child(child);
+        this._renderMapping();
 
         // GNOME 50's St.Widget has no 'allocation-changed' signal.
         // These are real Clutter.Actor GObject properties; watch only
@@ -124,6 +135,61 @@ export class ObservatoryHUD {
                 return GLib.SOURCE_CONTINUE;
             });
         this._reflow();
+    }
+
+    // Called ONLY by M7's existing visual controller with a mask of already
+    // illuminated photographic vertices. No raw password state enters HUD.
+    setMapping(mask) {
+        if (this._destroyed)
+            return;
+        if (!(mask instanceof Uint8Array) || mask.length !== this._totalStars)
+            throw new Error('HUD/scene geometry mismatch');
+        const stage = mappingStage(mask, this._stageCapacity);
+        if (stage === this._mappedStage)
+            return;  // No restyle on unchanged-length signal or random mask.
+        this._mappedStage = stage;
+        this._settled = false;
+        this._renderMapping();
+    }
+
+    // Reuse the ALREADY RUNNING M7 completion frames; never install a second
+    // fast timer. The completed segments settle into a static bright style.
+    setCompletion(frame) {
+        if (this._destroyed || this._mappedStage !== this._stageCapacity)
+            return;
+        if (frame?.settled === true) {
+            if (!this._settled) {
+                this._settled = true;
+                this._renderMapping();
+            }
+            return;
+        }
+        const progress = frame?.completion;
+        if (progress === null || progress === undefined)
+            return;
+        for (let i = 0; i < this._stageCapacity; i++) {
+            const glow = segmentWaveStrength(progress, i, this._stageCapacity);
+            this._segments[i].set_scale(1 + .52 * glow, 1 + .32 * glow);
+            this._segments[i].opacity = Math.round(225 + 30 * glow);
+        }
+    }
+
+    _renderMapping() {
+        this._mappingLabel.set_text(mappingStatus(
+            this._mappedStage, this._stageCapacity));
+        for (let i = 0; i < this._stageCapacity; i++) {
+            const segment = this._segments[i];
+            const mode = i >= this._mappedStage ? 'unlit' :
+                this._settled ? 'mapped' : 'lit';
+            if (this._segmentModes[i] !== mode) {
+                segment.set_style_class_name(`mellon-m8-${mode}-segment`);
+                this._segmentModes[i] = mode;
+            }
+            // Backspace or failure cancels transient glints immediately.
+            // Final visual completion is bright without a running loop.
+            segment.set_scale(1, 1);
+            segment.opacity = 255;
+        }
     }
 
     _updateClock() {
@@ -189,5 +255,8 @@ export class ObservatoryHUD {
         this._panels = null;
         this._time = null;
         this._date = null;
+        this._mappingLabel = null;
+        this._segments = null;
+        this._segmentModes = null;
     }
 }

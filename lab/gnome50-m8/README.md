@@ -1,41 +1,42 @@
-# Mellon M8.1 — Observatory HUD (GNOME 50.1 test VM only)
+# Mellon M8.2 — Dynamic Constellation Mapping (GNOME 50.1 test VM)
 
-M8.1 overlays **four small, scene-aware observatory instruments** over the
-already accepted M7.1 photographic lock-screen visuals. This is a lab milestone,
-not a production extension. The BlackPearl HOST GNOME lock screen is off-limits.
+**M8.1.1 has been visually approved in the VM.** This iteration keeps the
+same four-corner layout, photo colors, original constellation geometry, native
+GNOME login, SHOW LOGIN button, failure warning and strong M7.1 finish.
 
-The actual selected constellation name, original source-star count, and genuine
-scene-graph connection count appear in the top-right. The top-left identifies
-MELLON / CELESTIAL OBSERVATORY below the existing SHOW LOGIN control. The
-bottom-left displays the real **guest-local** date/time (refreshed every
-60 seconds) and a neutral ONLINE label. The bottom-right displays **eight
-permanently unlit placeholder segments** until the separate M8.2 milestone.
-The map READY label means the scene was loaded, **not authentication**.
+## Changes
 
-The four translucent charcoal/cyan/violet panels use a pure responsive
-layout. They never occupy the protected central source-star region or touch
-the SHOW LOGIN hit target; when space is insufficient, panels **disappear**
-instead of crowding the photo or native-login recovery. Every HUD actor is
-non-reactive and keyboard-unfocusable. The red UNAUTHORIZED ACCESS alert
-stays higher in the actor stack.
+The bottom-right eight slim segments now represent the *existing illuminated
+photographic star mask*. The HUD never sees password text, key events, a
+password-length observer, typing timestamps or verifier state. A pure
+`hud-progress.js` function inverts M6.4's eight-stage activation curve:
+`ceil(starCount × stage / 8)`. It works for all 8–24-star figures, including
+9-star and 17-star scenes, and respects randomized star activation.
 
-## What did NOT change
+- Empty constellation: eight dim segments, **AWAITING INPUT**.
+- Partial: 1–7 cyan segments, **MAPPING CONSTELLATION**.
+- All original stars active: eight cyan segments,
+  **CONSTELLATION MAPPED**. This describes the *visual scene only*.
+- During M7.1's original 1.60-second completion effect, a brief glint passes
+  through the eight bars using the **existing** M7.1 animation source.
+- After M7 settles, eight bars remain brightly lit without any HUD animation
+  timer. Backspace removes the appropriate progress; a failed authentication
+  clears it immediately while the red **UNAUTHORIZED ACCESS** alert remains
+  in front. The status never claims access granted or login success.
 
-- M7.1 dramatic source-pixel ignition, bright post-completion stars/lines,
-  edge pulses, center-out wave and eventual timer stop.
-- M6.4 original six photos / 12 verified eight-plus-star figures; 8-stage
-  random reveal, randomized Backspace, and active-endpoint-only connections.
-- GNOME 50.1 password, focus, verification, retries and unlock workflow.
-- SHOW LOGIN manual recovery, read-only FailureTracker and fail-open behavior.
-- No new star matching, photo edits, raw input hooks, false authentication
-  indicators, continuous HUD animation or host GNOME modification.
+No new animation timer, idle shading loop, photo rebuild, constellation
+search, input observer, native-verifier change or host installation is added.
+The original tested M7.1 `stellar-effects.js`, M6.4 `scene-data.js`, and
+`failure-tracker.js` are copied byte-for-byte. M8.1's layout is unchanged.
 
-## Synthetic checks (also run by GitHub Actions)
+## Automated checks
 
 ```bash
 (
     set -euo pipefail
+    cd "$HOME/go/src/ap0calypse644/Mellon"
     node lab/gnome50-m8/test-hud.mjs
+    node lab/gnome50-m8/test-mapping.mjs
     node lab/gnome50-m8/test-m8-regression.mjs
     node lab/gnome50-m8/test-stellar-effects.mjs
     bash -n lab/gnome50-m8/deploy-from-blackpearl.sh
@@ -43,7 +44,11 @@ stays higher in the actor stack.
 )
 ```
 
-## Deploy ONLY to mellon-gnome50-lab (from BlackPearl)
+These are synthetic tests, **not** proof of functioning GNOME guest actors.
+
+## Deploy ONLY to mellon-gnome50-lab
+
+Run on the BlackPearl host's **zsh terminal**; only VM contents are changed:
 
 ```bash
 (
@@ -55,63 +60,49 @@ stays higher in the actor stack.
 )
 ```
 
-The installer checks the guest's identity, GNOME 50.1, verified VM baseline,
-existing M7.1/M8 version, exact curated 12-scene pack SHA256, assets, current
-scene-config and stage files. It transfers a symlink-free pack, verifies
-SHA256 checksums in the guest before atomic replacement, and preserves the
-previous guest extension under `~/.local/state/mellon/backups/pre-m8-*`.
-It does NOT reboot either system itself.
+The installer verifies the 12-scene pack SHA256, guest GNOME identity, VM
+baseline and scene selection; copies all M8 runtime modules and original
+photos into a checksummed guest staging folder; backs up M8.1.1 under
+`~/.local/state/mellon/backups/pre-m8-*`; swaps only the guest extension,
+and does not reboot itself.
 
-## VM acceptance checks
+## Visual acceptance tests
 
-1. Lock the **guest** at 1920×1080: look for four thin edge instruments
-   outside the constellation, with SHOW LOGIN unblocked at the upper left.
-2. Verify a fixed Scorpius or Andromeda scene shows its actual name, star
-   count (14 or 17), and a genuine connection count, not invented sensor
-   readings. Switch back to random-on-lock afterward.
-3. Wait past one minute and verify guest-local time advances without animated
-   idle effects. Ensure all eight progress placeholders remain UNLIT even
-   after completing the visual constellation.
-4. Type and Backspace: M7.1's glow, random star selection and live-only
-   connecting edges should be exactly as before.
-5. Submit several wrong passwords: each should show centered flashing red
-   UNAUTHORIZED ACCESS above all HUD instruments. SHOW LOGIN must still
-   reveal GNOME's unmodified native login.
-6. Resize the guest to 1280×720, 1024×768, 800×600 and tall/narrow: HUD
-   must never cover the center or SHOW LOGIN. Hidden panels on small screens
-   are intentional.
-7. Unlock/relock repeatedly: no stale HUD panels or timers should survive
-   the lock session. Check GNOME Shell logs if the HUD fails to appear.
+1. Lock the logged-in **guest** at 1920×1080; check the same static panels,
+   correct constellation metadata and unobstructed SHOW LOGIN.
+2. Type 1–7 characters: progress tracks eight mapping stages; 9 and
+   17-star constellations illuminate proportionally without extra HUD stages.
+3. Backspace randomly extinguishes actual stars and retracts the number of
+   active HUD segments. No connection remains attached to an unlit star.
+4. At eight stages, the existing strong photo-star completion wave also
+   produces a sequential glint along all eight bars; they then stay
+   **bright and static** without additional CPU/fan activity.
+5. Backspace below a complete constellation cancels the persistent glow and
+   dims the final segment; completing it again retriggers the wave.
+6. Submit wrong passwords multiple times: HUD resets and the prominent
+   red warning remains on top. No failed-attempt count reveals native login.
+7. Click SHOW LOGIN; GNOME's unmodified password prompt remains usable.
+   Unlock/relock; check that every mapping indicator resets.
+8. Narrow the VM display: original M8.1 panel-hiding rules remain intact.
 
-## Restore previous guest extension
+## Roll back directly to screenshot-approved M8.1.1
 
 ```bash
 (
     set -euo pipefail
     cd "$HOME/go/src/ap0calypse644/Mellon"
-    bash lab/gnome50-m8/rollback-last-guest-install.sh
+    bash lab/gnome50-m8/rollback-last-guest-install.sh m8.1
     virsh -c qemu:///system reboot mellon-gnome50-lab
 )
 ```
 
-For a **guaranteed M7.1 rollback** after multiple M8 installs, pass
-`m7.1` to the rollback script (the installer saves the original M7.1 in
-`pre-m8-*`, and the option selects its metadata rather than the latest
-broken M8 backup):
+The `m8.1` selector explicitly looks for a *fixed* M8.1 guest backup
+with GNOME 50 compatible width/height observers and rejects the earlier
+broken `allocation-changed` variant. `m7.1` remains available for the
+original known-good photographic version. Regular `latest` rollback may
+choose a previous M8.2 build, so prefer `m8.1` after a failed visual test.
 
-```bash
-(
-    set -euo pipefail
-    cd "$HOME/go/src/ap0calypse644/Mellon"
-    bash lab/gnome50-m8/rollback-last-guest-install.sh m7.1
-    virsh -c qemu:///system reboot mellon-gnome50-lab
-)
-```
-
-The default `latest` mode restores the last `pre-m8-*`, which can be an
-earlier M8 build. Every rollback retains the replaced version in the VM.
-
-## M8.1.1 GNOME 50.1 runtime fix
+## Previous M8.1.1 acceptance and history
 
 The first M8.1 guest run failed open with `No signal 'allocation-changed'
 on object 'StWidget'`. The HUD now uses the supported
@@ -121,5 +112,4 @@ The regression test forbids the unsupported connection and verifies
 teardown of those observers and the one-shot idle source.
 The actual guest render must still be checked after deployment.
 
-**M8.2** (dynamic stage segments) and **M8.3** (one-shot intro scan) are
-separate future steps requiring M8.1 VM visual approval.
+**Next milestone:** M8.3 one-time scanning intro; no perpetual radar.

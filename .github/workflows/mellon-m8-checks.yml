@@ -1,4 +1,4 @@
-name: Mellon M8.1 Observatory HUD (synthetic, no VM)
+name: Mellon M8.2 Observatory HUD (synthetic, no VM)
 on:
   push:
     branches: [main]
@@ -23,12 +23,13 @@ jobs:
           node-version: '22'
       - name: Syntax validation of GNOME source (no GNOME started)
         run: |
-          for file in lab/gnome50-m8/{extension,scene-data,stellar-effects,failure-tracker,observatory-hud,hud-layout,hud-state}.js; do
+          for file in lab/gnome50-m8/{extension,scene-data,stellar-effects,failure-tracker,observatory-hud,hud-layout,hud-state,hud-progress}.js; do
             node --input-type=module --check < "$file"
           done
       - name: Four-corner layout, metadata, security and teardown guards
         run: |
           node lab/gnome50-m8/test-hud.mjs
+          node lab/gnome50-m8/test-mapping.mjs
           node lab/gnome50-m8/test-m8-regression.mjs
       - name: Preserve M7.1 light engine and M6/M5 regression checks
         run: |

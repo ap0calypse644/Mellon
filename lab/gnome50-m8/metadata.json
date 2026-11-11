@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-lab@local",
-  "name": "Mellon M8.1 — Observatory HUD (VM only)",
-  "description": "Four scene-aware edge instruments, local clock and unlit sequence housing; M7.1 photography and GNOME native authentication unchanged.",
+  "name": "Mellon M8.2 — Dynamic Observatory Mapping (VM only)",
+  "description": "Scene-derived eight-stage Observatory HUD; full-map glint and static brightness; unchanged M7.1 real-star effects, native GNOME login and manual recovery.",
   "shell-version": [
     "50"
   ],

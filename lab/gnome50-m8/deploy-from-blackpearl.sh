@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mellon M8.1: install ONLY in mellon-gnome50-lab, never BlackPearl host GNOME.
+# Mellon M8.2: install ONLY in mellon-gnome50-lab, never BlackPearl host GNOME.
 # Reuses the user's already-verified and user-tested M6.4 photo pack; NO search.
 (
     set -euo pipefail
@@ -14,7 +14,7 @@
     STAGING="$(mktemp -d "$HOME/VMs/Mellon/.m8-copy.XXXXXXXX")"
     trap 'rm -rf -- "$STAGING"' EXIT
 
-    echo 'MELLON M8.1 // GNOME 50.1 TEST VM ONLY // BLACKPEARL HOST UNTOUCHED'
+    echo 'MELLON M8.2 // GNOME 50.1 TEST VM ONLY // BLACKPEARL HOST UNTOUCHED'
     cd "$ROOT"
     test -d "$PACK" && test ! -L "$PACK" || {
         echo "Missing tested M6.4 image pack: $PACK" >&2; exit 1;
@@ -61,7 +61,8 @@ PY
     cp -a -- "$PACK/." "$STAGING/"
     for file in extension.js stellar-effects.js scene-data.js \
                 failure-tracker.js metadata.json stylesheet.css \
-                observatory-hud.js hud-state.js hud-layout.js; do
+                observatory-hud.js hud-state.js hud-layout.js \
+                hud-progress.js; do
         test -f "$HERE/$file" && test ! -L "$HERE/$file" || {
             echo "Missing/linked M8 source: $file" >&2; exit 1;
         }
@@ -105,7 +106,7 @@ PY
         "cd '.local/share/gnome-shell/extensions/$STAGE_NAME' && sha256sum -c checksums.sha256"
 
     echo
-    echo '=== BACK UP CURRENT GUEST M7.1/M8 AND INSTALL M8.1 (ATOMIC RENAME) ==='
+    echo '=== BACK UP CURRENT GUEST M7.1/M8 AND INSTALL M8.2 (ATOMIC RENAME) ==='
     ssh -o BatchMode=yes mellon \
         "M8_STAGING='$STAGE_NAME' bash -s" <<'GUEST'
 (
@@ -125,7 +126,8 @@ PY
         exit 1
     fi
     test -f "$DEST/stellar-effects.js" && test -f "$DEST/library.json" &&
-        test -f "$DEST/observatory-hud.js" && test -f "$DEST/hud-layout.js"
+        test -f "$DEST/observatory-hud.js" && test -f "$DEST/hud-layout.js" &&
+        test -f "$DEST/hud-progress.js"
     echo "PASS: Working previous extension retained in guest: $BACKUP"
 )
 GUEST
@@ -139,7 +141,7 @@ GUEST
 )
 GUEST
     echo
-    echo 'PASS: Installed M8.1 and the unchanged twelve-scene photographs in TEST VM ONLY.'
+    echo 'PASS: Installed M8.2 and the unchanged twelve-scene photographs in TEST VM ONLY.'
     echo 'NEXT: reboot ONLY mellon-gnome50-lab, then test locking/unlocking.'
-    echo 'ROLLBACK: bash lab/gnome50-m8/rollback-last-guest-install.sh'
+    echo 'ROLLBACK: bash lab/gnome50-m8/rollback-last-guest-install.sh m8.1'
 )

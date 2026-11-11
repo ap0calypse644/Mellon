@@ -17,7 +17,7 @@ export function hudMetadata(scene) {
         sourceStars: stars,
         connections: edges.length,
         status: 'STAR MAP READY',
-        mapping: 'VISUAL ARRAY STANDBY',
+        mapping: 'AWAITING INPUT',
         stageCapacity: 8,
     });
 }

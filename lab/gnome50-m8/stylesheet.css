@@ -81,3 +81,18 @@
 .mellon-m8-compact .mellon-m8-eyebrow { font-size: 8px; }
 .mellon-m8-compact .mellon-m8-data,
 .mellon-m8-compact .mellon-m8-status { font-size: 9px; }
+/* M8.2: eight visual mapping stages from original source-star activation.
+ * Neutral while empty, cyan during mapping, static brilliant blue at full
+ * constellation completion. None implies a successful authentication. */
+.mellon-m8-lit-segment {
+    background-color: rgba(103, 222, 248, 0.91);
+    border: 1px solid rgba(158, 236, 255, 0.92);
+    border-radius: 2px;
+    box-shadow: 0px 0px 7px rgba(89, 201, 251, 0.58);
+}
+.mellon-m8-mapped-segment {
+    background-color: rgba(202, 241, 255, 0.98);
+    border: 1px solid rgba(239, 246, 255, 0.98);
+    border-radius: 2px;
+    box-shadow: 0px 0px 13px rgba(110, 215, 255, 0.94);
+}

@@ -14,7 +14,7 @@ import {StellarEffects, completionWave, completionLevel,
     starLightProfile, connectionLightProfile} from './stellar-effects.js';
 
 /**
- * Mellon M8.1: M7.1 visuals plus non-reactive Observatory HUD (VM ONLY).
+ * Mellon M8.2: M7.1 visuals plus scene-derived eight-stage mapping HUD (VM ONLY).
  * Native authentication, password entry, focus, retries and locking remain
  * entirely GNOME-owned. We inspect only buffer length, never text or keys.
  * SHOW LOGIN manually reveals native UI. Each failed password shows an alert;
@@ -222,6 +222,9 @@ class MVPScene {
         this._effects.transition(this._active,
             GLib.get_monotonic_time() / 1000000);
         this._target = desired;
+        // The HUD sees ONLY the activated source-star mask, never
+        // the password buffer length or any input event.
+        this._hud?.setMapping(this._active);
         if (length > 0) {
             this._deniedUntil = 0;
             this._feedback?.hide();
@@ -239,6 +242,7 @@ class MVPScene {
         this._active.fill(0);
         // A failed authentication cancels ALL pending light effects.
         this._effects.reset();
+        this._hud?.setMapping(this._active);
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
         this._deniedUntil = this._deniedStartedAt + 1.5;
         this._feedback.opacity = 255;
@@ -260,6 +264,9 @@ class MVPScene {
                 }
                 const now = GLib.get_monotonic_time() / 1000000;
                 const fx = this._effects.sample(now);
+                // Share the existing transient completion waveform;
+                // no additional HUD animation timer is introduced.
+                this._hud?.setCompletion(fx);
                 // Latch sustained brightness only AFTER the entire
                 // constellation has completed its spectacular wave.
                 // Backspace/reset clears it through StellarEffects.
