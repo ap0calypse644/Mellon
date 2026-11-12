@@ -51,7 +51,7 @@ const required=[
     'rollback.sh','/usr/local/sbin/mellon-blackpearl-rollback',
     'stage-v1','BUNDLE-SHA256SUMS','SHA256SUMS',
     'mellon-greeter@local','mellon-lab@local','G1.8','M8.4',
-    'host-v1','dconf update','test ! -e',
+    'host-v1','dconf update','if test -e "$path" || test -L "$path";',
     'mv -T -- "$TMP_LOCK" "$USER_EXT"',
     'mv -T -- "$TMP_GDM" "$SYS_EXT"',
 ];
