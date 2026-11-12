@@ -77,6 +77,11 @@ jobs:
           node lab/gnome50-gdm/test-g17-parity-performance.mjs
           node lab/gnome50-gdm/test-g18-hud-runtime.mjs
           node lab/gnome50-gdm/test-g18-deploy.mjs
+          node lab/blackpearl-host/test-host-deployment.mjs
+          bash -n lab/blackpearl-host/preflight.sh
+          bash -n lab/blackpearl-host/stage.sh
+          bash -n lab/blackpearl-host/install.sh
+          bash -n lab/blackpearl-host/rollback.sh
           bash -n lab/gnome50-gdm/stage-g18-to-vm.sh
           bash -n lab/gnome50-gdm/install-g18-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g18-in-guest.sh
