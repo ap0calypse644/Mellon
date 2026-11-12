@@ -53,7 +53,7 @@ assert.ok(install.includes(newGuard),'NEW HUD guard missing in assembled tree');
 assert.ok(!install.includes(brokenGuard),'Cannot check old HUD in new tree');
 assert.ok(install.includes(`grep -Fq 'topLeft: {x: pad, y: 14,' "$EXT/hud-layout.js"`),
     'OLD G1.5 installation guard must remain');
-assert.ok(entry.includes('[Mellon Greeter G1.6B] enabled in gdm mode'));
+assert.ok(entry.includes('[Mellon Greeter G1.7] enabled in gdm mode'));
 assert.ok(stage.includes('test-g16a1-deploy.mjs'));
 const metadata=JSON.parse(meta);
 assert.equal(metadata.uuid,'mellon-greeter@local');
