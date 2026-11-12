@@ -74,6 +74,7 @@ jobs:
           node lab/gnome50-gdm/test-g16b-chooser.mjs
           node lab/gnome50-gdm/test-g16b-deploy.mjs
           node lab/gnome50-gdm/test-g17-deploy.mjs
+          node lab/gnome50-gdm/test-g17-parity-performance.mjs
           bash -n lab/gnome50-gdm/stage-g17-to-vm.sh
           bash -n lab/gnome50-gdm/install-g17-in-guest.sh
           bash -n lab/gnome50-gdm/rollback-g17-in-guest.sh

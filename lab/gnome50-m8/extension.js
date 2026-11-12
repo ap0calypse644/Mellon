@@ -438,6 +438,7 @@ export default class MellonMVP extends Extension {
         this._view = null;
         this._prompt = null;
         this._buffer = null;
+        this._bufferSignalId = 0;
         this._lastWarning = null;
         this._failureTracker = new FailureTracker();
         this._lastSceneId = null;
@@ -481,11 +482,23 @@ export default class MellonMVP extends Extension {
     }
 
     _invalidateSignals() {
-        // GNOME may dispose prompt objects between ticks. Never disconnect
-        // an already disposed GObject; epoch guards invalidate callbacks.
+        // An old GNOME password buffer may survive several lock/unlock
+        // transitions. Disconnect promptly so it cannot retain stale
+        // closures or old view references until the buffer is finalized.
         this._epoch++;
-        this._prompt = null;
+        const buffer = this._buffer;
+        const signal = this._bufferSignalId;
         this._buffer = null;
+        this._prompt = null;
+        this._bufferSignalId = 0;
+        if (buffer && signal) {
+            try {
+                buffer.disconnect(signal);
+            } catch (_) {
+                // A disposed GNOME object may already have dropped the
+                // signal. Epoch checks still invalidate late callbacks.
+            }
+        }
     }
 
     _unmount() {
@@ -549,7 +562,7 @@ export default class MellonMVP extends Extension {
         this._buffer = buffer;
         const epoch = this._epoch;
         const current = () => epoch === this._epoch && this._view !== null;
-        buffer.connect('notify::length', () => {
+        this._bufferSignalId = buffer.connect('notify::length', () => {
             if (current())
                 this._view.setLength(buffer.get_length());
         });
