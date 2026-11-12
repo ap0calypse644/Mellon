@@ -24,7 +24,7 @@
     node "$HERE/test-g14-runtime.mjs"
     node "$HERE/test-g16a-cover.mjs"
     node "$HERE/test-g16a-scan.mjs"
-    node "$HERE/test-g17-chooser.mjs"
+    node "$HERE/test-g16b-chooser.mjs"
     node "$HERE/test-g131-layout.mjs"
     node "$HERE/test-g17-deploy.mjs"
     grep -Fq '[Mellon Greeter G1.7] enabled in gdm mode' "$SRC/extension.js"
