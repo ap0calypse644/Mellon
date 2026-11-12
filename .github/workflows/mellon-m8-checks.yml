@@ -34,6 +34,11 @@ jobs:
           node lab/gnome50-m8/test-intro-runtime.mjs
           node lab/gnome50-m8/test-m8-regression.mjs
           node lab/gnome50-gdm/test-g17-parity-performance.mjs
+          node lab/gnome50-gdm/test-g18-hud-runtime.mjs
+          node lab/gnome50-gdm/test-g18-deploy.mjs
+          bash -n lab/gnome50-m8/stage-m84-to-vm.sh
+          bash -n lab/gnome50-m8/install-m84-in-guest.sh
+          bash -n lab/gnome50-m8/rollback-m84-in-guest.sh
       - name: Preserve M7.1 light engine and M6/M5 regression checks
         run: |
           node lab/gnome50-m8/test-stellar-effects.mjs

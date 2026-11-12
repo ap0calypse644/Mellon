@@ -52,3 +52,24 @@ export function segmentWaveStrength(progress, index, stages = MAPPING_STAGES) {
         return 0;
     return Math.sin(Math.PI * phase);
 }
+
+// G1.8: a compact, readable eight-step instrument readout. Derived solely
+// from the already-lit visual star mask; never from password text or events.
+export function mappingReadout(stage, stages = MAPPING_STAGES) {
+    const status = mappingStatus(stage, stages);
+    if (stage === 0 || stage === stages)
+        return status;
+    return `MAPPING ${String(stage).padStart(2, '0')} / 08`;
+}
+
+// Each newly illuminated HUD stage gets one bright, short-lived flare.
+// Pure time envelope; the existing 62ms stellar frame loop drives it.
+// No new timeout or extra compositor redraw source is introduced.
+export const STAGE_PULSE_SEC = 0.56;
+export function stagePulseStrength(elapsed) {
+    if (!Number.isFinite(elapsed))
+        throw new Error('Invalid stage pulse time');
+    if (elapsed <= 0 || elapsed >= STAGE_PULSE_SEC)
+        return 0;
+    return Math.sin(Math.PI * elapsed / STAGE_PULSE_SEC);
+}

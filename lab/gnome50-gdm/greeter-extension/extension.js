@@ -55,7 +55,7 @@ export default class MellonGreeter extends Extension {
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.7] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.8] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.

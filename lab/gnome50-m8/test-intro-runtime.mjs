@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// M8.3.2: mocked GNOME timers verify 5-second cadence and cancellation.
+// M8.4: mocked GNOME timers verify 5-second cadence and cancellation.
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
@@ -136,9 +136,16 @@ function harness() {
     h.intro.onLayout({},1920,1080);
     h.advance(300);
     h.intro.onLayout({},1280,720);
-    assert.equal(h.activeSources,0,'Resize must cancel both timers');
-    assert.equal(h.intro._grid.visible,false);
+    assert.deepEqual(h.intervals(),[50,5000],
+        'Resize must rearm both bounded timers, not disable the 5s scan');
+    assert.equal(h.intro._grid.visible,true);
     assert.equal(h.panels.topLeft.opacity,255);
+    h.advance(2200);
+    assert.deepEqual(h.intervals(),[5000]);
+    h.advance(5500);
+    assert.deepEqual(h.intervals(),[50,5000]);
+    h.intro.stop();
+    assert.equal(h.activeSources,0);
 }
 {
     const h=harness();
@@ -157,4 +164,4 @@ function harness() {
     h.intro.destroy();
     assert.equal(h.activeSources,0,'Destroy while active cancels both');
 }
-console.log('PASS M8.3.2: sweeps at 0/5/10 seconds, 3.15s idle, steady HUD, resize/stop/destroy cleanup');
+console.log('PASS M8.4: sweeps at 0/5/10 seconds, 3.15s idle, steady HUD, resize/stop/destroy cleanup');

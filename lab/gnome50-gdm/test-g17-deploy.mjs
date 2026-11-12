@@ -58,7 +58,7 @@ assert.ok(rollback.includes('Math.max(78, recovery.y + recovery.height + 12)'),
     'Rollback MUST check G1.6B actual dynamic HUD layout, not old static layout');
 assert.ok(!rollback.includes('topLeft: {x: pad, y: 14,'));
 assert.ok(rollback.includes('mv -T -- "$PREVIOUS" "$ACTIVE"'));
-assert.ok(entry.includes('[Mellon Greeter G1.7] enabled in gdm mode'));
+assert.ok(entry.includes('[Mellon Greeter G1.8] enabled in gdm mode'));
 assert.ok(entry.includes('this._accounts?.sync()'));
 assert.ok(entry.includes('this._accounts?.revealNative()'),
     'Unhealthy observer must also release any startup curtain');

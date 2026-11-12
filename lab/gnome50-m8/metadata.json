@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-lab@local",
-  "name": "Mellon M8.3.2 — Recurring Observatory Grid Sweep (VM only)",
-  "description": "Full-screen cyan grid sweeps every five seconds (1.85s animation; 3.15s idle); M8.2 mapping, M7.1 photo effects, and native GNOME authentication unchanged.",
+  "name": "Mellon M8.4 — Unified Eight-Stage Observatory (VM only)",
+  "description": "Eight-stage numeric readout and short per-stage HUD pulse, 5s scan survives mistakes and resizing, native GNOME unlock unchanged; VM only.",
   "shell-version": [
     "50"
   ],

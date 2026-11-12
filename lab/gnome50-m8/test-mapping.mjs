@@ -4,7 +4,8 @@ import {readFile} from 'node:fs/promises';
 const load=async file=>import('data:text/javascript;base64,'+
     Buffer.from(await readFile(new URL(file,import.meta.url),'utf8'))
         .toString('base64'));
-const {mappingStage,mappingStatus,segmentWaveStrength,MAPPING_STAGES} =
+const {mappingStage,mappingStatus,mappingReadout,segmentWaveStrength,
+    stagePulseStrength,STAGE_PULSE_SEC,MAPPING_STAGES} =
     await load('./hud-progress.js');
 const {activationCount}=await load('./scene-data.js');
 assert.equal(MAPPING_STAGES,8);
@@ -29,6 +30,10 @@ assert.equal(mappingStatus(0),'AWAITING INPUT');
 for(let i=1;i<8;i++)
     assert.equal(mappingStatus(i),'MAPPING CONSTELLATION');
 assert.equal(mappingStatus(8),'CONSTELLATION MAPPED');
+assert.equal(mappingReadout(0),'AWAITING INPUT');
+assert.equal(mappingReadout(8),'CONSTELLATION MAPPED');
+for(let i=1;i<8;i++)
+    assert.equal(mappingReadout(i),`MAPPING ${String(i).padStart(2,'0')} / 08`);
 for(const input of [-1,9,2.5,Infinity])
     assert.throws(()=>mappingStatus(input));
 assert.throws(()=>mappingStage(new Uint8Array(7)));
@@ -46,4 +51,16 @@ for(let i=0;i<8;i++) {
 assert.throws(()=>segmentWaveStrength(1,0));
 assert.throws(()=>segmentWaveStrength(-.1,0));
 assert.throws(()=>segmentWaveStrength(.5,8));
-console.log('PASS M8.2: visual-only 8 stages for all 8–24 real-star scenes, Backspace/reset status and bounded completion envelope');
+assert.equal(STAGE_PULSE_SEC,.56);
+assert.equal(stagePulseStrength(0),0);
+assert.equal(stagePulseStrength(STAGE_PULSE_SEC),0);
+assert.equal(stagePulseStrength(.28),1);
+for(let sec=.01;sec<STAGE_PULSE_SEC;sec+=.025) {
+    const amplitude=stagePulseStrength(sec);
+    assert.ok(amplitude>0&&amplitude<=1);
+}
+for(const invalid of [NaN,Infinity,-Infinity])
+    assert.throws(()=>stagePulseStrength(invalid));
+assert.equal(stagePulseStrength(-.1),0);
+assert.equal(stagePulseStrength(5),0);
+console.log('PASS M8.4 / G1.8: visual-only 8-stage readout, 560ms pulse, Backspace, all 8–24 source-star scenes');

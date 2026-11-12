@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-greeter@local",
-  "name": "Mellon Greeter G1.7 — Seamless GDM Startup (VM only)",
-  "description": "Early astronomical account-loading curtain masks Ubuntu logo after Mellon mounts; 8-second fail-open recovery, single/multi-user GNOME handoff, unchanged M8 password and Observatory scan.",
+  "name": "Mellon Greeter G1.8 — Unified Eight-Stage Observatory (VM only)",
+  "description": "Matching lock-screen eight-stage numeric mapping and transient HUD stage glints, original nebula/stars/completion preserved; native GDM auth unchanged.",
   "shell-version": [
     "50"
   ],

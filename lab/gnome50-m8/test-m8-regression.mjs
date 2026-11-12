@@ -32,6 +32,8 @@ for(const [start,end] of [
         .split('\n')
         .filter(line => !line.includes('this._hud?.cancelIntro();') &&
             !line.includes('// Cancel decorative scan during a native authentication warning.') &&
+            !line.includes('// Keep the 5s Observatory scan alive across failed password') &&
+            !line.includes('// attempts, matching GDM. The red denial alert overlays the HUD.') &&
             !line.includes('this._hud?.setMapping(') &&
             !line.includes('this._hud?.setCompletion(') &&
             !line.includes('// The HUD sees ONLY') &&

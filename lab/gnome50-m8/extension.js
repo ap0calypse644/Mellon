@@ -243,8 +243,8 @@ class MVPScene {
         // A failed authentication cancels ALL pending light effects.
         this._effects.reset();
         this._hud?.setMapping(this._active);
-        // Cancel decorative scan during a native authentication warning.
-        this._hud?.cancelIntro();
+        // Keep the 5s Observatory scan alive across failed password
+        // attempts, matching GDM. The red denial alert overlays the HUD.
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
         this._deniedUntil = this._deniedStartedAt + 1.5;
         this._feedback.opacity = 255;

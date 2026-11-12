@@ -3,7 +3,8 @@ import GLib from 'gi://GLib';
 import St from 'gi://St';
 import {hudLayout} from './hud-layout.js';
 import {ObservatoryIntro} from './observatory-intro.js';
-import {mappingStage, mappingStatus, segmentWaveStrength}
+import {mappingStage, mappingReadout, segmentWaveStrength,
+    stagePulseStrength, STAGE_PULSE_SEC}
     from './hud-progress.js';
 
 // Actor-only presentation. No password buffer, verifier, key signals,
@@ -44,6 +45,9 @@ export class ObservatoryHUD {
         this._stageCapacity = info.stageCapacity;
         this._mappedStage = 0;
         this._settled = false;
+        this._pulseFrom = 0;
+        this._pulseTo = 0;
+        this._pulseStartedAt = 0;
         this._segmentModes = [];
         this._segments = [];
         this.actor = new St.Widget({
@@ -149,17 +153,46 @@ export class ObservatoryHUD {
             throw new Error('HUD/scene geometry mismatch');
         const stage = mappingStage(mask, this._stageCapacity);
         if (stage === this._mappedStage)
-            return;  // No restyle on unchanged-length signal or random mask.
+            return;  // No restyle on unchanged-stage random star changes.
+        const previous = this._mappedStage;
         this._mappedStage = stage;
         this._settled = false;
+        // Pulse ONLY newly activated stages. Backspace/failure instantly
+        // removes the progress without leaving orphaned effects.
+        this._pulseFrom = previous;
+        this._pulseTo = stage > previous && stage < this._stageCapacity
+            ? stage : 0;
+        this._pulseStartedAt = this._pulseTo
+            ? GLib.get_monotonic_time() / 1000000 : 0;
         this._renderMapping();
     }
 
     // Reuse the ALREADY RUNNING M7 completion frames; never install a second
     // fast timer. The completed segments settle into a static bright style.
     setCompletion(frame) {
-        if (this._destroyed || this._mappedStage !== this._stageCapacity)
+        if (this._destroyed)
             return;
+        if (this._mappedStage !== this._stageCapacity) {
+            // Reuse the already-running star ignition frames to pulse
+            // newly reached segments; nothing redraws while idle.
+            if (!this._pulseTo)
+                return;
+            const elapsed = GLib.get_monotonic_time() / 1000000 -
+                this._pulseStartedAt;
+            const strength = stagePulseStrength(elapsed);
+            for (let i = this._pulseFrom; i < this._pulseTo; i++) {
+                const segment = this._segments[i];
+                segment.set_scale(1 + .82 * strength,
+                    1 + .56 * strength);
+                segment.opacity = 255;
+            }
+            if (elapsed >= STAGE_PULSE_SEC) {
+                for (let i = this._pulseFrom; i < this._pulseTo; i++)
+                    this._segments[i].set_scale(1, 1);
+                this._pulseTo = 0;
+            }
+            return;
+        }
         if (frame?.settled === true) {
             if (!this._settled) {
                 this._settled = true;
@@ -178,7 +211,7 @@ export class ObservatoryHUD {
     }
 
     _renderMapping() {
-        this._mappingLabel.set_text(mappingStatus(
+        this._mappingLabel.set_text(mappingReadout(
             this._mappedStage, this._stageCapacity));
         for (let i = 0; i < this._stageCapacity; i++) {
             const segment = this._segments[i];
@@ -281,5 +314,6 @@ export class ObservatoryHUD {
         this._mappingLabel = null;
         this._segments = null;
         this._segmentModes = null;
+        this._pulseTo = 0;
     }
 }

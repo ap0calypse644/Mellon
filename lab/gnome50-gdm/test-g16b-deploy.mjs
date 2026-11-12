@@ -54,7 +54,7 @@ assert.ok(entry.includes('new GreeterAccountChooser('));
 assert.ok(entry.includes('this._accounts?.sync()'));
 assert.ok(entry.includes('this._accounts?.destroy()'));
 assert.ok(entry.includes("this._cover?.sync()"));
-assert.ok(entry.includes("[Mellon Greeter G1.7] enabled in gdm mode"));
+assert.ok(entry.includes("[Mellon Greeter G1.8] enabled in gdm mode"));
 assert.ok(chooser.includes("item.emit('activate')"));
 assert.ok(chooser.includes("list?._items instanceof Map"));
 assert.ok(chooser.includes("MAX_CUSTOM_ACCOUNTS = 8"));
