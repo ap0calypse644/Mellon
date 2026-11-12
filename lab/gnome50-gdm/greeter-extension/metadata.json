@@ -1,7 +1,7 @@
 {
   "uuid": "mellon-greeter@local",
-  "name": "Mellon Greeter G1.6B — Astronomical Login & Account Selection (VM only)",
-  "description": "VM-only GNOME 50: single-user native activation, multi-user Mellon cards, M8 password cover, SHOW LOGIN recovery; no authentication changes.",
+  "name": "Mellon Greeter G1.7 — Seamless GDM Startup (VM only)",
+  "description": "Early astronomical account-loading curtain masks Ubuntu logo after Mellon mounts; 8-second fail-open recovery, single/multi-user GNOME handoff, unchanged M8 password and Observatory scan.",
   "shell-version": [
     "50"
   ],

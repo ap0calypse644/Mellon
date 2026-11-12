@@ -143,7 +143,11 @@ function mock(names,opts={}){
 {
     const h=mock([], {managerLoaded:false});
     h.chooser.sync();
-    assert.equal(h.chooser.isVisible,false);
+    assert.equal(h.chooser.isVisible,true,
+        'Initial GDM loading must be concealed by Mellon curtain');
+    assert.equal(h.chooser._panel.children[1].opts.text,
+        'ESTABLISHING UPLINK');
+    assert.equal(h.chooser._recovery.opts.label,'SHOW LOGIN');
     h.add('test1');
     h.dialog._userManager.is_loaded=true;
     h.chooser.sync();
@@ -188,4 +192,74 @@ function mock(names,opts={}){
         'Native alternate/password prompt cannot be covered by account picker');
     h.chooser.destroy();
 }
-console.log('PASS G1.6B: one-user deferred native selection, multi-user tiles, roster changes, SHOW LOGIN, fail open');
+{
+    const h=mock([], {managerLoaded:false,loaded:false});
+    h.chooser.sync();
+    assert.equal(h.chooser.isVisible,true,
+        'Early boot needs the image ABOVE GDM before any user is loaded');
+    assert.ok(h.order().indexOf(h.photo) > h.order().indexOf(h.dialog));
+    for(let i=0;i<30;i++)h.chooser.sync();
+    assert.equal(h.chooser.isVisible,true);
+    h.chooser.sync();
+    assert.equal(h.chooser.isVisible,true,
+        '32nd tick is the final bounded startup frame');
+    h.chooser.sync();
+    assert.equal(h.chooser.isVisible,false,
+        'At 33rd tick reveal native GDM if users never load');
+    assert.equal(h.list.focused,true);
+    assert.ok(h.order().indexOf(h.photo) < h.order().indexOf(h.dialog),
+        'Full artwork must be BELOW native dialog after timeout');
+    h.chooser.destroy();
+}
+{
+    const h=mock([], {managerLoaded:false,loaded:false});
+    h.chooser.sync();
+    h.dialog._disableUserList=true;
+    h.chooser.sync();
+    assert.equal(h.chooser.isVisible,false,
+        'Native disabled account list must never be permanently covered');
+    assert.equal(h.list.focused,true);
+    h.chooser.destroy();
+}
+{
+    const h=mock([], {managerLoaded:false,loaded:false});
+    h.chooser.sync();
+    h.dialog._authPrompt.visible=true;
+    h.dialog._userSelectionBox.visible=false;
+    h.dialog._authPrompt._entry={name:'OTP'};
+    h.dialog._authPrompt._passwordEntry={name:'password'};
+    h.chooser.sync();
+    assert.equal(h.chooser.isVisible,false);
+    assert.equal(h.list.focused,true,
+        'Alternate authentication prompt must restore native GDM');
+    assert.ok(h.order().indexOf(h.photo) < h.order().indexOf(h.dialog));
+    h.chooser.destroy();
+}
+{
+    const h=mock([], {managerLoaded:false,loaded:false});
+    h.chooser.sync();
+    h.dialog._authPrompt.visible=true;
+    h.dialog._userSelectionBox.visible=false;
+    const password={name:'password'};
+    h.dialog._authPrompt._passwordEntry=password;
+    h.dialog._authPrompt._entry=password;
+    h.chooser.sync();
+    assert.equal(h.chooser.isVisible,false);
+    assert.equal(h.chooser._bypassed,false,
+        'Existing G1.6A.1 password cover takes over without native fallback');
+    assert.ok(h.order().indexOf(h.photo) > h.order().indexOf(h.dialog),
+        'Photo stays ABOVE original GDM across password transition');
+    h.chooser.destroy();
+}
+{
+    const h=mock([], {managerLoaded:false,loaded:false});
+    h.chooser.sync();
+    h.chooser._recovery.click();
+    assert.equal(h.chooser.isVisible,false);
+    assert.equal(h.list.focused,true);
+    for(let i=0;i<35;i++)h.chooser.sync();
+    assert.equal(h.chooser.isVisible,false,
+        'SHOW LOGIN click must latch native GDM during startup');
+    h.chooser.destroy();
+}
+console.log('PASS G1.7: early logo concealment, bounded startup fallback, original password handoff, native recovery');

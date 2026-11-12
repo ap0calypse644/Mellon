@@ -28,6 +28,11 @@
     node "$HERE/test-g16b-chooser.mjs"
     node "$HERE/test-g131-layout.mjs"
     node "$HERE/test-g16b-deploy.mjs"
+    # A G1.6B-only package must never ship newer G1.7 initialization code.
+    if ! grep -Fq '[Mellon Greeter G1.6B] enabled in gdm mode' "$SRC/extension.js"; then
+        echo 'G1.6B stage retired: use the G1.7 package.' >&2
+        exit 1
+    fi
     grep -Fq '[Mellon Greeter G1.6B] enabled in gdm mode' "$SRC/extension.js"
     grep -Fq "from './greeter-account-chooser.js'" "$SRC/extension.js"
     grep -Fq "item.emit('activate')" "$SRC/greeter-account-chooser.js"

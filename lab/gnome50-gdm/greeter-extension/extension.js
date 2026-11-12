@@ -13,7 +13,10 @@ import {GreeterLengthObserver} from './greeter-length-observer.js';
 import {GreeterPasswordCover} from './greeter-password-cover.js';
 import {GreeterAccountChooser} from './greeter-account-chooser.js';
 
-// Mellon G1.6B: Astronomical GDM account selection + M8 password.
+// Mellon G1.7: early photographic GDM startup curtain + seamless M8 password.
+// Covers user-list initialization before Ubuntu's native logo can appear
+// after the GNOME extension mounts. Bounded native GDM fallback remains.
+// G1.6B: Astronomical account selection + M8 password.
 // Account choice goes through GNOME's existing native UserListItem
 // activation signal. Session choice and authentication remain GNOME-owned.
 // The PASSWORD prompt alone gets the photo, source stars and Observatory
@@ -52,7 +55,7 @@ export default class MellonGreeter extends Extension {
         this._lastError = null;
         if (Main.sessionMode.currentMode !== 'gdm')
             return;
-        console.log('[Mellon Greeter G1.6B] enabled in gdm mode');
+        console.log('[Mellon Greeter G1.7] enabled in gdm mode');
 
         // GDM's dynamically allocated account must read a separate,
         // system-installed immutable pack. No $HOME or user-specific paths.
@@ -208,9 +211,14 @@ export default class MellonGreeter extends Extension {
                             // Observer not healthy: reveal native controls
                             // rather than leaving unknown GNOME UI masked.
                             try {
+                                this._accounts?.revealNative();
+                            } catch (_) {
+                                // The account curtain may be disposed.
+                            }
+                            try {
                                 this._cover?.revealNative();
                             } catch (_) {
-                                // Native GDM remains unaffected.
+                                // Native GDM must remain accessible.
                             }
                             try {
                                 this._observer?.destroy();
@@ -229,7 +237,7 @@ export default class MellonGreeter extends Extension {
                         return GLib.SOURCE_CONTINUE;
                     });
             }
-            console.log('[Mellon Greeter G1.6B] Mellon account selection and covered password mode ready');
+            console.log('[Mellon Greeter G1.7] early startup curtain and continuous password handoff ready');
         } catch (error) {
             // A failed source-star mount cannot strand native authentication.
             observer?.destroy();
@@ -281,7 +289,7 @@ export default class MellonGreeter extends Extension {
         // Do not print identity, credentials, paths, input or secrets.
         const key = `${error?.name ?? 'Error'}:${error?.message ?? 'unknown'}`;
         if (key !== this._lastError) {
-            console.warn(`[Mellon Greeter G1.6B] ${key}`);
+            console.warn(`[Mellon Greeter G1.7] ${key}`);
             this._lastError = key;
         }
     }

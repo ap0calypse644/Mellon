@@ -11,6 +11,35 @@ import St from 'gi://St';
 // rosters always leave the native chooser available.
 const MAX_CUSTOM_ACCOUNTS = 8;
 const AUTO_STABLE_TICKS = 5; // 250ms sync ticks, ~1.25s roster stabilization
+const STARTUP_MAX_TICKS = 32; // bounded 8-second GDM initialization curtain
+
+// The native account list may not be populated when the GDM LoginDialog
+// first mounts. Cover *that* interval with Mellon instead of exposing the
+// Ubuntu logo. Only a known account-selection phase can be covered;
+// unsupported, oversized, or unavailable native structures fail open.
+function mayBeLoadingRoster(dialog, container) {
+    if (!dialog || dialog.get_parent?.() !== container ||
+        dialog._disableUserList === true ||
+        dialog._authPrompt?.visible !== false ||
+        !dialog._userSelectionBox || !dialog._userList ||
+        dialog._timedLoginUserListHold)
+        return false;
+    const list = dialog._userList;
+    if (list._items instanceof Map) {
+        if (list._items.size > MAX_CUSTOM_ACCOUNTS)
+            return false;
+        // Once GNOME has loaded a nonempty list, an incompatible item
+        // must NEVER be hidden by a perpetual Mellon splash.
+        if (dialog._userListLoaded === true &&
+            dialog._userManager?.is_loaded === true &&
+            list._items.size > 0)
+            return false;
+        return true;
+    }
+    // GNOME may construct its list before allocating the internal map.
+    // Permit the splash only before GNOME says its roster is loaded.
+    return dialog._userListLoaded !== true;
+}
 
 function nativeRoster(dialog, container) {
     if (!dialog || dialog.get_parent?.() !== container ||
@@ -67,6 +96,7 @@ export class GreeterAccountChooser {
         this._bypassed = false;
         this._autoAttempted = false;
         this._stableTicks = 0;
+        this._startupTicks = 0;
         this._rosterKey = null;
         this._renderedKey = null;
         this._destroyed = false;
@@ -93,11 +123,37 @@ export class GreeterAccountChooser {
             return;
         const roster = nativeRoster(this._dialog, this._container);
         if (!roster) {
-            this._hide();
             this._rosterKey = null;
             this._stableTicks = 0;
+            // A genuine password/alternate prompt gets the existing
+            // lock-screen-matched G1.6A.1 cover, never this account layer.
+            if (this._dialog?._authPrompt?.visible === true) {
+                const prompt = this._dialog._authPrompt;
+                if (prompt._passwordEntry &&
+                    prompt._entry === prompt._passwordEntry)
+                    this._hide(); // Native password covered by G1.6A.1.
+                else
+                    this.revealNative(); // Username, OTP or other challenge.
+                return;
+            }
+            // GNOME may temporarily hide the user list while finishing
+            // the one native activation. Keep the art, not a new loader.
+            if (this._autoAttempted &&
+                this._dialog?._userSelectionBox?.visible === false) {
+                this._hide();
+                return;
+            }
+            if (mayBeLoadingRoster(this._dialog, this._container) &&
+                ++this._startupTicks <= STARTUP_MAX_TICKS) {
+                this._show(null, 'startup', true);
+                return;
+            }
+            // No native user, unsupported list, or timed out after 8s.
+            // Restore both the native compositor order and keyboard focus.
+            this.revealNative();
             return;
         }
+        this._startupTicks = 0;
         // Never auto-start on a half-loaded roster. The USER LIST is the
         // authoritative source; Mellon never guesses from /etc/passwd.
         const key = roster.map(item => item.user.get_user_name()).join('\x1f');
@@ -136,9 +192,12 @@ export class GreeterAccountChooser {
             this._layer.show();
             this._active = true;
         }
-        const showChooser = roster.length > 1 || this._autoAttempted;
+        const startup = roster === null;
+        const showChooser = !startup &&
+            (roster.length > 1 || this._autoAttempted);
         const renderKey = key + ':' +
-            (showChooser ? 'choose' : settling ? 'settle' : 'enter');
+            (startup ? 'startup' : showChooser ? 'choose'
+                : settling ? 'settle' : 'enter');
         if (this._renderedKey === renderKey)
             return;
         this._renderedKey = renderKey;
@@ -156,7 +215,8 @@ export class GreeterAccountChooser {
         panel.add_child(textLabel('MELLON  /  ACCESS CONTROL',
             'mellon-gdm-account-eyebrow'));
         panel.add_child(textLabel(
-            showChooser ? 'SELECT OPERATOR' : 'IDENTIFYING OPERATOR',
+            startup ? 'ESTABLISHING UPLINK'
+                : showChooser ? 'SELECT OPERATOR' : 'IDENTIFYING OPERATOR',
             'mellon-gdm-account-title'));
         if (showChooser) {
             // All eligible native users are represented; never silently
@@ -183,7 +243,9 @@ export class GreeterAccountChooser {
                 panel.add_child(button);
             }
         } else {
-            panel.add_child(textLabel('PREPARING SECURE LOGIN',
+            panel.add_child(textLabel(
+                startup ? 'INITIALIZING NATIVE ACCOUNT REGISTRY'
+                    : 'PREPARING SECURE LOGIN',
                 'mellon-gdm-account-status'));
         }
 
@@ -196,6 +258,15 @@ export class GreeterAccountChooser {
         recovery.connect('clicked', () => this.revealNative());
         this._layer.add_child(panel);
         this._layer.add_child(recovery);
+        // Only the small account panel fades in. The astronomical photo
+        // stays continuously opaque above native GDM across handoff.
+        if (typeof panel.ease === 'function') {
+            panel.opacity = 0;
+            panel.ease({
+                opacity: 255, duration: 180,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            });
+        }
         this._panel = panel;
         this._recovery = recovery;
         // GNOME's native screen is behind artwork. The custom choices
