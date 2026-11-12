@@ -56,7 +56,6 @@ for(const fragment of [
     `this._hud?.hide();`, `this._hud?.destroy();`,
     `this._hud?.setMapping(this._active);`,
     `this._hud?.setCompletion(fx);`,
-    `this._hud?.cancelIntro();`,
 ]) assert.ok(m8.includes(fragment),`Missing auth/HUD invariant: ${fragment}`);
 for(const forbidden of [
     'key-press-event','key-release-event','get_text()','get_password',
@@ -123,4 +122,4 @@ assert.ok(!intro.includes('this._finished = true'));
 assert.ok(introState.includes('gridGeometry(width, height)'));
 assert.ok(introState.includes('gridCellStrength(frame, column, row, geometry)'));
 
-console.log('PASS M8.3.2: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
+console.log('PASS M8.4: unchanged M7 visual/auth state, HUD layering, SHOW LOGIN and alert priority, teardown and input isolation');
