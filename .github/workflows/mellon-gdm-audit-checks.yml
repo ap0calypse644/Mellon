@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'lab/gnome50-gdm/**'
+      - 'lab/blackpearl-host/**'
       - '.github/workflows/mellon-gdm-audit-checks.yml'
   workflow_dispatch:
 permissions:
