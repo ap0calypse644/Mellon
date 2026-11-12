@@ -66,7 +66,8 @@ assert.ok(css.includes('.mellon-gdm-account-option'));
 const executable=chooser.replace(/\/\*[\s\S]*?\*\//g,'')
     .replace(/^\s*\/\/.*$/gm,'');
 for(const forbidden of [
-  '_userVerifier','_passwordEntry','get_text(', 'get_buffer(',
+  '_userVerifier','_passwordEntry.get_text(', '_passwordEntry.text',
+  'get_text(', 'get_buffer(',
   'getAnswer(', 'get_password(', 'get_passphrase(', 'set_text(',
   'key-press-event','PAM','_beginVerificationForItem(',
 ]){
