@@ -14,7 +14,7 @@
     }
     test -f "$PREVIOUS/extension.js" && test ! -L "$PREVIOUS/extension.js"
     grep -Fq '[Mellon Greeter G1.6B] enabled in gdm mode' "$PREVIOUS/extension.js" || {
-        echo 'Previous directory does not contain G1.6A.' >&2; exit 1;
+        echo 'Previous directory does not contain G1.6B.' >&2; exit 1;
     }
     test -f "$PREVIOUS/hud-layout.js"
     grep -Fq 'Math.max(78, recovery.y + recovery.height + 12)' "$PREVIOUS/hud-layout.js"

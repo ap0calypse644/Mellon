@@ -3,7 +3,7 @@
 # Root inside Ubuntu GNOME 50 test VM. NEVER install on BlackPearl.
 (
     set -euo pipefail
-    echo '========== G1.7: VM-ONLY GREETER STABILITY UPGRADE =========='
+    echo '========== G1.7: VM-ONLY EARLY OBSERVATORY CURTAIN =========='
     test "$(id -u)" -eq 0 || { echo 'Guest sudo required.' >&2; exit 1; }
     test "$(gnome-shell --version)" = 'GNOME Shell 50.1'
     test "$(dpkg-query -W -f='${Version}' gdm3)" = '50.1-0ubuntu0.1'
@@ -155,7 +155,7 @@ PY
     trap - EXIT
 
     echo
-    echo 'PASS: Mellon G1.7 scan recovery patch installed in TEST VM only.'
+    echo 'PASS: Mellon G1.7 early startup curtain installed in TEST VM only.'
     echo 'Entire G1.6B extension retained as .mellon-g17-previous-001.'
     echo 'No changes to GDM login controls, PAM, dconf, M8 or BlackPearl.'
     echo 'NO GDM restart. Reboot only the isolated VM for functional tests.'
