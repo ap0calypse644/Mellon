@@ -1,5 +1,8 @@
 # Mellon on BlackPearl — G1.8 GDM + M8.4 Lock Screen
 
+> **Historical first-install record, not a repeatable updater.** G1.8 + M8.4 were subsequently installed and confirmed working on BlackPearl. These scripts are pinned to that machine and refuse a second installation. For a new machine or an existing-install upgrade, start with [the current deployment guide](../../docs/DEPLOYMENT.md). Do **not** re-run `install.sh` over a working Mellon installation.
+
+
 **Host deployment is specifically authorized by the owner on Nov 12,
 2026. The VM is already fully validated. Mythological constellation
 artwork is intentionally postponed until last.**

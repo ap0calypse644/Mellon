@@ -1,0 +1,57 @@
+name: Documentation and repository hygiene
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'docs/**'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/pull_request_template.md'
+      - '.github/workflows/docs.yml'
+      - 'tools/docs/**'
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'docs/**'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'LICENSE'
+      - '.github/**'
+      - 'tools/docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Check local links and documentation structure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate links (no network access required)
+        run: python3 tools/docs/check_links.py
+      - name: Check foundational project files
+        shell: bash
+        run: |
+          test -s README.md
+          test -s LICENSE
+          test -s SECURITY.md
+          test -s CONTRIBUTING.md
+          test -s docs/ARCHITECTURE.md
+          test -s docs/COMPONENTS.md
+          test -s docs/DEPLOYMENT.md
+          test -s docs/ASSETS_AND_LICENSES.md
+          grep -Fq 'mellon-greeter@local' docs/ARCHITECTURE.md
+          grep -Fq 'mellon-lab@local' docs/ARCHITECTURE.md
+          grep -Fq 'GNOME Shell 50.1' docs/GETTING_STARTED.md
+          echo 'PASS: current G1.8/M8.4 documentation entry points exist'

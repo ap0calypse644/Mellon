@@ -49,7 +49,7 @@ assets/starfield/                ← sources, catalogues, previews, provenance
 docs/                            ← newcomer, internals, recipes, recovery
 ```
 
-**Do not start with `./install.sh`.** The root-level `extension.js`, `metadata.json`, `install.sh`, and `uninstall.sh` belong to the **2016-style** *(original experimental)* `mellon@nibir.local` prototype, **not** the current two-extension system. They remain only as historical reference. See [the project evolution](docs/HISTORY.md).
+**Do not start with `./install.sh`.** The root-level `extension.js`, `metadata.json`, `install.sh`, and `uninstall.sh` belong to the *(original experimental)* `mellon@nibir.local` prototype, **not** the current two-extension system. They remain only as historical reference. See [the project evolution](docs/HISTORY.md).
 
 ### Try the logic without touching GNOME
 

@@ -1,0 +1,38 @@
+# Personal development environments and generated artifacts
+.venv/
+.venv-*/
+.venv_*/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# Editors and OS detritus
+.idea/
+.vscode/
+.DS_Store
+*~
+*.swp
+*.swo
+
+# Never commit secrets or machine-specific credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# VM disks, firmware snapshots and local logs are not source assets
+*.qcow2
+*.qcow2.*
+*.vdi
+*.iso
+*.vmdk
+*.nvram
+*.log

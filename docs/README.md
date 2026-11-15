@@ -13,8 +13,11 @@ Mellon has a **working system** and a **long experimental history**. These pages
 7. [Deployment](DEPLOYMENT.md) — why existing scripts are pinned to one machine, porting them, staged installation, rollback, and TTY recovery.
 8. [Troubleshooting](TROUBLESHOOTING.md) — diagnosed failures, read-only commands, safe fallbacks, what not to do.
 9. [Security & privacy](SECURITY.md) — threat model, private GNOME APIs, invariant checklist.
-10. [Assets & licenses](ASSETS_AND_LICENSES.md) — what is MIT, what is *not*, photographers and image/model provenance.
-11. [History](HISTORY.md) — version map, original prototype versus current implementation, milestone documentation.
+10. [API reference](API_REFERENCE.md) — pure-module signatures and actor adapters.
+11. [GDM internals](GDM_INTERNALS.md) — native accounts, password cover, fallback and GNOME 50 private APIs.
+12. [Observatory](OBSERVATORY.md) — HUD, stage pulses, grid scanning, sprite rendering.
+13. [Assets & licenses](ASSETS_AND_LICENSES.md) — what is MIT, what is *not*, photographers and image/model provenance.
+14. [History](HISTORY.md) — version map, original prototype versus current implementation, milestone documentation.
 
 ## Where to look in the code
 
