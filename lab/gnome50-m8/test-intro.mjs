@@ -10,7 +10,7 @@ const {INTRO_DURATION_MS, INTRO_TICK_MS, INTRO_REPEAT_MS, introFrame,
 const {hudLayout} = await load('./hud-layout.js');
 
 assert.equal(INTRO_DURATION_MS, 1850);
-assert.equal(INTRO_TICK_MS, 50);
+assert.equal(INTRO_TICK_MS, 25);
 assert.equal(INTRO_REPEAT_MS, 5000);
 assert.ok(INTRO_REPEAT_MS > INTRO_DURATION_MS,
     'Recurring sweeps must have an idle period');
