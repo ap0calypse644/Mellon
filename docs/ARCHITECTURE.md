@@ -1,16 +1,18 @@
 # How Mellon works
 
+**M9:** A single GNOME authentication session now owns **independent clipped visual viewports on each monitor**. See [Multi-monitor internals](MULTI_MONITOR.md) for actor trees, mixed scaling and the compositor scan.
+
 Mellon is **two GNOME Shell extensions sharing one visual language**. It does not replace the display manager, the system password entry, or the authentication service.
 
 ## The two GNOME sessions
 
-| | Lock screen (M8.4) | GDM greeter (G1.8) |
+| | Lock screen (M9) | GDM greeter (M9) |
 | --- | --- | --- |
 | GNOME session mode | `unlock-dialog` | `gdm` |
 | Extension UUID | `mellon-lab@local` | `mellon-greeter@local` |
 | Typical installed path | `~/.local/share/gnome-shell/extensions/` | `/usr/share/gnome-shell/extensions/` |
 | GNOME owns | PasswordEntry, unlock flow, session | LoginDialog, user/session selection, AuthPrompt, verifier |
-| Mellon owns | Photo/canvas, source-pixel stars, HUD, feedback | Same visuals plus themed account selector |
+| Mellon owns | One photo/canvas/stars/HUD per GNOME logical monitor | One `GreeterVisuals` group with one clipped viewport per monitor; primary-only account selector |
 | Exit hatch | SHOW LOGIN reveals native unlock | SHOW LOGIN reveals native account/password controls |
 | Error handling | Fall back to native UI | Bounded init/rebind, fail-open to native GDM |
 
