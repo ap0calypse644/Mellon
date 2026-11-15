@@ -69,7 +69,7 @@ The greeter has the same scene JSON model but currently chooses a random scene i
 
 `lab/gnome50-gdm/stage-g18-to-vm.sh` and `lab/gnome50-m8/stage-m84-to-vm.sh` are pinned to the original isolated `mellon-gnome50-lab` VM and validate existing prior releases. Their installer/rollback pairs are for **that VM only**.
 
-`lab/blackpearl-host/` contains the original, machine-specific first-install and recovery scripts. The **M9 GDM upgrade and rollback** are separate scripts at `lab/gnome50-gdm/m9-{upgrade,rollback}-blackpearl.sh`. See the [Multi-monitor guide](MULTI_MONITOR.md) before changing an installed system. The original `lab/blackpearl-host/` scripts `preflight.sh` is read-only; `stage.sh` assembles hashes; `install.sh` changes on-disk extensions and GDM dconf; `rollback.sh` restores native login configuration. Review [Deployment](DEPLOYMENT.md) before porting.
+`lab/blackpearl-host/` contains the original, machine-specific first-install and recovery scripts. The **M9 GDM upgrade and rollback** are separate scripts at `lab/gnome50-gdm/m9-{upgrade,rollback}-blackpearl.sh`. See the [Multi-monitor guide](MULTI_MONITOR.md) before changing an installed system. In that historical first-install toolset, `preflight.sh` is read-only; `stage.sh` assembles hashes; `install.sh` changes on-disk extensions and GDM dconf; and `rollback.sh` restores native login configuration. Review [Deployment](DEPLOYMENT.md) before porting.
 
 ## Where a change should go
 
