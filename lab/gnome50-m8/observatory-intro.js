@@ -1,14 +1,14 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
-import {INTRO_TICK_MS, INTRO_REPEAT_MS,
-    introFrame, gridGeometry, gridCellStrength}
+import {INTRO_DURATION_MS, INTRO_REPEAT_MS, gridGeometry}
     from './hud-intro-state.js';
 
-// One GNOME DrawingArea renders the entire grid: no cell actors, no shaders,
-// and no access to password or key events. A low-frequency 5s cadence
-// activates short-lived 25ms frame updates ONLY during each 1.85s sweep.
-// The overlay is non-reactive; native SHOW LOGIN remains fully clickable.
+// M9.2: the head travels on Clutter's refresh-synchronized animation clock.
+// No per-frame GLib timer, Cairo repaint, or JS updates compete with the
+// two monitors. Native authentication and its input actors stay untouched.
+const BEAM_WIDTH = 240;
+
 export class ObservatoryIntro {
     constructor(root, panels) {
         this._root = root;
@@ -18,35 +18,63 @@ export class ObservatoryIntro {
         this._stopped = false;
         this._sweeping = false;
         this._destroyed = false;
-        this._timerId = 0;
+        this._finishId = 0;
         this._repeatTimerId = 0;
-        this._startedAt = 0;
+        this._firstLayoutId = 0;
         this._screenSize = null;
-        this._frame = introFrame(0);
-        this._grid = new St.DrawingArea({reactive: false, can_focus: false});
+
+        // A static texture: paint once, not 60+ times a second.
+        this._grid = new St.DrawingArea({
+            reactive: false, can_focus: false,
+        });
         this._grid.add_constraint(new Clutter.BindConstraint({
             source: root, coordinate: Clutter.BindCoordinate.SIZE,
         }));
         this._grid.connect('repaint', area => {
-            if (this._destroyed || this._stopped || !this._sweeping)
+            if (this._destroyed || this._stopped)
                 return;
             const [width, height] = area.get_surface_size();
             if (width < 320 || height < 240)
                 return;
             const cr = area.get_context();
             try {
-                this._paint(cr, gridGeometry(width, height), this._frame);
-            } catch (_) {
-                // An optional visual failing must never break GNOME login.
+                this._paintGrid(cr, gridGeometry(width, height));
+            } catch (error) {
+                // Decorative errors must never interfere with GNOME login.
+                console.warn('[Mellon scan] grid rendering disabled: ' +
+                    String(error));
                 this.stop();
             } finally {
                 cr.$dispose();
             }
         });
-        // Under all HUD labels, stages and metadata. This actor and its
-        // parent are non-reactive; GNOME keeps native keyboard and focus.
         root.insert_child_below(this._grid, panels.topLeft);
         this._grid.hide();
+
+        // One animated parent moves the wake and luminous leading edge.
+        // GNOME/Mutter interpolates its x-position at the display's refresh
+        // rate, including when the external and internal monitors differ.
+        this._scanner = new St.Widget({
+            reactive: false, can_focus: false,
+            layout_manager: new Clutter.FixedLayout(),
+        });
+        this._wake = new St.Widget({
+            reactive: false, can_focus: false,
+        });
+        this._wake.set_style(
+            'background-gradient-direction: horizontal; ' +
+            'background-gradient-start: rgba(21, 123, 192, 0); ' +
+            'background-gradient-end: rgba(95, 217, 255, 0.26);');
+        this._edge = new St.Widget({
+            reactive: false, can_focus: false,
+        });
+        this._edge.set_style(
+            'background-color: rgba(185, 245, 255, 0.9); ' +
+            'box-shadow: 0 0 14px rgba(78, 205, 255, 0.8);');
+        this._scanner.add_child(this._wake);
+        this._scanner.add_child(this._edge);
+        root.insert_child_above(this._scanner, this._grid);
+        this._scanner.hide();
     }
 
     onLayout(_rects, width, height) {
@@ -58,24 +86,38 @@ export class ObservatoryIntro {
             if (width === this._screenSize[0] &&
                 height === this._screenSize[1])
                 return;
-            // GDM may allocate the same HUD at intermediate sizes while
-            // switching the login prompt or the display mode. Never call
-            // stop() here: it permanently disables all later 5s sweeps.
             if (this._repeatTimerId) {
                 GLib.source_remove(this._repeatTimerId);
                 this._repeatTimerId = 0;
             }
+            if (this._firstLayoutId) {
+                GLib.source_remove(this._firstLayoutId);
+                this._firstLayoutId = 0;
+            }
             this._finishSweep(false);
-            this._started = false;
         }
-        const firstSweep = !this._everStarted;
-        this._everStarted = true;
+
         this._started = true;
         this._screenSize = [width, height];
-        this._startSweep(firstSweep);
+        this._scanner.set_size(BEAM_WIDTH, height);
+        this._wake.set_position(0, 0);
+        this._wake.set_size(BEAM_WIDTH - 3, height);
+        this._edge.set_position(BEAM_WIDTH - 3, 0);
+        this._edge.set_size(3, height);
+        this._grid.queue_repaint();
 
-        // From the first sweep START, begin another one every five seconds.
-        // This source only WAKES at 5s intervals; it never redraws while idle.
+        // The HUD's first reflow runs before it is parented to the lock
+        // dialog. Start on the next idle, after the actor joins the stage.
+        const firstSweep = !this._everStarted;
+        this._everStarted = true;
+        this._firstLayoutId = GLib.idle_add(
+            GLib.PRIORITY_DEFAULT_IDLE, () => {
+                this._firstLayoutId = 0;
+                if (!this._destroyed && !this._stopped)
+                    this._startSweep(firstSweep);
+                return GLib.SOURCE_REMOVE;
+            });
+
         this._repeatTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
             INTRO_REPEAT_MS, () => {
                 if (this._destroyed || this._stopped) {
@@ -85,9 +127,11 @@ export class ObservatoryIntro {
                 try {
                     if (!this._sweeping)
                         this._startSweep(false);
-                } catch (_) {
-                    this._repeatTimerId = 0; // Current callback self-removes.
-                    this.stop();  // Never strand a guest behind decoration.
+                } catch (error) {
+                    console.warn('[Mellon scan] animation disabled: ' +
+                        String(error));
+                    this.stop();
+                    this._repeatTimerId = 0;
                     return GLib.SOURCE_REMOVE;
                 }
                 return GLib.SOURCE_CONTINUE;
@@ -95,60 +139,55 @@ export class ObservatoryIntro {
     }
 
     _startSweep(firstSweep) {
-        if (this._destroyed || this._stopped || this._sweeping)
+        if (this._destroyed || this._stopped || this._sweeping ||
+            !this._screenSize)
             return;
         this._sweeping = true;
-        this._startedAt = GLib.get_monotonic_time() / 1000;
-        this._frame = introFrame(0);
+        const width = this._screenSize[0];
+        this._scanner.remove_all_transitions();
+        this._scanner.set_position(-BEAM_WIDTH, 0);
+        this._scanner.opacity = 255;
 
-        // Only the very FIRST sweep fades in instrument panels.
-        // All later sweeps leave the approved M8.2 HUD fully visible.
-        if (firstSweep)
-            for (const panel of Object.values(this._panels))
+        if (firstSweep) {
+            for (const panel of Object.values(this._panels)) {
+                panel.remove_all_transitions();
                 panel.opacity = 0;
+                panel.ease({
+                    opacity: 255, duration: 900,
+                    mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
+                });
+            }
+        }
 
         this._grid.show();
-        this._grid.queue_repaint();
-        this._timerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
-            INTRO_TICK_MS, () => {
-                if (this._destroyed || this._stopped || !this._sweeping) {
-                    this._timerId = 0;
-                    return GLib.SOURCE_REMOVE;
-                }
-                try {
-                    const elapsed = GLib.get_monotonic_time() / 1000 -
-                        this._startedAt;
-                    const next = introFrame(elapsed);
-                    if (next.done) {
-                        this._finishSweep(true);
-                        return GLib.SOURCE_REMOVE;
-                    }
-                    this._frame = next;
-                    if (firstSweep) {
-                        for (const panel of Object.values(this._panels))
-                            panel.opacity = next.panelOpacity;
-                    }
-                    this._grid.queue_repaint();
-                    return GLib.SOURCE_CONTINUE;
-                } catch (_) {
-                    this._timerId = 0; // Current callback self-removes.
-                    this.stop();
-                    return GLib.SOURCE_REMOVE;
-                }
+        this._scanner.show();
+
+        // Linear motion until the leading edge has left the right border.
+        // Unlike the old frame math, there is NO mid-sweep hold or early
+        // stop. No 16/25/50ms JS timeout is involved.
+        this._scanner.ease({
+            x: width,
+            duration: INTRO_DURATION_MS,
+            mode: Clutter.AnimationMode.LINEAR,
+            onComplete: () => this._finishSweep(false),
+        });
+
+        // Bounded cleanup if the compositor cancels an animation (e.g.
+        // monitor hot-unplug), independent of the onComplete callback.
+        this._finishId = GLib.timeout_add(GLib.PRIORITY_DEFAULT,
+            INTRO_DURATION_MS + 100, () => {
+                this._finishId = 0;
+                this._finishSweep(false);
+                return GLib.SOURCE_REMOVE;
             });
     }
 
-    _paint(cr, geometry, frame) {
-        const {width, height, columns, rows, cellWidth, cellHeight} = geometry;
-        const globalAlpha = frame.gridOpacity;
-        if (globalAlpha <= .001)
-            return;
-
-        // Preserve the ALWAYS-visible native SHOW LOGIN recovery area.
-        // Clip out a generous rectangle, without reducing grid coverage
-        // over the actual center of the nebula and constellation.
-        const rx = 12, ry = 10, rw = 230, rh = 86;
+    _paintGrid(cr, {width, height, columns, rows, cellWidth, cellHeight}) {
+        // A subtle stationary lattice, painted only on resize/first show.
+        // The moving gradient provides the scan, while the artwork stays
+        // crisp at ultrawide and fractional-scaled laptop resolutions.
         cr.save();
+        const rx = 12, ry = 10, rw = 230, rh = 86;
         cr.newPath();
         cr.rectangle(0, 0, width, ry);
         cr.rectangle(0, ry + rh, width, Math.max(0, height - ry - rh));
@@ -156,9 +195,7 @@ export class ObservatoryIntro {
         cr.rectangle(rx + rw, ry, Math.max(0, width - rx - rw), rh);
         cr.clip();
 
-        // Muted full-screen lattice, always underneath the photographic
-        // stars (visually) and under the prominent HUD panels.
-        cr.setSourceRGBA(.36, .76, 1, .095 * globalAlpha);
+        cr.setSourceRGBA(.36, .76, 1, .095);
         cr.setLineWidth(.75);
         for (let col = 0; col <= columns; col++) {
             const x = col * cellWidth;
@@ -172,66 +209,35 @@ export class ObservatoryIntro {
         }
         cr.stroke();
 
-        // A faint afterglow follows the head without repainting every
-        // already-traversed cell. The lattice above retains the grid texture.
-        const lead = Math.min(width, frame.sweep * width);
-        cr.rectangle(0, 0, lead, height);
-        cr.setSourceRGBA(.24, .72, 1, .014 * globalAlpha);
-        cr.fill();
-
-        // Only draw the moving 1/4-screen wake in detail. The previous
-        // implementation repainted hundreds of settled cells on BOTH
-        // monitors on every tick, making the leading edge stutter.
-        const firstColumn = Math.max(0,
-            Math.floor((frame.sweep - .25) * columns));
-        const lastColumn = Math.min(columns,
-            Math.ceil(frame.sweep * columns) + 1);
-        for (let col = firstColumn; col < lastColumn; col++) {
-            const x = col * cellWidth;
+        // A sparse cell texture remains still while the gradient crosses.
+        cr.setSourceRGBA(.32, .78, 1, .035);
+        for (let col = 0; col < columns; col++)
             for (let row = 0; row < rows; row++) {
-                const intensity = gridCellStrength(frame,col,row,geometry);
-                if (intensity < .20)
+                if ((col * 7 + row * 11) % 5 !== 0)
                     continue;
-                const y = row * cellHeight;
-                const alpha = intensity * globalAlpha;
-                cr.rectangle(x + 1.5, y + 1.5,
-                    Math.max(0, cellWidth - 3),
-                    Math.max(0, cellHeight - 3));
-                cr.setSourceRGBA(.24, .72, 1, .12 * alpha);
-                cr.fill();
-                cr.rectangle(x + .5, y + .5,
-                    Math.max(0, cellWidth - 1),
-                    Math.max(0, cellHeight - 1));
-                cr.setSourceRGBA(.52, .92, 1, .25 * alpha);
-                cr.setLineWidth(1);
-                cr.stroke();
+                cr.rectangle(col * cellWidth + 2, row * cellHeight + 2,
+                    Math.max(0, cellWidth - 4),
+                    Math.max(0, cellHeight - 4));
             }
-        }
-
-        // Leading wave crosses the entire viewport before the brief fade.
-        // A bright, narrow core avoids a fuzzy apparent stop short of right.
-        cr.rectangle(Math.max(0, lead - 16), 0, 18, height);
-        cr.setSourceRGBA(.24, .8, 1, .12 * globalAlpha);
-        cr.fill();
-        cr.rectangle(Math.max(0, lead - 2), 0, 3, height);
-        cr.setSourceRGBA(.75, .96, 1, .54 * globalAlpha);
         cr.fill();
         cr.restore();
     }
 
-    _finishSweep(inCallback) {
+    _finishSweep(_fromCallback) {
         if (!this._sweeping)
             return;
         this._sweeping = false;
-        if (this._timerId) {
-            if (!inCallback)
-                GLib.source_remove(this._timerId);
-            this._timerId = 0;
+        if (this._finishId) {
+            GLib.source_remove(this._finishId);
+            this._finishId = 0;
         }
+        this._scanner?.remove_all_transitions();
+        this._scanner?.hide();
         this._grid?.hide();
-        for (const panel of Object.values(this._panels))
+        for (const panel of Object.values(this._panels)) {
+            panel.remove_all_transitions();
             panel.opacity = 255;
-        this._frame = introFrame(0);
+        }
     }
 
     stop() {
@@ -242,11 +248,13 @@ export class ObservatoryIntro {
             GLib.source_remove(this._repeatTimerId);
             this._repeatTimerId = 0;
         }
-        // Cancels a frame timer immediately, without leaving the 5s source.
+        if (this._firstLayoutId) {
+            GLib.source_remove(this._firstLayoutId);
+            this._firstLayoutId = 0;
+        }
         this._finishSweep(false);
+        this._scanner?.hide();
         this._grid?.hide();
-        for (const panel of Object.values(this._panels))
-            panel.opacity = 255;
     }
 
     destroy() {
@@ -254,8 +262,12 @@ export class ObservatoryIntro {
             return;
         this.stop();
         this._destroyed = true;
+        this._scanner?.destroy();
         this._grid?.destroy();
+        this._scanner = null;
         this._grid = null;
+        this._wake = null;
+        this._edge = null;
         this._root = null;
         this._panels = null;
     }
