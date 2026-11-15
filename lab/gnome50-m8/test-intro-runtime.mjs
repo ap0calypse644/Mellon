@@ -102,20 +102,20 @@ function harness() {
 {
     const h=harness();
     h.intro.onLayout({},1920,1080);
-    assert.deepEqual(h.intervals(),[50,5000]);
+    assert.deepEqual(h.intervals(),[25,5000]);
     assert.equal(h.intro._grid.visible,true);
     assert.equal(h.panels.topLeft.opacity,0,'First sweep fades HUD');
 
     h.advance(1850);
     assert.equal(h.intro._grid.visible,false,'Sweep stops after 1.85s');
-    assert.deepEqual(h.intervals(),[5000],'No 50ms idle repaint source');
+    assert.deepEqual(h.intervals(),[5000],'No active-sweep repaint source during idle');
     assert.equal(h.panels.topLeft.opacity,255);
     const idleRepaints=h.repaints;
     h.advance(4999);
     assert.equal(h.repaints,idleRepaints,'No drawing between sweeps');
 
     h.advance(5000);
-    assert.deepEqual(h.intervals(),[50,5000]);
+    assert.deepEqual(h.intervals(),[25,5000]);
     assert.equal(h.intro._grid.visible,true,'Sweep repeats at 5 seconds');
     assert.equal(h.panels.topLeft.opacity,255,
         'Repeated sweeps must not fade approved Observatory panels');
@@ -136,14 +136,14 @@ function harness() {
     h.intro.onLayout({},1920,1080);
     h.advance(300);
     h.intro.onLayout({},1280,720);
-    assert.deepEqual(h.intervals(),[50,5000],
+    assert.deepEqual(h.intervals(),[25,5000],
         'Resize must rearm both bounded timers, not disable the 5s scan');
     assert.equal(h.intro._grid.visible,true);
     assert.equal(h.panels.topLeft.opacity,255);
     h.advance(2200);
     assert.deepEqual(h.intervals(),[5000]);
     h.advance(5500);
-    assert.deepEqual(h.intervals(),[50,5000]);
+    assert.deepEqual(h.intervals(),[25,5000]);
     h.intro.stop();
     assert.equal(h.activeSources,0);
 }
