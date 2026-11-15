@@ -1,6 +1,6 @@
 # Component reference
 
-This is a quick-reference map for **current M9**,  not every historical prototype. Source links below are relative to the repository root.
+This is a quick-reference map for **current M9**, not every historical prototype. Source links below are relative to the repository root.
 
 ## Shared visual engine
 
@@ -42,8 +42,9 @@ UUID `mellon-lab@local`; `session-modes: ["unlock-dialog"]`; GNOME Shell 50 only
 
 | File | What it does |
 | --- | --- |
-| `extension.js` | Mounts photo/stars/HUD into native GNOME 50 `_lockDialogGroup`, coordinates chooser, password cover, length observer; bounds attempts and rebind |
-| `greeter-account-chooser.js` | Temporary startup curtain, 1.25 s single-user roster stabilization, up to eight themed account tiles, native `activate` event, fail-open SHOW LOGIN |
+| `extension.js` | Mounts a single `GreeterVisuals` group in native GNOME 50 `_lockDialogGroup`, coordinates one chooser, password cover and length observer; bounds attempts and rebind |
+| `greeter-visuals.js` | Owns all clipped, independent GDM monitor viewports and their photo/stars/HUD actors; one visual ordering group, GNOME logical coordinates |
+| `greeter-account-chooser.js` | Primary-monitor startup curtain, 1.25 s single-user roster stabilization, up to eight themed account tiles, native `activate` event, fail-open SHOW LOGIN |
 | `greeter-length-observer.js` | Attaches to the actual native `_passwordEntry` only, reads `get_length()`, disconnects old buffer signals; avoids username/OTP fields |
 | `greeter-password-cover.js` | Masks only recognized password prompts; controls SHOW LOGIN, wrong-password label, focus and failure feedback |
 | `greeter-starfield.js` | GDM-specific photo-derived sprite actors, drawn connections, effects, and frame timer; invokes HUD stage/completion updates |
@@ -68,7 +69,7 @@ The greeter has the same scene JSON model but currently chooses a random scene i
 
 `lab/gnome50-gdm/stage-g18-to-vm.sh` and `lab/gnome50-m8/stage-m84-to-vm.sh` are pinned to the original isolated `mellon-gnome50-lab` VM and validate existing prior releases. Their installer/rollback pairs are for **that VM only**.
 
-`lab/blackpearl-host/` bundles the tested runtime and installs it on one specific physical workstation. `preflight.sh` is read-only; `stage.sh` assembles hashes; `install.sh` changes on-disk extensions and GDM dconf; `rollback.sh` restores native login configuration. Review [Deployment](DEPLOYMENT.md) before porting.
+`lab/blackpearl-host/` historically bundled the first-install runtime for one workstation; the **M9 upgrade and rollback** live at `lab/gnome50-gdm/m9-{upgrade,rollback}-blackpearl.sh`. See [Multi-monitor guide](MULTI_MONITOR.md). `lab/blackpearl-host/` `preflight.sh` is read-only; `stage.sh` assembles hashes; `install.sh` changes on-disk extensions and GDM dconf; `rollback.sh` restores native login configuration. Review [Deployment](DEPLOYMENT.md) before porting.
 
 ## Where a change should go
 
