@@ -1,10 +1,12 @@
 # Installation, updates, and recovery
 
+**Current M9 (accepted on the original BlackPearl):** both GNOME lock and GDM render per-monitor viewports. Read the [M9 multi-monitor guide](MULTI_MONITOR.md) for the already-installed host upgrade, exact rollback path, and why Wayland requires a fresh GNOME Shell session after module changes. The initial-install scripts below are historical and **must not be rerun** on an installed host.
+
 Mellon makes the **visible** GNOME login experience custom; authentication remains native. That still puts it on a critical path: an extension error can make GDM unusable. This page intentionally separates **tested BlackPearl deployment history** from **porting instructions for other machines**.
 
 ## The known-good physical installation
 
-The original owner has successfully installed G1.8 (GDM) and M8.4 (lock) on BlackPearl: Ubuntu 26.04.1, GNOME Shell 50.1, gdm3 50.1, Wayland, `ap0calypse` as primary user.
+The original owner has successfully installed M9 (GDM and lock, superseding the original G1.8/M8.4 builds) on BlackPearl: Ubuntu 26.04.1, GNOME Shell 50.1, gdm3 50.1, Wayland, `ap0calypse` as primary user.
 
 The original scripts in [`lab/blackpearl-host/`](../lab/blackpearl-host/README.md) are an **initial-install** set, not an updater. They deliberately refuse to overwrite an existing Mellon installation or dconf admin profile. **Do not rerun `install.sh` on an already installed machine**; use a separate, versioned upgrade procedure with fresh backups.
 
@@ -19,7 +21,7 @@ The original scripts in [`lab/blackpearl-host/`](../lab/blackpearl-host/README.m
 
 The root-owned rollback path is `/usr/local/sbin/mellon-blackpearl-rollback`. The install-time backup is `/var/backups/mellon-blackpearl/host-v1/`. These paths are **specific to the original workstation**.
 
-### First-install order that worked
+### Historical first-install order that worked
 
 1. Check that a **text-console login** works before changing GDM.
 2. Run the host preflight and stage; stop on any error.
