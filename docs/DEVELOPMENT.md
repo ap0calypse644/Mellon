@@ -4,7 +4,7 @@ Mellon was built in small milestones with a **VM-first, recoverable** workflow. 
 
 ## Working in the repo
 
-The current code is **G1.8 GDM** and **M8.4 unlock-dialog**.
+The current code is **M9 GDM** and **M9 unlock-dialog**, preserving the historical G1.8/M8.4 source directory names.
 
 ```text
 README.md                            newcomer entry point
@@ -49,8 +49,8 @@ From repository root:
 
     echo '== GDM account / password adapters =='
     node lab/gnome50-gdm/test-g14-length.mjs
-    node lab/gnome50-gdm/test-g16a-cover.mjs
-    node lab/gnome50-gdm/test-g16b-chooser.mjs
+    node lab/gnome50-gdm/test-m9-gdm-ui.mjs
+    node lab/gnome50-gdm/test-m9-gdm-multimonitor.mjs
 
     echo '== Shared parity / latest HUD / deployment guards =='
     node lab/gnome50-gdm/test-g17-parity-performance.mjs
@@ -75,7 +75,7 @@ To check GJS module syntax without requiring GNOME:
 
 **Node can parse these files but cannot execute `gi://` imports.** Runtime behavior must be tested in GJS/GNOME.
 
-The CI workflows include additional legacy milestone tests; when changing a shared helper, run them too. See the files under [`.github/workflows/`](../.github/workflows/mellon-gdm-audit-checks.yml) and [M8 workflow](../.github/workflows/mellon-m8-checks.yml).
+The active M9 CI runs the current per-monitor geometry and native-auth recovery mocks. Earlier `test-g16a-*.mjs`, `test-g16b-*.mjs` and other single-screen milestone tests are retained as historical fixtures, **not** valid assertions about M9's actor hierarchy. The CI workflows include additional legacy milestone tests; when changing a shared helper, run them too. See the files under [`.github/workflows/`](../.github/workflows/mellon-gdm-audit-checks.yml) and [M8 workflow](../.github/workflows/mellon-m8-checks.yml).
 
 ## Pure logic is your friend
 
