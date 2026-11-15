@@ -99,7 +99,11 @@ assert.ok(intro.includes('Clutter.BindCoordinate.SIZE'));
 assert.ok(intro.includes('root.insert_child_below(this._grid, panels.topLeft)'));
 assert.ok(intro.includes("this._grid.connect('repaint'"));
 assert.ok(intro.includes('GLib.timeout_add(GLib.PRIORITY_DEFAULT,'));
-assert.ok(intro.includes('GLib.source_remove(this._timerId)'));
+assert.ok(intro.includes('this._scanner.ease({'));
+assert.ok(intro.includes('mode: Clutter.AnimationMode.LINEAR'));
+assert.ok(intro.includes('root.set_clip_to_allocation(true)'));
+assert.ok(!intro.includes('INTRO_TICK_MS'),
+    'M9 must not use timer-driven animation frames');
 assert.ok(intro.includes('this._grid.queue_repaint()'));
 assert.ok(intro.includes('this._grid.hide()'));
 assert.ok(intro.includes('this._grid?.destroy()'));
