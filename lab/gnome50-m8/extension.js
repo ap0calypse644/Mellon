@@ -50,8 +50,10 @@ function loadM7Library(root) {
 }
 
 class MVPScene {
-    constructor(dialog, scene, imagePath, spritePaths, stages) {
-        this._dialog = dialog;
+    constructor(dialog, scene, imagePath, spritePaths, stages,
+        nativeDialog = dialog, revealAll = null) {
+        this._dialog = nativeDialog;
+        this._revealAll = revealAll;
         this._scene = scene;
         this._destroyed = false;
         this._target = 0;
@@ -155,7 +157,8 @@ class MVPScene {
             style_class: 'mellon-m5-recovery',
         });
         this._recovery.set_position(26, 22);
-        this._recovery.connect('clicked', () => this.revealNative());
+        this._recovery.connect('clicked', () =>
+            this._revealAll ? this._revealAll() : this.revealNative());
         dialog.insert_child_above(this._recovery,
             this._sprites.at(-1) ?? this._canvas);
 
@@ -431,11 +434,82 @@ class MVPScene {
     }
 }
 
+// Each monitor owns a local, fixed-layout visual viewport. Authentication
+// remains in the original GNOME dialog and has exactly one observer.
+class MellonMonitorViews {
+    constructor(dialog, scene, imagePath, spritePaths, stages, monitors) {
+        this._views = [];
+        this._roots = [];
+        this._revealed = false;
+        try {
+            for (const monitor of monitors) {
+                const root = new St.Widget({
+                    reactive: false, can_focus: false,
+                    layout_manager: new Clutter.FixedLayout(),
+                });
+                root.set_position(monitor.x, monitor.y);
+                root.set_size(monitor.width, monitor.height);
+                dialog.insert_child_above(root, null);
+                this._roots.push(root);
+                this._views.push(new MVPScene(root, scene, imagePath,
+                    spritePaths, stages, dialog, () => this.revealNative()));
+            }
+        } catch (error) {
+            this.destroy();
+            throw error;
+        }
+    }
+
+    get revealed() {
+        return this._revealed;
+    }
+
+    setLength(length) {
+        for (const view of this._views)
+            view.setLength(length);
+    }
+
+    onFailed() {
+        for (const view of this._views)
+            view.onFailed();
+    }
+
+    revealNative() {
+        if (this._revealed)
+            return;
+        this._revealed = true;
+        for (const view of this._views)
+            view.revealNative();
+    }
+
+    destroy() {
+        for (const view of this._views ?? [])
+            view.destroy();
+        for (const root of this._roots ?? [])
+            root.destroy();
+        this._views = [];
+        this._roots = [];
+    }
+}
+
+function monitorGeometry() {
+    const monitors = Main.layoutManager.monitors;
+    if (!Array.isArray(monitors) || !monitors.length ||
+        monitors.some(m => !Number.isFinite(m.x) ||
+            !Number.isFinite(m.y) || m.width < 320 || m.height < 240))
+        throw new Error('M9: GNOME logical monitor geometry unavailable');
+    return monitors.map(m => ({
+        x: m.x, y: m.y, width: m.width, height: m.height,
+    }));
+}
+
 export default class MellonMVP extends Extension {
     enable() {
         this._epoch = 0;
         this._dialog = null;
         this._view = null;
+        this._geometryKey = null;
+        this._sceneSelection = null;
         this._prompt = null;
         this._buffer = null;
         this._bufferSignalId = 0;
@@ -507,6 +581,7 @@ export default class MellonMVP extends Extension {
         this._view?.destroy();
         this._view = null;
         this._dialog = null;
+        this._geometryKey = null;
     }
 
     _observeFailures(prompt) {
@@ -531,22 +606,37 @@ export default class MellonMVP extends Extension {
         const dialog = Main.screenShield?._dialog;
         if (!dialog || !dialog._backgroundGroup)
             return;
+        // GNOME reports logical coordinates, including fractional scaling.
+        // Never use Xrandr/Xwayland's separately scaled virtual desktop.
+        const monitors = monitorGeometry();
+        const key = JSON.stringify(monitors);
         if (dialog !== this._dialog) {
             this._unmount();
-            // Config is reloaded at EACH lock; the twelve scenes remain
-            // switched manually without needing a new extension install.
-            const config = readJSON(GLib.build_filenamev([
-                this.path, 'scene-config.json']));
-            const scene = pickScene(this._library, config, this._lastSceneId);
-            const root = this.path;
-            const image = GLib.build_filenamev([root, scene.image]);
+            this._sceneSelection = null;
+        }
+        if (key !== this._geometryKey || !this._view) {
+            // Rebuild cosmetic actors only. Keep the chosen scene when a
+            // monitor is connected/disconnected during the same unlock.
+            const revealed = this._view?.revealed ?? false;
+            this._unmount();
+            if (!this._sceneSelection) {
+                const config = readJSON(GLib.build_filenamev([
+                    this.path, 'scene-config.json']));
+                const scene = pickScene(this._library, config,
+                    this._lastSceneId);
+                this._sceneSelection = {scene, stages: config.stages ?? 8};
+                this._lastSceneId = scene.id;
+            }
+            const {scene, stages} = this._sceneSelection;
+            const image = GLib.build_filenamev([this.path, scene.image]);
             const sprites = scene.sprites.map(rel =>
-                GLib.build_filenamev([root, rel]));
-            const view = new MVPScene(dialog, scene, image, sprites,
-                config.stages ?? 8);
-            this._view = view;
+                GLib.build_filenamev([this.path, rel]));
+            this._view = new MellonMonitorViews(dialog, scene, image,
+                sprites, stages, monitors);
             this._dialog = dialog;
-            this._lastSceneId = scene.id;
+            this._geometryKey = key;
+            if (revealed)
+                this._view.revealNative();
         }
         const prompt = dialog._authPrompt;
         const buffer = prompt?._passwordEntry?.clutter_text?.get_buffer?.();

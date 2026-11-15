@@ -82,16 +82,14 @@ function textLabel(text, className) {
 }
 
 export class GreeterAccountChooser {
-    constructor(container, dialog, photo, starfield, hud) {
+    constructor(container, dialog, visuals) {
         if (!container || dialog?.get_parent?.() !== container ||
             typeof container.set_child_above_sibling !== 'function' ||
             typeof dialog?._userList?.numItems !== 'function')
             throw new Error('Unsupported GNOME 50 GDM user list');
         this._container = container;
         this._dialog = dialog;
-        this._photo = photo;
-        this._starfield = starfield;
-        this._hud = hud;
+        this._visuals = visuals;
         this._active = false;
         this._bypassed = false;
         this._autoAttempted = false;
@@ -105,9 +103,11 @@ export class GreeterAccountChooser {
             reactive: false, can_focus: false,
             layout_manager: new Clutter.FixedLayout(),
         });
-        this._layer.add_constraint(new Clutter.BindConstraint({
-            source: container, coordinate: Clutter.BindCoordinate.SIZE,
-        }));
+        // Interactive account UI belongs to the PRIMARY screen only.
+        // Do not center it in the combined GDM virtual desktop.
+        this._layer.set_position(visuals.primary.x, visuals.primary.y);
+        this._layer.set_size(visuals.primary.width,
+            visuals.primary.height);
         this._layer.hide();
         container.insert_child_above(this._layer, dialog);
         this._panel = null;
@@ -181,14 +181,10 @@ export class GreeterAccountChooser {
     _show(roster, key, settling) {
         if (!this._active) {
             const c = this._container;
-            c.set_child_above_sibling(this._photo, this._dialog);
-            c.set_child_above_sibling(this._starfield.actor, this._photo);
-            c.set_child_above_sibling(this._hud.actor, this._starfield.actor);
-            c.set_child_above_sibling(this._layer, this._hud.actor);
-            this._photo.show();
-            this._starfield.actor.show();
-            this._hud.actor.show();
-            this._hud.setRecoveryLayout(true);
+            c.set_child_above_sibling(this._visuals.actor, this._dialog);
+            c.set_child_above_sibling(this._layer, this._visuals.actor);
+            this._visuals.show();
+            this._visuals.setRecoveryLayout(true);
             this._layer.show();
             this._active = true;
         }
@@ -308,10 +304,8 @@ export class GreeterAccountChooser {
         this._bypassed = true;
         this._hide();
         const c = this._container;
-        c.set_child_below_sibling(this._photo, this._dialog);
-        c.set_child_above_sibling(this._starfield.actor, this._photo);
-        c.set_child_above_sibling(this._hud.actor, this._starfield.actor);
-        this._hud.setRecoveryLayout(false);
+        c.set_child_below_sibling(this._visuals.actor, this._dialog);
+        this._visuals.setRecoveryLayout(false);
         this._dialog?._userList?.grab_key_focus?.();
     }
 
@@ -325,8 +319,6 @@ export class GreeterAccountChooser {
         this._recovery = null;
         this._container = null;
         this._dialog = null;
-        this._photo = null;
-        this._starfield = null;
-        this._hud = null;
+        this._visuals = null;
     }
 }

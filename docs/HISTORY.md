@@ -12,15 +12,16 @@ Mellon started as a small animated GNOME unlock experiment and became a paired G
 | M6.4 | Twelve curated 8+ real-source-star scenes and randomized masks | Scene pack/pixel rendering foundation |
 | M7.1 | Strong source-pixel ignition, bright completion wave, sustained stars/edges | Current stellar effects foundation |
 | M8.1–M8.3.2 | Four-panel HUD, eight-stage readout engine, recurring five-second grid | Current Observatory foundation |
-| **M8.4** | Numeric 01–08 stages, per-stage pulses, resilient grid scans and signal cleanup | **Current lock extension** |
+| **M8.4** | Numeric 01–08 stages, per-stage pulses, resilient grid scans and signal cleanup | Foundation of current lock extension |
 | G1.4 | GDM photographic constellation and length observer | Historical implementation |
 | G1.5 | Bounded GDM lifecycle / recovery | Current stability foundation |
 | G1.6A/A.1 | Hide native password interface with SHOW LOGIN and fixed scan behavior | Current password-cover foundation |
 | G1.6B | GNOME-native single-user activation and custom multi-user selector | Current account UI foundation |
 | G1.7 | Early photographic curtain eliminates account-loading logo flash | Current GDM startup foundation |
-| **G1.8** | Matches M8.4 eight-stage readout and progress pulse | **Current GDM extension** |
+| **G1.8** | Matches M8.4 eight-stage readout and progress pulse | Foundation of current GDM extension |
+| **M9** | Per-monitor photo, constellation and HUD; primary-only native GDM controls; compositor-driven scan; reversible GDM upgrade | **Current accepted lock and GDM implementation** |
 
-The current BlackPearl deployment uses **M8.4 + G1.8** and was confirmed working on GNOME Shell 50.1. Newcomers should start with [Architecture](ARCHITECTURE.md) and [Getting started](GETTING_STARTED.md), not a handover or a milestone-specific VM installer.
+The current BlackPearl deployment uses **M9**, built on M8.4 + G1.8, and was confirmed working across mixed-scale dual monitors on GNOME Shell 50.1. Read [Multi-monitor implementation](MULTI_MONITOR.md) and [Changelog](../CHANGELOG.md). Newcomers should start with [Architecture](ARCHITECTURE.md) and [Getting started](GETTING_STARTED.md), not a handover or a milestone-specific VM installer.
 
 ## Historical notes you may still want
 

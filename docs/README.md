@@ -1,23 +1,24 @@
 # Documentation map
 
-Mellon has a **working system** and a **long experimental history**. These pages describe the current G1.8/M8.4 system first; the milestone journals under `lab/` are historical design records and may contain warnings or commands that were accurate *at the time*, not for today's install.
+Mellon has a **working system** and a **long experimental history**. These pages describe the current M9 system first; the milestone journals under `lab/` are historical design records and may contain warnings or commands that were accurate *at the time*, not for today's install.
 
 ## Learn the system
 
 1. [Getting started](GETTING_STARTED.md) — hardware, GNOME compatibility, prerequisites, building a VM, missing external assets, first tests.
-2. [Architecture](ARCHITECTURE.md) — extension ownership, event/data flow, security boundaries, actors, timer lifecycle.
-3. [Component map](COMPONENTS.md) — responsibilities and interaction of each current source file.
-4. [Customization](CUSTOMIZATION.md) — scene selection, photo matching, 8-stage HUD, glow, animations, account selection, troubleshooting your changes.
-5. [Scenes & assets](SCENES_AND_ASSETS.md) — offline pipeline, manifest validation, sprite generation, coordinates, provenance.
-6. [Development](DEVELOPMENT.md) — safe iterative workflow, tests, exact CI commands, contribution standards.
-7. [Deployment](DEPLOYMENT.md) — why existing scripts are pinned to one machine, porting them, staged installation, rollback, and TTY recovery.
-8. [Troubleshooting](TROUBLESHOOTING.md) — diagnosed failures, read-only commands, safe fallbacks, what not to do.
-9. [Security & privacy](SECURITY.md) — threat model, private GNOME APIs, invariant checklist.
-10. [API reference](API_REFERENCE.md) — pure-module signatures and actor adapters.
-11. [GDM internals](GDM_INTERNALS.md) — native accounts, password cover, fallback and GNOME 50 private APIs.
-12. [Observatory](OBSERVATORY.md) — HUD, stage pulses, grid scanning, sprite rendering.
-13. [Assets & licenses](ASSETS_AND_LICENSES.md) — what is MIT, what is *not*, photographers and image/model provenance.
-14. [History](HISTORY.md) — version map, original prototype versus current implementation, milestone documentation.
+2. [Multi-monitor architecture & deployment](MULTI_MONITOR.md) — GNOME logical geometry, per-display viewports, smooth scanning, primary-only account controls, refresh requirements and rollback.
+3. [Architecture](ARCHITECTURE.md) — extension ownership, event/data flow, security boundaries, actors, timer lifecycle.
+4. [Component map](COMPONENTS.md) — responsibilities and interaction of each current source file.
+5. [Customization](CUSTOMIZATION.md) — scene selection, photo matching, 8-stage HUD, glow, animations, account selection, troubleshooting your changes.
+6. [Scenes & assets](SCENES_AND_ASSETS.md) — offline pipeline, manifest validation, sprite generation, coordinates, provenance.
+7. [Development](DEVELOPMENT.md) — safe iterative workflow, tests, exact CI commands, contribution standards.
+8. [Deployment](DEPLOYMENT.md) — why existing scripts are pinned to one machine, porting them, staged installation, rollback, and TTY recovery.
+9. [Troubleshooting](TROUBLESHOOTING.md) — diagnosed failures, read-only commands, safe fallbacks, what not to do.
+10. [Security & privacy](SECURITY.md) — threat model, private GNOME APIs, invariant checklist.
+11. [API reference](API_REFERENCE.md) — pure-module signatures and actor adapters.
+12. [GDM internals](GDM_INTERNALS.md) — native accounts, password cover, fallback and GNOME 50 private APIs.
+13. [Observatory](OBSERVATORY.md) — HUD, stage pulses, grid scanning, sprite rendering.
+14. [Assets & licenses](ASSETS_AND_LICENSES.md) — what is MIT, what is *not*, photographers and image/model provenance.
+15. [History](HISTORY.md) — version map, original prototype versus current implementation, milestone documentation.
 
 ## Where to look in the code
 
@@ -25,13 +26,14 @@ Mellon has a **working system** and a **long experimental history**. These pages
 | --- | --- |
 | Native lock integration | `lab/gnome50-m8/extension.js` |
 | Native GDM integration | `lab/gnome50-gdm/greeter-extension/extension.js` |
+| Per-display GDM visuals | `lab/gnome50-gdm/greeter-extension/greeter-visuals.js` |
 | Password-length observation (GDM) | `lab/gnome50-gdm/greeter-extension/greeter-length-observer.js` |
 | GDM native recovery and wrong-password warning | `lab/gnome50-gdm/greeter-extension/greeter-password-cover.js` |
 | GDM user selection / early curtain | `lab/gnome50-gdm/greeter-extension/greeter-account-chooser.js` |
 | Scene loading & visual mask | `lab/gnome50-m8/scene-data.js` |
 | Effects | `lab/gnome50-m8/stellar-effects.js` |
 | Observatory HUD | `lab/gnome50-m8/observatory-hud.js` |
-| 5-second grid | `lab/gnome50-m8/observatory-intro.js`, `hud-intro-state.js` |
+| 5-second compositor scan | `lab/gnome50-m8/observatory-intro.js`, `hud-intro-state.js` (and GDM copies) |
 | Eight-stage mapping | `lab/gnome50-m8/hud-progress.js` |
 | Offline image matcher | `tools/constellations/` |
 | Host deployment | `lab/blackpearl-host/` |

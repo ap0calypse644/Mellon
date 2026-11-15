@@ -6,9 +6,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {validateLibrary, pickScene} from './scene-data.js';
-import {hudMetadata} from './hud-state.js';
-import {ObservatoryHUD} from './observatory-hud.js';
-import {GreeterStarfield} from './greeter-starfield.js';
+import {GreeterVisuals, currentMonitorGeometry} from './greeter-visuals.js';
 import {GreeterLengthObserver} from './greeter-length-observer.js';
 import {GreeterPasswordCover} from './greeter-password-cover.js';
 import {GreeterAccountChooser} from './greeter-account-chooser.js';
@@ -40,8 +38,8 @@ function readJSON(path) {
 export default class MellonGreeter extends Extension {
     enable() {
         this._background = null;
-        this._hud = null;
-        this._starfield = null;
+        this._visuals = null;
+        this._layoutKey = null;
         this._observer = null;
         this._cover = null;
         this._accounts = null;
@@ -116,9 +114,7 @@ export default class MellonGreeter extends Extension {
             dialog.get_parent() !== container)
             return;
 
-        let photo = null;
-        let hud = null;
-        let starfield = null;
+        let visuals = null;
         let observer = null;
         let cover = null;
         let accounts = null;
@@ -127,50 +123,27 @@ export default class MellonGreeter extends Extension {
             // Source-derived star sprites use this identical cover transform.
             const scene = this._selectedScene ??
                 pickScene(this._library, {mode: 'random-on-lock'});
-            const file = Gio.File.new_for_path(
-                GLib.build_filenamev([this.path, scene.image]));
-            if (!file.query_exists(null))
-                return;
-            photo = new St.Widget({
-                reactive: false, can_focus: false,
-            });
-            photo.add_constraint(new Clutter.BindConstraint({
-                source: container, coordinate: Clutter.BindCoordinate.SIZE,
-            }));
-            photo.set_style(
-                `background-image: url("${file.get_uri()}"); ` +
-                'background-size: cover; background-position: center; ' +
-                'background-repeat: no-repeat;');
-            // A sibling BELOW the native LoginDialog. No auth actor moves,
-            // no changes to its custom vfunc_allocate(), and no focus grab.
-            container.insert_child_below(photo, dialog);
-            // Visual-only HUD: same approved M8.3.2 instrument cluster.
-            hud = new ObservatoryHUD(container, hudMetadata(scene));
-            const sprites = scene.sprites.map(rel =>
-                GLib.build_filenamev([this.path, rel]));
-            starfield = new GreeterStarfield(container, scene, sprites, hud);
-            // During native user selection, photo < source stars < HUD
-            // remain BELOW LoginDialog, preserving GDM's account/session UI.
-            container.insert_child_below(starfield.actor, dialog);
-            container.insert_child_below(hud.actor, dialog);
-            // The cover reorders ONLY Mellon's three already-parented actors
-            // above the native password form while it is actually active.
-            // SHOW LOGIN is the only interactive Mellon actor.
-            cover = new GreeterPasswordCover(
-                container, dialog, photo, starfield, hud);
+            // GDM can use a different monitor layout from the logged-in
+            // user. Bind all artwork to its CURRENT logical rectangles.
+            const geometry = currentMonitorGeometry();
+            visuals = new GreeterVisuals(
+                container, dialog, scene, this.path, geometry);
+            // Native GDM owns account selection and the password prompt;
+            // Mellon creates ONE controller for all visual viewports.
+            cover = new GreeterPasswordCover(container, dialog, visuals);
             observer = new GreeterLengthObserver(length => {
-                starfield.setLength(length);
+                visuals.setLength(length);
                 cover.onLength(length);
             });
             accounts = new GreeterAccountChooser(
-                container, dialog, photo, starfield, hud);
-            this._hud = hud;
-            this._starfield = starfield;
+                container, dialog, visuals);
+            this._visuals = visuals;
             this._cover = cover;
             this._accounts = accounts;
             this._observer = observer;
-            this._background = photo;
+            this._background = visuals.actor;
             this._dialog = dialog;
+            this._layoutKey = JSON.stringify(geometry);
             this._sceneId = scene.id;
             this._selectedScene = scene;
             this._rebindTicks = 0;
@@ -202,6 +175,25 @@ export default class MellonGreeter extends Extension {
                             return GLib.SOURCE_CONTINUE;
                         }
                         try {
+                            // Rebuild only Mellon's decorative layers when
+                            // GDM changes the monitor arrangement. Never
+                            // move the native LoginDialog or auth entry.
+                            const layout = JSON.stringify(
+                                currentMonitorGeometry());
+                            if (layout !== this._layoutKey) {
+                                // A user who explicitly requested native GDM
+                                // must not get re-covered on hot-plug.
+                                const nativeRequested =
+                                    this._cover?._revealed === true ||
+                                    this._accounts?._bypassed === true;
+                                this._unmount();
+                                this._tryMount();
+                                if (nativeRequested) {
+                                    this._accounts?.revealNative();
+                                    this._cover?.revealNative();
+                                }
+                                return GLib.SOURCE_CONTINUE;
+                            }
                             this._syncInput();
                         } catch (_) {
                             // Never rethrow from the GNOME main-loop callback.
@@ -227,7 +219,7 @@ export default class MellonGreeter extends Extension {
                             }
                             this._observer = null;
                             try {
-                                this._starfield?.clear();
+                                this._visuals?.clear();
                             } catch (_) {
                                 // The visual layer may already be disposed.
                             }
@@ -243,12 +235,10 @@ export default class MellonGreeter extends Extension {
             observer?.destroy();
             accounts?.destroy();
             cover?.destroy();
-            starfield?.destroy();
-            hud?.destroy();
-            photo?.destroy();
+            visuals?.destroy();
             this._background = null;
-            this._hud = null;
-            this._starfield = null;
+            this._visuals = null;
+            this._layoutKey = null;
             this._observer = null;
             this._cover = null;
             this._accounts = null;
@@ -276,12 +266,10 @@ export default class MellonGreeter extends Extension {
         this._accounts = null;
         this._cover?.destroy();
         this._cover = null;
-        this._starfield?.destroy();
-        this._starfield = null;
-        this._hud?.destroy();
-        this._hud = null;
-        this._background?.destroy();
+        this._visuals?.destroy();
+        this._visuals = null;
         this._background = null;
+        this._layoutKey = null;
         this._dialog = null;
     }
 

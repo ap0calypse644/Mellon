@@ -31,7 +31,7 @@ For a PR that touches the login manager, describe:
 - whether native SHOW LOGIN still works and what happens on failures;
 - how the user can roll back **without a working graphical login**.
 
-A passing Node mock is not an acceptable replacement for trying a changed GDM actor on a real VM.
+A passing Node mock is not an acceptable replacement for trying a changed GDM actor in an attended VM or on recoverable test hardware.
 
 ## Photos, templates, and licenses
 
@@ -43,4 +43,4 @@ Don't post credentials, an exploitable GDM bypass, or private host details in a 
 
 ## Project conventions
 
-Current production is **M8.4 + G1.8**. Root `install.sh` and `extension.js` are historical; new functionality belongs under `lab/gnome50-m8/`, `lab/gnome50-gdm/greeter-extension/`, and the supporting tools/docs. Please don't turn the old single-extension prototype into a new install path.
+Current accepted build is **M9 on both lock screen and GDM**. See [the multi-monitor guide](docs/MULTI_MONITOR.md) before changing any viewport or native GDM actor ordering. Earlier milestone tests are historical; use the current M9 test suite. Root `install.sh` and `extension.js` are historical; new functionality belongs under `lab/gnome50-m8/`, `lab/gnome50-gdm/greeter-extension/`, and the supporting tools/docs. Please don't turn the old single-extension prototype into a new install path.

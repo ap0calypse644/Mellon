@@ -1,7 +1,7 @@
 // Mellon M8.3.2 — Repeating full-screen grid sweep, pure visual math only.
 // No GNOME, keyboard, authentication, passwords, sensors, timers or I/O.
 export const INTRO_DURATION_MS = 1850;
-export const INTRO_TICK_MS = 50;
+export const INTRO_TICK_MS = 25; // 40fps only during each 1.85s sweep
 // Sweep start-to-start cadence. During the remaining 3.15s, the grid is
 // hidden and there is no high-frequency repaint source.
 export const INTRO_REPEAT_MS = 5000;
@@ -29,12 +29,14 @@ export function introFrame(elapsedMs) {
     if (!Number.isFinite(elapsedMs) || elapsedMs < 0)
         throw new Error('Invalid Observatory intro elapsed time');
     const p = clamp(elapsedMs / INTRO_DURATION_MS);
-    const fadeIn = smooth(clamp(p / .09));
-    const fadeOut = smooth(clamp((1 - p) / .15));
+    // Keep the leading edge visibly moving until it reaches the FAR RIGHT.
+    // The old / .84 clamp parked it for ~300ms while the grid faded.
+    const fadeIn = smooth(clamp(p / .045));
+    const fadeOut = smooth(clamp((1 - p) / .035));
     return Object.freeze({
         done: p >= 1,
         progress: p,
-        sweep: clamp(p / .84),
+        sweep: clamp(p / .965),
         gridOpacity: fadeIn * fadeOut,
         panelOpacity: Math.round(255 * smooth(clamp(p / .55))),
     });

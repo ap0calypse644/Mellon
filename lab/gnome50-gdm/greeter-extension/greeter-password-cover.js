@@ -12,7 +12,7 @@ import {FailureTracker} from './failure-tracker.js';
 // LoginDialog only for the active PASSWORD prompt. The only reactive widget
 // is a mouse-click recovery button, matching the VM lock screen.
 export class GreeterPasswordCover {
-    constructor(container, dialog, photo, starfield, hud) {
+    constructor(container, dialog, visuals) {
         if (!container || !dialog ||
             typeof container.insert_child_above !== 'function' ||
             typeof container.set_child_above_sibling !== 'function' ||
@@ -22,9 +22,7 @@ export class GreeterPasswordCover {
             throw new Error('Unsupported GNOME 50 greeter actor ordering');
         this._container = container;
         this._dialog = dialog;
-        this._photo = photo;
-        this._starfield = starfield;
-        this._hud = hud;
+        this._visuals = visuals;
         this._masked = false;
         this._revealed = false;
         this._destroyed = false;
@@ -38,7 +36,8 @@ export class GreeterPasswordCover {
             reactive: true, can_focus: false, track_hover: true,
             style_class: 'mellon-m5-recovery',
         });
-        this._recovery.set_position(26, 22);
+        this._recovery.set_position(visuals.primary.x + 26,
+            visuals.primary.y + 22);
         this._recovery.connect('clicked', () => this.revealNative());
         this._recovery.hide();
         // The button remains hidden over native user selection. No GDM
@@ -51,10 +50,13 @@ export class GreeterPasswordCover {
             style_class: 'mellon-m5-failure',
         });
         this._feedback.add_constraint(new Clutter.AlignConstraint({
-            source: container, align_axis: Clutter.AlignAxis.BOTH, factor: 0.5,
+            source: visuals.primaryRoot,
+            align_axis: Clutter.AlignAxis.BOTH, factor: 0.5,
         }));
         this._feedback.hide();
-        container.insert_child_above(this._feedback, this._recovery);
+        // Denial warning is centered on the primary monitor, not the
+        // full virtual desktop. Its parent moves with the visuals.
+        visuals.primaryRoot.add_child(this._feedback);
     }
 
     get isMasked() {
@@ -89,15 +91,10 @@ export class GreeterPasswordCover {
         // Exact visual order: native LoginDialog < PHOTO < SOURCE STARS
         // < OBSERVATORY HUD < SHOW LOGIN. All but the button are
         // nonreactive; the real native password entry keeps keyboard focus.
-        c.set_child_above_sibling(this._photo, this._dialog);
-        c.set_child_above_sibling(this._starfield.actor, this._photo);
-        c.set_child_above_sibling(this._hud.actor, this._starfield.actor);
-        c.set_child_above_sibling(this._recovery, this._hud.actor);
-        c.set_child_above_sibling(this._feedback, this._recovery);
-        this._photo.show();
-        this._starfield.actor.show();
-        this._hud.actor.show();
-        this._hud.setRecoveryLayout(true);
+        c.set_child_above_sibling(this._visuals.actor, this._dialog);
+        c.set_child_above_sibling(this._recovery, this._visuals.actor);
+        this._visuals.show();
+        this._visuals.setRecoveryLayout(true);
         this._recovery.show();
         this._masked = true;
     }
@@ -110,15 +107,11 @@ export class GreeterPasswordCover {
         this._recovery.hide();
         this._stopFeedback();
         this._tracker.reset();
-        this._hud.setRecoveryLayout(false);
-        this._photo.show();
-        this._starfield.actor.show();
-        this._hud.actor.show();
-        // Photo/HUD return BELOW native GDM for account/session selection.
-        const c = this._container;
-        c.set_child_below_sibling(this._photo, this._dialog);
-        c.set_child_above_sibling(this._starfield.actor, this._photo);
-        c.set_child_above_sibling(this._hud.actor, this._starfield.actor);
+        this._visuals.setRecoveryLayout(false);
+        this._visuals.show();
+        // All cosmetic viewports return below native GDM for selection.
+        this._container.set_child_below_sibling(this._visuals.actor,
+            this._dialog);
     }
 
     // Identical read-only failure semantics to approved M8.3.2.
@@ -135,7 +128,7 @@ export class GreeterPasswordCover {
         }
         if (result.failures === 0)
             return;
-        this._starfield.clear();
+        this._visuals.clear();
         // Keep the recurring scan alive across failed passwords; its
         // visual layer stays beneath the red native-auth failure warning.
         this._deniedStartedAt = GLib.get_monotonic_time() / 1000000;
@@ -188,10 +181,8 @@ export class GreeterPasswordCover {
         this._masked = false;
         this._recovery.hide();
         this._stopFeedback();
-        this._hud.setRecoveryLayout(false);
-        this._photo.hide();
-        this._starfield.actor.hide();
-        this._hud.actor.hide();
+        this._visuals.setRecoveryLayout(false);
+        this._visuals.hide();
         try {
             this._dialog?._authPrompt?._passwordEntry?.grab_key_focus();
         } catch (_) {
@@ -214,8 +205,6 @@ export class GreeterPasswordCover {
         // extension's reverse-order _unmount(); no native actor is hidden.
         this._container = null;
         this._dialog = null;
-        this._photo = null;
-        this._starfield = null;
-        this._hud = null;
+        this._visuals = null;
     }
 }

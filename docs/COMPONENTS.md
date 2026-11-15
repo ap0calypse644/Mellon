@@ -1,6 +1,6 @@
 # Component reference
 
-This is a quick-reference map for **current G1.8/M8.4**, not every historical prototype. Source links below are relative to the repository root.
+This is a quick-reference map for **current M9**, not every historical prototype. Source links below are relative to the repository root.
 
 ## Shared visual engine
 
@@ -12,8 +12,8 @@ This is a quick-reference map for **current G1.8/M8.4**, not every historical pr
 | `hud-progress.js` | Inverts the active-star mask into eight HUD stages; formats `MAPPING 01 / 08`; computes 560 ms stage pulse and completion sweep | Progress text, pulse envelope; eight stages are currently an enforced contract |
 | `hud-layout.js` | Pure rectangle placement and center-safe inset for four edge panels | Band spacing, size cutoffs, margins; test recovery/control collisions |
 | `observatory-hud.js` | Four `St` panels, progress rectangles, clock, and mapping pulse; owns intro/grid helper | CSS names, panel content, pulse scale, metadata |
-| `hud-intro-state.js` | Pure 5-second grid timing, geometry and opacity model | Grid duration and density without touching GDM |
-| `observatory-intro.js` | One `St.DrawingArea` for the sweeping grid; timer lifecycle and resize rearm | Scan rendering, cadence, foreground/background order |
+| `hud-intro-state.js` | Pure lattice geometry, 1.85s / 5s timing and legacy scan math | Grid geometry and duration; live movement uses Clutter instead of the legacy tick |
+| `observatory-intro.js` | Static `St.DrawingArea` grid + refresh-synchronized `St.Widget` scanning beam; bounded 5s start cadence | Gradient/beam styling, duration, startup and teardown |
 | `failure-tracker.js` | Read-only GNOME verifier counter deltas | Keep counter observation only; never read credential buffers |
 | `stylesheet.css` | Existing St/CSS styles for photo overlays, HUD, warning, and recovery | Typography, borders, spacing, glows; verify compatibility with GNOME Shell St CSS |
 
@@ -28,7 +28,7 @@ This is the GNOME-facing entrypoint for `unlock-dialog`. It:
 1. Loads `library.json` and `scene-config.json`, verifying that all twelve photos and all selected source sprites exist.
 2. Watches the active native unlock prompt and its password-buffer **length**.
 3. Keeps a randomly selected binary mask of real source stars, then updates glow, connections, and HUD on changes.
-4. Hosts `MVPScene` visuals and the **SHOW LOGIN** recovery control.
+4. Hosts `MellonMonitorViews` with a clipped `MVPScene` per monitor and shared **SHOW LOGIN** recovery.
 5. Observes failed attempts without replacing verification.
 6. Tears down old timers, signals, and actors when the dialog changes or the extension is disabled.
 
@@ -42,8 +42,9 @@ UUID `mellon-lab@local`; `session-modes: ["unlock-dialog"]`; GNOME Shell 50 only
 
 | File | What it does |
 | --- | --- |
-| `extension.js` | Mounts photo/stars/HUD into native GNOME 50 `_lockDialogGroup`, coordinates chooser, password cover, length observer; bounds attempts and rebind |
-| `greeter-account-chooser.js` | Temporary startup curtain, 1.25 s single-user roster stabilization, up to eight themed account tiles, native `activate` event, fail-open SHOW LOGIN |
+| `extension.js` | Mounts a single `GreeterVisuals` group in native GNOME 50 `_lockDialogGroup`, coordinates one chooser, password cover and length observer; bounds attempts and rebind |
+| `greeter-visuals.js` | Owns all clipped, independent GDM monitor viewports and their photo/stars/HUD actors; one visual ordering group, GNOME logical coordinates |
+| `greeter-account-chooser.js` | Primary-monitor startup curtain, 1.25 s single-user roster stabilization, up to eight themed account tiles, native `activate` event, fail-open SHOW LOGIN |
 | `greeter-length-observer.js` | Attaches to the actual native `_passwordEntry` only, reads `get_length()`, disconnects old buffer signals; avoids username/OTP fields |
 | `greeter-password-cover.js` | Masks only recognized password prompts; controls SHOW LOGIN, wrong-password label, focus and failure feedback |
 | `greeter-starfield.js` | GDM-specific photo-derived sprite actors, drawn connections, effects, and frame timer; invokes HUD stage/completion updates |
@@ -68,7 +69,7 @@ The greeter has the same scene JSON model but currently chooses a random scene i
 
 `lab/gnome50-gdm/stage-g18-to-vm.sh` and `lab/gnome50-m8/stage-m84-to-vm.sh` are pinned to the original isolated `mellon-gnome50-lab` VM and validate existing prior releases. Their installer/rollback pairs are for **that VM only**.
 
-`lab/blackpearl-host/` bundles the tested runtime and installs it on one specific physical workstation. `preflight.sh` is read-only; `stage.sh` assembles hashes; `install.sh` changes on-disk extensions and GDM dconf; `rollback.sh` restores native login configuration. Review [Deployment](DEPLOYMENT.md) before porting.
+`lab/blackpearl-host/` contains the original, machine-specific first-install and recovery scripts. The **M9 GDM upgrade and rollback** are separate scripts at `lab/gnome50-gdm/m9-{upgrade,rollback}-blackpearl.sh`. See the [Multi-monitor guide](MULTI_MONITOR.md) before changing an installed system. In that historical first-install toolset, `preflight.sh` is read-only; `stage.sh` assembles hashes; `install.sh` changes on-disk extensions and GDM dconf; and `rollback.sh` restores native login configuration. Review [Deployment](DEPLOYMENT.md) before porting.
 
 ## Where a change should go
 

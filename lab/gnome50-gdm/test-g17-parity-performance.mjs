@@ -36,7 +36,10 @@ const [lock,gdm,lockIntro,gdmIntro,lockHud,gdmHud,gdmStars,gdmCover,
 assert.ok(gdmCss.startsWith(lockCss),
   'GDM original M8 styles drifted: GDM may only add account styles');
 for (const src of [lockIntro,gdmIntro]) {
-  assert.ok(src.includes('INTRO_TICK_MS'));
+  assert.ok(!src.includes('INTRO_TICK_MS'),
+    'The scanner must not use a JS frame timer');
+  assert.ok(src.includes('this._scanner.ease({'));
+  assert.ok(src.includes('mode: Clutter.AnimationMode.LINEAR'));
   assert.ok(src.includes('INTRO_REPEAT_MS'));
   assert.ok(src.includes('this._repeatTimerId = GLib.timeout_add('));
   assert.ok(src.includes('this._finishSweep(false)'));
@@ -71,8 +74,10 @@ assert.ok(gdm.includes('const GREETER_MAX_ATTEMPTS = 90;'));
 assert.ok(gdm.includes('this._accounts?.destroy()'));
 assert.ok(gdm.includes('this._cover?.destroy()'));
 assert.ok(gdm.includes('this._observer?.destroy()'));
-assert.ok(gdm.includes('this._starfield?.destroy()'));
-assert.ok(gdm.includes('this._hud?.destroy()'));
+assert.ok(gdm.includes('this._visuals?.destroy()'));
+assert.ok(gdm.includes('currentMonitorGeometry()'));
+assert.ok(gdm.includes('new GreeterVisuals('));
+assert.ok(gdm.includes('this._visuals = null;'));
 assert.ok(gdmHud.includes('GLib.timeout_add_seconds('));
 assert.ok(gdmHud.includes('GLib.source_remove(this._clockTimer)'));
 assert.ok(gdmCover.includes('GLib.source_remove(this._deniedTimer)'));
@@ -120,5 +125,5 @@ assert.doesNotThrow(()=>disposed._invalidateSignals(),
   'Disposed GNOME buffers must not crash the shell');
 assert.equal(disposed._buffer,null);
 assert.equal(disposed._bufferSignalId,0);
-console.log('PASS Mellon parity: 6 identical core engines, matching 62ms stars / 5s grid, bounded GDM timers, no idle sprite spin');
+console.log('PASS M9 parity: shared visual modules, compositor scanner, bounded GDM timers and native-safe observer');
 console.log('PASS M8 observer teardown: disconnected buffer, epoch invalidation, idempotent and disposed-GObject-safe');

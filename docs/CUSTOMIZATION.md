@@ -1,5 +1,7 @@
 # Customization cookbook
 
+**M9 visual tuning:** each GNOME monitor owns a complete independent viewport. The live scan is a Clutter animation, **not** the older Cairo repaint timer. See [Multi-monitor rendering](MULTI_MONITOR.md) before editing geometry, beam width/gradients, timings, or primary-monitor controls.
+
 The idea is to make the stars yours **without accidentally rewriting GNOME authentication**. Most changes can be made to the scene data or pure visual functions and validated in seconds with Node/Python before trying them in a VM.
 
 ## Before changing anything
@@ -7,7 +9,7 @@ The idea is to make the stars yours **without accidentally rewriting GNOME authe
 - Work from a Git branch; commit the currently working configuration.
 - Back up your **running extension directory and scene assets**, not just the .js files.
 - Test in a VM. **SHOW LOGIN** and a known-working TTY rollback are mandatory.
-- For pure modules copied between M8 and GDM, keep the two copies in sync and run `test-g17-parity-performance.mjs`.
+- For pure modules copied between lock and GDM, keep the two copies in sync and run `test-g17-parity-performance.mjs`. After changes to imported GJS files, begin a **new Wayland GNOME session**; disable/enable alone may keep stale modules.
 - Avoid changing the UUID, GDM's vendor profile, auth prompt, or PAM unless your goal is specifically to port to a new GNOME version (which needs separate auditing).
 
 ## Choose a fixed constellation or random rotation

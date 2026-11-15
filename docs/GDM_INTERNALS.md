@@ -1,5 +1,7 @@
 # The GNOME 50 GDM adapter
 
+**M9 update:** the current greeter now wraps its independently clipped per-monitor photo/star/HUD actors in one `GreeterVisuals` container, preserving GNOME's native `LoginDialog` position and using the primary monitor for account and recovery controls. The G1.8 actor description below explains the foundational adapter; see [M9 multi-monitor implementation](MULTI_MONITOR.md) for current ordering and clipping.
+
 This is Mellon's riskiest code. **GNOME GDM has private implementation details, not a stable external theme API.** G1.8 was tested against GNOME Shell 50.1; a newer version requires a source and runtime audit.
 
 ## Entry-point lifecycle
@@ -8,12 +10,12 @@ This is Mellon's riskiest code. **GNOME GDM has private implementation details, 
 
 1. Loads and validates the full scene library and every source-image/sprite file.
 2. Waits for `Main.screenShield._dialog` and `_lockDialogGroup` with bounded 350 ms / 90-attempt search.
-3. Inserts **non-reactive** photo, `GreeterStarfield`, and `ObservatoryHUD` actors into the existing GNOME group, initially below native `LoginDialog`.
+3. Inserts a **non-reactive** `GreeterVisuals` group below `LoginDialog`; each GNOME logical monitor gets a clipped photo, `GreeterStarfield`, and `ObservatoryHUD`.
 4. Constructs `GreeterPasswordCover`, `GreeterLengthObserver`, and `GreeterAccountChooser`.
 5. Synchronizes native state every 250 ms, with bounded reattachment if GNOME replaces the dialog (120 ticks).
 6. Removes GLib sources, signals and Mellon actors in `_unmount()`; native auth remains GNOME-owned.
 
-The background scene is retained through normal GDM dialog recreation; it should not visibly jump to another photo at each prompt transition.
+The selected background scene is retained through normal GDM dialog recreation; it should not visibly jump to another photo at each prompt transition.
 
 ## Account selection vs password entry
 
