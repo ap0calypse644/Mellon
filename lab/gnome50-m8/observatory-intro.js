@@ -146,6 +146,10 @@ export class ObservatoryIntro {
             return;
         this._sweeping = true;
         const width = this._screenSize[0];
+        if (firstSweep)
+            console.log('[Mellon M9.3 compositor scanner] viewport=' +
+                width + 'x' + this._screenSize[1] +
+                ', duration=' + INTRO_DURATION_MS + 'ms');
         this._scanner.remove_all_transitions();
         this._scanner.set_position(-BEAM_WIDTH, 0);
         this._scanner.opacity = 255;
