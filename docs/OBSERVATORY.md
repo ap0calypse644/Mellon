@@ -18,14 +18,15 @@ A completed stage is **not evidence of successful authentication**.
 
 ## Full-screen grid
 
-One transparent `St.DrawingArea` represents the whole lattice—no actor per cell. `gridGeometry()` sets approximately 23×14 cells at 1920×1080, `introFrame()` calculates the left→right sweep and fade, and `gridCellStrength()` computes deterministic cell brightness.
+M9 renders a static lattice using one non-interactive `St.DrawingArea` **per monitor**. A second, non-interactive `St.Widget` holds a translucent gradient wake and luminous leading beam. `Clutter.Actor.ease()` moves that beam linearly across the local monitor viewport at the compositor's refresh cadence, **without a 20/40/60 FPS JavaScript repaint loop**.
 
-- New scan start every **5,000 ms**
-- Temporary drawing frames every **50 ms**
-- Each sweep lasts **1,850 ms**
-- Approximately **3,150 ms idle** between sweeps, with no active high-frequency grid frame timer
+- Start-to-start cadence: **5,000 ms**
+- Compositor-controlled travel: **1,850 ms** to the right edge
+- Idle between passes: approximately **3,150 ms**
+- A short bounded timeout handles canceled animations; there is **no repeating frame timer**
+- Each viewport is clipped to its physical display's GNOME **logical** rectangle
 
-`ObservatoryIntro.onLayout()` handles resizing; `stop()` and `destroy()` must cancel both GLib timer IDs. Incorrect passwords do **not** permanently disable scanning in M8.4/G1.8; native SHOW LOGIN exposure still hides the overlay.
+`gridGeometry()` still defines the underlying lattice; `introFrame()` and `gridCellStrength()` are retained as pure historical helpers, but are not the live scan renderer. `ObservatoryIntro.onLayout()` rearms on resize. `stop()` and `destroy()` cancel wakeups, cleanup timers and animations. Incorrect passwords do not permanently disable scanning; **SHOW LOGIN** reveals native controls. See [M9 multi-monitor rendering](MULTI_MONITOR.md).
 
 ## Real-pixel star glow
 
