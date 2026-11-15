@@ -7,7 +7,7 @@ import {INTRO_TICK_MS, INTRO_REPEAT_MS,
 
 // One GNOME DrawingArea renders the entire grid: no cell actors, no shaders,
 // and no access to password or key events. A low-frequency 5s cadence
-// activates short-lived 50ms frame updates ONLY during each 1.85s sweep.
+// activates short-lived 25ms frame updates ONLY during each 1.85s sweep.
 // The overlay is non-reactive; native SHOW LOGIN remains fully clickable.
 export class ObservatoryIntro {
     constructor(root, panels) {
@@ -172,13 +172,25 @@ export class ObservatoryIntro {
         }
         cr.stroke();
 
-        // Columns wake from left to right. A slightly staggered mosaic
-        // within each column provides texture without changing direction.
-        for (let col = 0; col < columns; col++) {
+        // A faint afterglow follows the head without repainting every
+        // already-traversed cell. The lattice above retains the grid texture.
+        const lead = Math.min(width, frame.sweep * width);
+        cr.rectangle(0, 0, lead, height);
+        cr.setSourceRGBA(.24, .72, 1, .014 * globalAlpha);
+        cr.fill();
+
+        // Only draw the moving 1/4-screen wake in detail. The previous
+        // implementation repainted hundreds of settled cells on BOTH
+        // monitors on every tick, making the leading edge stutter.
+        const firstColumn = Math.max(0,
+            Math.floor((frame.sweep - .25) * columns));
+        const lastColumn = Math.min(columns,
+            Math.ceil(frame.sweep * columns) + 1);
+        for (let col = firstColumn; col < lastColumn; col++) {
             const x = col * cellWidth;
             for (let row = 0; row < rows; row++) {
                 const intensity = gridCellStrength(frame,col,row,geometry);
-                if (intensity < .01)
+                if (intensity < .20)
                     continue;
                 const y = row * cellHeight;
                 const alpha = intensity * globalAlpha;
@@ -196,13 +208,13 @@ export class ObservatoryIntro {
             }
         }
 
-        // Soft vertical leading wave, explicitly bounded to the display.
-        const lead = frame.sweep * width;
-        cr.rectangle(Math.max(0, lead - 10), 0, 20, height);
-        cr.setSourceRGBA(.24, .8, 1, .07 * globalAlpha);
+        // Leading wave crosses the entire viewport before the brief fade.
+        // A bright, narrow core avoids a fuzzy apparent stop short of right.
+        cr.rectangle(Math.max(0, lead - 16), 0, 18, height);
+        cr.setSourceRGBA(.24, .8, 1, .12 * globalAlpha);
         cr.fill();
-        cr.rectangle(Math.max(0, lead - 1), 0, 2, height);
-        cr.setSourceRGBA(.75, .96, 1, .32 * globalAlpha);
+        cr.rectangle(Math.max(0, lead - 2), 0, 3, height);
+        cr.setSourceRGBA(.75, .96, 1, .54 * globalAlpha);
         cr.fill();
         cr.restore();
     }
