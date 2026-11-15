@@ -2,19 +2,21 @@
 
 **Your login screen, somewhere among the stars.**
 
+**Current release: M9 — dual-monitor lock + GDM, compositor-smooth scanning, native GNOME authentication.**
+
 Mellon turns the **GNOME 50 lock screen and GDM login screen** into a photographic constellation observatory. Pick a nebula, watch stars light up as you enter your password, and keep all the good parts of GNOME authentication underneath. The old login UI is still one **SHOW LOGIN** click away.
 
 Originally built for an Ubuntu 26.04.1 workstation nicknamed *BlackPearl*. Now documented so you can explore it, fork it, and build your own version—without having to reconstruct months of experiments.
 
-> **Project status:** G1.8 (GDM) + M8.4 (lock screen) are running successfully on BlackPearl. The source is tailored to **GNOME Shell 50.1**, not a cross-version GNOME extension or a general-purpose theme. Test in a VM before changing your login manager. Mythological figure artwork is planned, **not** part of the current build.
+> **Project status:** M9 (both lock screen and GDM) has been accepted on BlackPearl's mixed-scale ultrawide + laptop setup. The source is tailored to **GNOME Shell 50.1**, not a cross-version GNOME extension or a general-purpose theme. Test in a VM before changing your login manager. Mythological figure artwork is planned, **not** part of the current build.
 
 ## What you get
 
-- **Two coordinated interfaces:** a themed GDM greeter and a matching user-session lock screen.
+- **Two coordinated interfaces:** a themed GDM greeter and a matching user-session lock screen, now with **one complete visual viewport per monitor**.
 - **12 curated scenes** across six nebula photographs, each with an actual-source-pixel constellation of 8–24 selected luminous points.
 - **Visual-only password feedback:** randomized source-star illumination/removal on password *length* changes, with connecting lines appearing only when both endpoints are lit.
 - **Eight-step Observatory mapping:** a small pulse for each reached stage and a strong 1.6-second completion wave, followed by a stable, bright constellation.
-- **Cockpit HUD:** four corner instruments and a cyan grid sweep every five seconds.
+- **Cockpit HUD:** four corner instruments per monitor and a **compositor-driven** cyan scan every five seconds, designed for 60 Hz+ displays.
 - **Native recovery:** **SHOW LOGIN** reveals GNOME's normal authentication UI. Invalid attempts display an **UNAUTHORIZED ACCESS** visual warning without modifying the verifier.
 - **GDM account flow:** one eligible user is selected through GNOME's own account activation event; multiple eligible users get a Mellon-themed selector (multi-user behavior is source-tested, but needs broader real-hardware testing).
 - **Failure-aware lifecycle:** bounded retries, signal/timer cleanup, checksum-verified bundles, and an offline recovery plan.
@@ -26,6 +28,7 @@ Mellon **does not authenticate anyone**, replace PAM, read password text, or log
 | I want to… | Read |
 | --- | --- |
 | Understand what runs where | [Architecture](docs/ARCHITECTURE.md) |
+| Set up mixed-resolution or fractional-scaled monitors | [M9 multi-monitor guide](docs/MULTI_MONITOR.md) |
 | Find a specific source file / actor | [Component map](docs/COMPONENTS.md) |
 | Try it safely on another machine | [Getting started & VM-first setup](docs/GETTING_STARTED.md) |
 | Change scenes, effects, HUD, timings, or accounts | [Customization cookbook](docs/CUSTOMIZATION.md) |
