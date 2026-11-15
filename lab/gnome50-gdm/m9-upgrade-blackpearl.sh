@@ -39,11 +39,13 @@ PY
 
     FILES=(extension.js greeter-visuals.js greeter-password-cover.js
         greeter-account-chooser.js observatory-intro.js)
+    # JavaScript syntax is checked by the unprivileged preflight before
+    # sudo. BlackPearl keeps Node in the user's PATH, not sudo secure_path.
+    # Never execute a user-installed Node binary as root.
     for file in "${FILES[@]}"; do
         test -f "$SOURCE/$file" && test ! -L "$SOURCE/$file"
-        node --input-type=module --check < "$SOURCE/$file"
     done
-    echo 'PASS: upgraded JavaScript syntax'
+    echo 'PASS: required upgrade files present (run user-level syntax preflight first)'
 
     echo '========== STAGE COMPLETE GREETER PACKAGE =========='
     STAGE="$(mktemp -d "$PARENT/.mellon-gdm-m9-stage.XXXXXXXX")"
