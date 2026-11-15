@@ -1,6 +1,6 @@
 # Getting started: try Mellon safely
 
-**Start with a VM, even if you plan to use Mellon on your daily machine.** A GNOME Shell extension executes in the same process responsible for showing the login or unlock UI. "It's only visual" does *not* make a broken overlay harmless.
+**Start with a VM, even if you plan to use Mellon on your daily machine.** The verified target is **GNOME Shell 50.1** with Ubuntu GDM 50.1. A GNOME Shell extension executes in the same process responsible for showing the login or unlock UI. "It's only visual" does *not* make a broken overlay harmless.
 
 ## Compatibility at a glance
 
