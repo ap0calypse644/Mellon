@@ -37,6 +37,7 @@ Mellon **does not authenticate anyone**, replace PAM, read password text, or log
 | Install or recover from an installation | [Deployment & recovery](docs/DEPLOYMENT.md) |
 | Debug a black screen or missing extension | [Troubleshooting](docs/TROUBLESHOOTING.md) |
 | Review the threat model | [Security & privacy](docs/SECURITY.md) |
+| See what's new in M9 | [Changelog](CHANGELOG.md) |
 
 Browse the [full documentation index](docs/README.md) for more.
 
