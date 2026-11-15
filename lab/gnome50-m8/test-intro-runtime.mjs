@@ -1,167 +1,132 @@
 #!/usr/bin/env node
-// M8.4: mocked GNOME timers verify 5-second cadence and cancellation.
+// M9.2: only bounded scheduling remains; frames use Clutter easing.
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-const state = await readFile(new URL('./hud-intro-state.js', import.meta.url),'utf8');
-const pure = await import('data:text/javascript;base64,' +
-    Buffer.from(state).toString('base64'));
+const raw = await readFile(new URL('./observatory-intro.js', import.meta.url), 'utf8');
+const source = raw.replace(/^import [\s\S]*?;\n/gm, '')
+    .replace('export class ObservatoryIntro', 'class ObservatoryIntro');
+assert.ok(!/^import /m.test(source), 'Unexpected import form');
 
-const raw = await readFile(new URL('./observatory-intro.js', import.meta.url),'utf8');
-const imports = [
-    "import Clutter from 'gi://Clutter';\n",
-    "import GLib from 'gi://GLib';\n",
-    "import St from 'gi://St';\n",
-    "import {INTRO_TICK_MS, INTRO_REPEAT_MS,\n" +
-        "    introFrame, gridGeometry, gridCellStrength}\n" +
-        "    from './hud-intro-state.js';\n",
-];
-let implementation = raw;
-for (const line of imports) {
-    assert.ok(implementation.includes(line),'Unexpected GNOME import shape');
-    implementation = implementation.replace(line,'');
-}
-implementation = implementation.replace(
-    'export class ObservatoryIntro', 'class ObservatoryIntro');
-assert.ok(!/^import /m.test(implementation));
-
-function harness() {
-    let now = 0, next = 1, repaints = 0;
-    const tasks = new Map();
-    const GLib = {
-        PRIORITY_DEFAULT: 0,
-        SOURCE_REMOVE: false,
-        SOURCE_CONTINUE: true,
-        get_monotonic_time: () => now * 1000,
-        timeout_add: (_priority, interval, callback) => {
-            const id = next++;
-            tasks.set(id, {due: now + interval, interval, callback});
-            return id;
-        },
-        source_remove: id => tasks.delete(id),
-    };
-    class DrawingArea {
-        constructor(options) {
-            assert.equal(options.reactive,false);
-            assert.equal(options.can_focus,false);
-            this.visible=false;
-            this.destroyed=false;
-        }
-        add_constraint() {}
-        connect(signal, handler) {
-            assert.equal(signal,'repaint');
-            this.repaintHandler=handler;
-        }
-        show() { this.visible=true; }
-        hide() { this.visible=false; }
-        queue_repaint() { repaints++; }
-        destroy() { this.destroyed=true; }
+let now = 0;
+let nextId = 1;
+const tasks = new Map();
+const repaints = [];
+const schedule = (delay, interval, callback) => {
+    const id = nextId++;
+    tasks.set(id, {due: now + delay, interval, callback});
+    return id;
+};
+const GLib = {
+    PRIORITY_DEFAULT: 0,
+    PRIORITY_DEFAULT_IDLE: 100,
+    SOURCE_REMOVE: false,
+    SOURCE_CONTINUE: true,
+    timeout_add: (_priority, delay, fn) => schedule(delay, delay, fn),
+    idle_add: (_priority, fn) => schedule(0, 0, fn),
+    source_remove: id => tasks.delete(id),
+};
+class Actor {
+    constructor(options = {}) {
+        this.options = options;
+        this.visible = true;
+        this.opacity = 255;
     }
-    class BindConstraint {}
-    const Clutter = {BindConstraint, BindCoordinate: {SIZE:1}};
-    const St = {DrawingArea};
-    const Factory = new Function(
-        'Clutter','GLib','St','INTRO_TICK_MS','INTRO_REPEAT_MS',
-        'introFrame','gridGeometry','gridCellStrength',
-        implementation+'\nreturn ObservatoryIntro;');
-    const Intro = Factory(Clutter,GLib,St,pure.INTRO_TICK_MS,
-        pure.INTRO_REPEAT_MS,pure.introFrame,pure.gridGeometry,
-        pure.gridCellStrength);
-    const panels = Object.fromEntries(['topLeft','topRight',
-        'bottomLeft','bottomRight'].map(key=>[key,{opacity:255}]));
-    const root = {
-        insert_child_below(grid, panel) {
-            assert.ok(grid instanceof DrawingArea);
-            assert.equal(panel,panels.topLeft);
-        },
-    };
-    const intro = new Intro(root,panels);
-    function advance(target) {
-        assert.ok(target>=now);
-        let steps=0;
-        while(true) {
-            const due=[...tasks.entries()].sort((a,b)=>
-                a[1].due-b[1].due || a[0]-b[0])[0];
-            if(!due || due[1].due>target)break;
-            if(++steps>1000)throw new Error('Potential runaway loop');
-            const [id,task]=due;
-            now=task.due;
-            const cont=task.callback();
-            if(tasks.get(id)!==task)continue;
-            if(cont===GLib.SOURCE_CONTINUE)
-                task.due+=task.interval;
-            else tasks.delete(id);
-        }
-        now=target;
+    add_constraint() {}
+    add_child() {}
+    set_style() {}
+    set_size(w,h) { this.width=w; this.height=h; }
+    set_position(x,y) { this.x=x; this.y=y; }
+    show() { this.visible=true; }
+    hide() { this.visible=false; }
+    remove_all_transitions() { this.animation=null; }
+    ease(options) { this.animation=options; }
+    destroy() { this.destroyed=true; }
+}
+class DrawingArea extends Actor {
+    connect(signal, handler) {
+        assert.equal(signal,'repaint');
+        this.repaint=handler;
     }
-    const intervals=()=>[...tasks.values()].map(t=>t.interval).sort((a,b)=>a-b);
-    return {intro,panels,advance,intervals,get repaints(){return repaints;},
-        get activeSources(){return tasks.size;}};
+    queue_repaint() { repaints.push(now); }
 }
-
-{
-    const h=harness();
-    h.intro.onLayout({},1920,1080);
-    assert.deepEqual(h.intervals(),[25,5000]);
-    assert.equal(h.intro._grid.visible,true);
-    assert.equal(h.panels.topLeft.opacity,0,'First sweep fades HUD');
-
-    h.advance(1850);
-    assert.equal(h.intro._grid.visible,false,'Sweep stops after 1.85s');
-    assert.deepEqual(h.intervals(),[5000],'No active-sweep repaint source during idle');
-    assert.equal(h.panels.topLeft.opacity,255);
-    const idleRepaints=h.repaints;
-    h.advance(4999);
-    assert.equal(h.repaints,idleRepaints,'No drawing between sweeps');
-
-    h.advance(5000);
-    assert.deepEqual(h.intervals(),[25,5000]);
-    assert.equal(h.intro._grid.visible,true,'Sweep repeats at 5 seconds');
-    assert.equal(h.panels.topLeft.opacity,255,
-        'Repeated sweeps must not fade approved Observatory panels');
-    h.advance(6850);
-    assert.equal(h.intro._grid.visible,false);
-    assert.deepEqual(h.intervals(),[5000]);
-    h.advance(10000);
-    assert.equal(h.intro._grid.visible,true,'Third sweep starts at 10 seconds');
-    h.intro.stop();
-    assert.equal(h.activeSources,0,'stop cancels both sources');
-    assert.equal(h.intro._grid.visible,false);
-    const paused=h.repaints;
-    h.advance(20000);
-    assert.equal(h.repaints,paused,'No work after stop');
+class Widget extends Actor {}
+const St = {Widget, DrawingArea};
+const Clutter = {
+    BindConstraint: class {},
+    BindCoordinate: {SIZE: 1},
+    FixedLayout: class {},
+    AnimationMode: {LINEAR: 1, EASE_OUT_CUBIC: 2},
+};
+const introDuration = 1850, repeatMs = 5000, beamWidth = 240;
+const Factory = new Function('Clutter','GLib','St',
+    'INTRO_DURATION_MS','INTRO_REPEAT_MS','gridGeometry',
+    source + '\nreturn ObservatoryIntro;');
+const Intro = Factory(Clutter, GLib, St, introDuration, repeatMs,
+    () => ({}));
+const panels=Object.fromEntries(
+    ['topLeft','topRight','bottomLeft','bottomRight'].map(key =>
+        [key, new Widget()]));
+const root = {
+    set_clip_to_allocation(value) {
+        assert.equal(value,true);
+        this.clipped=value;
+    },
+    insert_child_below(actor, sibling) {
+        assert.ok(actor instanceof DrawingArea);
+        assert.equal(sibling,panels.topLeft);
+    },
+    insert_child_above(actor, sibling) {
+        assert.ok(actor instanceof Widget);
+        assert.ok(sibling instanceof DrawingArea);
+    },
+};
+const intro = new Intro(root, panels);
+function advance(target) {
+    assert.ok(target >= now);
+    let limit=0;
+    while (true) {
+        const found=[...tasks.entries()].sort((a,b)=>
+            a[1].due-b[1].due || a[0]-b[0])[0];
+        if (!found || found[1].due > target)
+            break;
+        assert.ok(++limit < 100,'Unexpected fast timer loop');
+        const [id,task]=found;
+        now=task.due;
+        const repeat=task.callback() === GLib.SOURCE_CONTINUE;
+        if (tasks.get(id) !== task)
+            continue;
+        if (repeat && task.interval > 0)
+            task.due += task.interval;
+        else
+            tasks.delete(id);
+    }
+    now=target;
 }
-{
-    const h=harness();
-    h.intro.onLayout({},1920,1080);
-    h.advance(300);
-    h.intro.onLayout({},1280,720);
-    assert.deepEqual(h.intervals(),[25,5000],
-        'Resize must rearm both bounded timers, not disable the 5s scan');
-    assert.equal(h.intro._grid.visible,true);
-    assert.equal(h.panels.topLeft.opacity,255);
-    h.advance(2200);
-    assert.deepEqual(h.intervals(),[5000]);
-    h.advance(5500);
-    assert.deepEqual(h.intervals(),[25,5000]);
-    h.intro.stop();
-    assert.equal(h.activeSources,0);
-}
-{
-    const h=harness();
-    h.intro.onLayout({},1920,1080);
-    h.advance(2000);
-    h.intro.stop();
-    assert.equal(h.activeSources,0,'Idle repeat timer cancelled');
-    h.intro.destroy();
-    assert.equal(h.intro._grid,null);
-    h.advance(12000);
-    assert.equal(h.activeSources,0);
-}
-{
-    const h=harness();
-    h.intro.onLayout({},1920,1080);
-    h.intro.destroy();
-    assert.equal(h.activeSources,0,'Destroy while active cancels both');
-}
-console.log('PASS M8.4: sweeps at 0/5/10 seconds, 3.15s idle, steady HUD, resize/stop/destroy cleanup');
+intro.onLayout({},3440,1440);
+advance(0);
+assert.equal(intro._scanner.animation.x, 3440);
+assert.equal(intro._scanner.animation.duration, 1850);
+assert.equal(intro._scanner.animation.mode, Clutter.AnimationMode.LINEAR);
+assert.equal(intro._scanner.x, -beamWidth);
+assert.equal(intro._scanner.visible, true);
+assert.ok(repaints.length <= 1,'Grid must not repaint every frame');
+assert.ok([...tasks.values()].every(task =>
+    task.interval === 0 || task.interval >= 1850),
+    'No 16ms/25ms/50ms GLib render timer allowed');
+advance(1950);
+assert.equal(intro._scanner.visible, false);
+assert.equal(intro._grid.visible, false);
+assert.ok([...tasks.values()].every(task => task.interval >= 5000));
+advance(5000);
+assert.equal(intro._scanner.visible, true);
+assert.equal(intro._scanner.animation.x, 3440);
+intro.onLayout({},1920,1080);
+advance(5000);
+assert.equal(intro._scanner.animation.x, 1920);
+assert.equal(intro._edge.x, beamWidth - 3);
+intro.stop();
+assert.equal(tasks.size,0);
+intro.destroy();
+assert.equal(intro._scanner,null);
+console.log('PASS M9.2: native compositor motion covers each viewport, no JS frame loop, 5s repeat, resize and cleanup');
