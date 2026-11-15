@@ -181,8 +181,17 @@ export default class MellonGreeter extends Extension {
                             const layout = JSON.stringify(
                                 currentMonitorGeometry());
                             if (layout !== this._layoutKey) {
+                                // A user who explicitly requested native GDM
+                                // must not get re-covered on hot-plug.
+                                const nativeRequested =
+                                    this._cover?._revealed === true ||
+                                    this._accounts?._bypassed === true;
                                 this._unmount();
                                 this._tryMount();
+                                if (nativeRequested) {
+                                    this._accounts?.revealNative();
+                                    this._cover?.revealNative();
+                                }
                                 return GLib.SOURCE_CONTINUE;
                             }
                             this._syncInput();
