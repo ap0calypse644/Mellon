@@ -13,6 +13,8 @@ export class ObservatoryIntro {
     constructor(root, panels) {
         this._root = root;
         this._panels = panels;
+        // A moving scanner must never spill into the adjacent monitor.
+        root.set_clip_to_allocation(true);
         this._started = false;
         this._everStarted = false;
         this._stopped = false;
