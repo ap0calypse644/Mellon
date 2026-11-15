@@ -1,5 +1,7 @@
 # Troubleshooting
 
+**Current M9:** Start with [Multi-monitor troubleshooting](MULTI_MONITOR.md#troubleshooting). After copying imported GJS modules in Wayland, **log out and back in** (or reboot for a fresh GDM greeter) before deciding a fix did not work. Disabling/re-enabling the extension in one Shell process may leave stale modules loaded.
+
 **Priority order:** keep a usable native login, avoid destructive commands, read diagnostics, then change code. Mellon runs in GNOME Shell's login/lock process; a quick hack can strand the graphical session.
 
 ## Quick symptom guide
@@ -10,12 +12,14 @@
 | Ubuntu logo or native account card flashes briefly | GDM startup/chooser may run before Mellon mounts, or GDM is on a different version | Check whether G1.8 is installed and active; do not edit vendor greeter assets |
 | Native login UI stays visible on password entry | Cover did not activate, startup script is stale, or GNOME internals changed | Verify extension version, logs, and show native controls; debug in VM |
 | `SHOW LOGIN` missing | Recovery actor wasn't mounted or another fullscreen widget is above it | Use native TTY fallback, inspect GNOME actor diagnostics in VM |
-| 5-second grid stops after first scan / resize | Timer was canceled by an older build or unhandled allocation | Check installed M8.4/G1.8 source; don't restart host GDM |
+| Beam freezes partway across a monitor | Old timer-driven Cairo scanner still running from a stale GNOME process or wrong package | Confirm installed M9 code, then start a fresh Wayland GNOME/GDM process; never restart live host GDM |
 | Stars don't align with photo | Background cropped/resized differently from vertices/sprites | Rebuild scene pack and validate `coverTransform` |
 | Some scene is blank | Missing sprite/photo or malformed `library.json` | Verify manifest checksums and required asset paths |
 | `UNAUTHORIZED ACCESS` doesn't show | GNOME private `_failCounter` has changed or no recognized verifier exists | Verify GNOME version and keep native auth, don't infer failure from submit |
 | Initial single-user handoff loops / fails | Native user roster not stable or chooser private APIs changed | Fall back to native GDM and test chooser adapter in VM |
-| GDM fails entirely after deployment | Incompatible GDM version/config, broken extension code or missing assets | **TTY → rollback → reboot** |
+| GDM fails entirely after deployment | Incompatible GDM version/config, broken extension code or missing assets | **TTY → M9-specific rollback → reboot** |
+
+| `sudo: node: command not found` during GDM upgrade | User-installed Node is absent from root's restricted PATH | Use the corrected M9 installer and run Node syntax tests *before* sudo, as normal user |
 
 ## Read-only checks
 
