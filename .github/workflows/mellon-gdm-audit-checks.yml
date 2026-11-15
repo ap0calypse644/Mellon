@@ -1,131 +1,68 @@
-name: Mellon G0/G1 Greeter Audit and Prototype Safety
+name: Mellon M9 Greeter — Source Safety and Regression
 on:
   push:
-    branches: [main]
+    branches: [main, m9-gdm-multi-monitor]
     paths:
       - 'lab/gnome50-gdm/**'
+      - 'lab/gnome50-m8/**'
+      - 'lab/blackpearl-host/**'
+      - '.github/workflows/mellon-gdm-audit-checks.yml'
+  pull_request:
+    paths:
+      - 'lab/gnome50-gdm/**'
+      - 'lab/gnome50-m8/**'
       - 'lab/blackpearl-host/**'
       - '.github/workflows/mellon-gdm-audit-checks.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  read-only-audit:
+  gdm-source-checks:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Checkout without persisted credentials
+      - name: Checkout without saved credentials
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Validate syntax and static read-only guardrails
+      - name: Use Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Parse both live extension packages
         shell: bash
         run: |
-          bash -n lab/gnome50-gdm/audit-guest-greeter.sh
-          bash -n lab/gnome50-gdm/audit-live-greeter.sh
-          bash -n lab/gnome50-gdm/checkpoint-before-gdm.sh
-          bash lab/gnome50-gdm/test-checkpoint-state.sh
-          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-guest-greeter.sh
-          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-live-greeter.sh
-          grep -Fq "gnome-shell" lab/gnome50-gdm/audit-live-greeter.sh
-          grep -Fq -- "--mode=gdm" lab/gnome50-gdm/audit-live-greeter.sh
-          grep -Fq 'test "$(id -un)"' lab/gnome50-gdm/audit-guest-greeter.sh
-          if grep -En '(^|[[:space:]])(sudo|rm|mv|cp|systemctl[[:space:]]+(restart|stop|start|enable)|dconf[[:space:]]+update|gsettings[[:space:]]+set|virsh.*(revert|restore|destroy|shutdown))([[:space:]]|$)' lab/gnome50-gdm/audit-guest-greeter.sh lab/gnome50-gdm/audit-live-greeter.sh; then
-            echo 'Refusing mutation in read-only greeter audit' >&2
-            exit 1
-          fi
-          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/checkpoint-before-gdm.sh
-          grep -Fq "state\" != 'shut off'" lab/gnome50-gdm/checkpoint-before-gdm.sh
-          grep -Fq "backing-filename" lab/gnome50-gdm/checkpoint-before-gdm.sh
-          grep -Fq "sha256sum -c SHA256SUMS" lab/gnome50-gdm/checkpoint-before-gdm.sh
-          echo 'PASS: GDM read-only inventory and powered-off checkpoint helper syntax'
-      - name: Validate G1 source, visual-only guardrails and VM-safe pack prep
+          set -euo pipefail
+          for dir in lab/gnome50-m8 lab/gnome50-gdm/greeter-extension; do
+            for file in "$dir"/*.js; do
+              node --input-type=module --check < "$file"
+            done
+          done
+      - name: Verify M9 visual geometry, native GDM recovery and shared pure math
         shell: bash
         run: |
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/extension.js
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/scene-data.js
-          node lab/gnome50-gdm/test-g1.mjs
-          node lab/gnome50-gdm/test-g1-runtime.mjs
-          node lab/gnome50-gdm/test-g13-hud.mjs
-          bash -n lab/gnome50-gdm/stage-g13-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g13-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g13-in-guest.sh
-          node lab/gnome50-gdm/test-g13-deploy.mjs
-          node lab/gnome50-gdm/test-g131-layout.mjs
-          node lab/gnome50-gdm/test-g131-deploy.mjs
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/greeter-starfield.js
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/greeter-length-observer.js
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/stellar-effects.js
-          node lab/gnome50-gdm/test-g14-length.mjs
-          node lab/gnome50-gdm/test-g14-starfield.mjs
-          node lab/gnome50-gdm/test-g14-runtime.mjs
-          bash -n lab/gnome50-gdm/stage-g14-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g14-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g14-in-guest.sh
-          node lab/gnome50-gdm/test-g14-deploy.mjs
-          bash -n lab/gnome50-gdm/stage-g15-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g15-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g15-in-guest.sh
-          node lab/gnome50-gdm/test-g15-deploy.mjs
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/greeter-password-cover.js
-          node lab/gnome50-gdm/test-g16a-cover.mjs
-          node lab/gnome50-gdm/test-g16a-scan.mjs
-          node lab/gnome50-gdm/test-g16a1-deploy.mjs
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/greeter-account-chooser.js
-          node lab/gnome50-gdm/test-g16b-chooser.mjs
-          node lab/gnome50-gdm/test-g16b-deploy.mjs
-          node lab/gnome50-gdm/test-g17-deploy.mjs
+          set -euo pipefail
+          node lab/gnome50-gdm/test-m9-gdm-multimonitor.mjs
+          node lab/gnome50-gdm/test-m9-gdm-ui.mjs
           node lab/gnome50-gdm/test-g17-parity-performance.mjs
           node lab/gnome50-gdm/test-g18-hud-runtime.mjs
-          node lab/gnome50-gdm/test-g18-deploy.mjs
+          node lab/gnome50-m8/test-intro-runtime.mjs
+          node lab/gnome50-m8/test-m8-regression.mjs
+          node lab/gnome50-m8/test-stellar-effects.mjs
+          node lab/gnome50-m8/test-mapping.mjs
+      - name: Guard deployment, checksum and rollback procedures
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n lab/gnome50-gdm/m9-upgrade-blackpearl.sh
+          bash -n lab/gnome50-gdm/m9-rollback-blackpearl.sh
+          for file in lab/blackpearl-host/*.sh; do bash -n "$file"; done
           node lab/blackpearl-host/test-host-deployment.mjs
-          bash -n lab/blackpearl-host/preflight.sh
-          bash -n lab/blackpearl-host/stage.sh
-          bash -n lab/blackpearl-host/install.sh
-          bash -n lab/blackpearl-host/rollback.sh
-          bash -n lab/gnome50-gdm/stage-g18-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g18-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g18-in-guest.sh
-          bash -n lab/gnome50-gdm/stage-g17-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g17-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g17-in-guest.sh
-          bash -n lab/gnome50-gdm/stage-g16b-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g16b-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g16b-in-guest.sh
-          bash -n lab/gnome50-gdm/stage-g16a1-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g16a1-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g16a1-in-guest.sh
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/failure-tracker.js
-          node lab/gnome50-gdm/test-g16a-deploy.mjs
-          bash -n lab/gnome50-gdm/stage-g16a-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g16a-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g16a-in-guest.sh
-          bash -n lab/gnome50-gdm/stage-g131-to-vm.sh
-          bash -n lab/gnome50-gdm/install-g131-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g131-in-guest.sh
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-hud.js
-          node --input-type=module --check < lab/gnome50-gdm/greeter-extension/observatory-intro.js
-          bash -n lab/gnome50-gdm/stage-pack-on-blackpearl.sh
-          bash -n lab/gnome50-gdm/preflight-activation.sh
-          bash -n lab/gnome50-gdm/audit-extension-enablement.sh
-          bash -n lab/gnome50-gdm/audit-effective-greeter-settings.sh
-          python3 -c 'import ast,pathlib; ast.parse(pathlib.Path("lab/gnome50-gdm/read-effective-greeter-settings.py").read_text())'
-          bash -n lab/gnome50-gdm/install-g1-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g1-in-guest.sh
-          bash -n lab/gnome50-gdm/stage-g1-to-vm.sh
-          node lab/gnome50-gdm/test-g1-install.mjs
-          bash -n lab/gnome50-gdm/diagnose-g1-greeter.sh
-          python3 -c 'import ast,pathlib; ast.parse(pathlib.Path("lab/gnome50-gdm/diagnose-g1-greeter.py").read_text())'
-          node lab/gnome50-gdm/test-g1-diagnostics.mjs
-          bash -n lab/gnome50-gdm/stage-g121-update-to-vm.sh
-          bash -n lab/gnome50-gdm/update-g121-in-guest.sh
-          bash -n lab/gnome50-gdm/rollback-g121-in-guest.sh
-          node lab/gnome50-gdm/test-g121-update.mjs
-          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/preflight-activation.sh
-          grep -Fq "VM='mellon-gnome50-lab'" lab/gnome50-gdm/audit-extension-enablement.sh
-          grep -Fq 'DCONF_PROFILE=gdm' lab/gnome50-gdm/audit-extension-enablement.sh
-          if grep -En '(^|[[:space:]])(sudo|systemctl[[:space:]]+(restart|stop|start|enable)|virsh.*(destroy|shutdown|reboot)|dconf[[:space:]]+update|gsettings[[:space:]]+set)([[:space:]]|$)' lab/gnome50-gdm/stage-pack-on-blackpearl.sh lab/gnome50-gdm/preflight-activation.sh lab/gnome50-gdm/audit-extension-enablement.sh; then
-            echo 'FAIL: G1 preparation/preflight must not enable or restart GDM' >&2
+          node lab/gnome50-gdm/test-g18-deploy.mjs
+          grep -Fq 'sha256sum -c SHA256SUMS' lab/gnome50-gdm/m9-upgrade-blackpearl.sh
+          grep -Fq 'mv -T -- "$PREVIOUS" "$ACTIVE"' lab/gnome50-gdm/m9-rollback-blackpearl.sh
+          if grep -Eq 'systemctl (restart|stop|start) (gdm|display-manager)' lab/gnome50-gdm/m9-*.sh; then
+            echo 'Refusing a GDM upgrade which restarts the live display manager' >&2
             exit 1
           fi
-          echo 'PASS: G1 source-only staged; no GDM modification/activation'
+          echo 'PASS: synthetic validation only; no live GDM or VM modifications'
