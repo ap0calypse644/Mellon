@@ -1,73 +1,108 @@
-# Mellon
+# Mellon ✦
 
-Experimental GNOME Shell unlock-dialog extension that replaces the visible unlock UI with a starfield.
+**Your login screen, somewhere among the stars.**
 
-## What it does
+Mellon turns the **GNOME 50 lock screen and GDM login screen** into a photographic constellation observatory. Pick a nebula, watch stars light up as you enter your password, and keep all the good parts of GNOME authentication underneath. The old login UI is still one **SHOW LOGIN** click away.
 
-- Draws a full-screen starfield on the GNOME unlock screen.
-- Hides the native password prompt visually without removing GNOME authentication.
-- Brightens one random star for anonymous keypress activity.
-- Shows a submit pulse on Enter.
-- Shows a failure pulse when GNOME reports auth failure.
-- Attempts to delay unlock teardown briefly and form a constellation on success if the current GNOME Shell version exposes a known finish method.
+Originally built for an Ubuntu 26.04.1 workstation nicknamed *BlackPearl*. Now documented so you can explore it, fork it, and build your own version—without having to reconstruct months of experiments.
 
-## Security model
+> **Project status:** G1.8 (GDM) + M8.4 (lock screen) are running successfully on BlackPearl. The source is tailored to **GNOME Shell 50.1**, not a cross-version GNOME extension or a general-purpose theme. Test in a VM before changing your login manager. Mythological figure artwork is planned, **not** part of the current build.
 
-Mellon does not authenticate. GNOME Shell/GDM/PAM still owns authentication.
+## What you get
 
-Mellon does not intentionally log or store passwords. It reacts to anonymous keypress activity and always propagates the event back to GNOME. It does not inspect the password-entry text.
+- **Two coordinated interfaces:** a themed GDM greeter and a matching user-session lock screen.
+- **12 curated scenes** across six nebula photographs, each with an actual-source-pixel constellation of 8–24 selected luminous points.
+- **Visual-only password feedback:** randomized source-star illumination/removal on password *length* changes, with connecting lines appearing only when both endpoints are lit.
+- **Eight-step Observatory mapping:** a small pulse for each reached stage and a strong 1.6-second completion wave, followed by a stable, bright constellation.
+- **Cockpit HUD:** four corner instruments and a cyan grid sweep every five seconds.
+- **Native recovery:** **SHOW LOGIN** reveals GNOME's normal authentication UI. Invalid attempts display an **UNAUTHORIZED ACCESS** visual warning without modifying the verifier.
+- **GDM account flow:** one eligible user is selected through GNOME's own account activation event; multiple eligible users get a Mellon-themed selector (multi-user behavior is source-tested, but needs broader real-hardware testing).
+- **Failure-aware lifecycle:** bounded retries, signal/timer cleanup, checksum-verified bundles, and an offline recovery plan.
 
-This is for personal experimentation. Do not publish it to extensions.gnome.org without reworking it to match GNOME's unlock-dialog review rules.
+Mellon **does not authenticate anyone**, replace PAM, read password text, or log raw keys. The eight-step visual completion is **not proof of a correct password**.
 
-## Install
+## Start here
 
-```bash
-./install.sh
+| I want to… | Read |
+| --- | --- |
+| Understand what runs where | [Architecture](docs/ARCHITECTURE.md) |
+| Find a specific source file / actor | [Component map](docs/COMPONENTS.md) |
+| Try it safely on another machine | [Getting started & VM-first setup](docs/GETTING_STARTED.md) |
+| Change scenes, effects, HUD, timings, or accounts | [Customization cookbook](docs/CUSTOMIZATION.md) |
+| Understand images, matching, and attribution | [Scene & asset pipeline](docs/SCENES_AND_ASSETS.md) |
+| Run tests or contribute a change | [Development & testing](docs/DEVELOPMENT.md) |
+| Install or recover from an installation | [Deployment & recovery](docs/DEPLOYMENT.md) |
+| Debug a black screen or missing extension | [Troubleshooting](docs/TROUBLESHOOTING.md) |
+| Review the threat model | [Security & privacy](docs/SECURITY.md) |
+
+Browse the [full documentation index](docs/README.md) for more.
+
+## Two builds, one repository
+
+```text
+lab/gnome50-m8/                  ← M8.4: lock screen (unlock-dialog)
+lab/gnome50-gdm/greeter-extension/ ← G1.8: GDM login screen (gdm)
+lab/blackpearl-host/             ← hardware-specific deployment & rollback
+tools/starfield/                 ← offline image catalog generation
+tools/constellations/            ← offline constellation fitting / QA
+assets/starfield/                ← sources, catalogues, previews, provenance
+docs/                            ← newcomer, internals, recipes, recovery
 ```
 
-Then log out and log back in. Lock with `Super+L`.
+**Do not start with `./install.sh`.** The root-level `extension.js`, `metadata.json`, `install.sh`, and `uninstall.sh` belong to the **2016-style** *(original experimental)* `mellon@nibir.local` prototype, **not** the current two-extension system. They remain only as historical reference. See [the project evolution](docs/HISTORY.md).
 
-## Disable from normal session
+### Try the logic without touching GNOME
 
-```bash
-gnome-extensions disable mellon@nibir.local
-```
-
-## Emergency disable from TTY
-
-Press `Ctrl+Alt+F3`, log in, then run:
+Clone and run the synthetic tests (Node.js and Python; a running GNOME session is not required):
 
 ```bash
-gnome-extensions disable mellon@nibir.local
-rm -rf ~/.local/share/gnome-shell/extensions/mellon@nibir.local
+(
+    set -euo pipefail
+    git clone https://github.com/ap0calypse644/Mellon.git
+    cd Mellon
+    node lab/gnome50-m8/test-mapping.mjs
+    node lab/gnome50-m8/test-stellar-effects.mjs
+    node lab/gnome50-m8/test-intro-runtime.mjs
+    node lab/gnome50-gdm/test-g18-hud-runtime.mjs
+    node lab/gnome50-gdm/test-g17-parity-performance.mjs
+)
 ```
 
-Then return to the GUI with `Ctrl+Alt+F2` or reboot.
+These tests check algorithms and mocked lifecycle behavior; **they do not prove your GNOME build is compatible**.
 
-## Debug
+### Want it on your workstation?
 
-```bash
-./dev-logs.sh
+Read [Getting started](docs/GETTING_STARTED.md) and [Deployment](docs/DEPLOYMENT.md) before running an installer. The scripts under `lab/blackpearl-host/` intentionally check for **`ap0calypse`, `blackpearl`, a particular GDM configuration, and a local VM/photo corpus**. They are examples to *adapt and test*, not something to execute unmodified on another computer.
+
+## How the visual part works
+
+```text
+GNOME-owned PasswordEntry
+       │
+       └── buffer length only ──→ activationCount(length, scene size)
+                                         │
+                                         ▼
+                                randomized active-star mask
+                                         │
+                       ┌─────────────────┼──────────────────────┐
+                       ▼                 ▼                      ▼
+                  source sprites     connected lines       eight-stage HUD
+                       │                 │                      │
+                       └─────────── existing effect engine ──────┘
+
+GNOME verifier / GDM / PAM ───────────────→ actual authentication
 ```
 
-Useful version check:
+No part of the star display decides whether access is allowed. Details: [Architecture](docs/ARCHITECTURE.md).
 
-```bash
-gnome-shell --version
-```
+## Make it yours
 
-## Known rough edges
+The repository separates **pure functions** (scene selection, star masks, HUD progress, geometry, animation envelopes) from **GNOME-specific actors** (lock screen and GDM). You can tune a glow without rebuilding GDM, change a scene without changing authentication, or build an alternative frontend around the data model. See [Customization](docs/CUSTOMIZATION.md).
 
-GNOME Shell's lock screen internals are private APIs. The `_authPrompt`, `_stack`, and unlock finish method names may shift across GNOME versions. This is why the extension has fallbacks and why the first target should be your exact Ubuntu/GNOME version.
+The included image corpus contains third-party photographs and attribution obligations. See [Assets and licensing](docs/ASSETS_AND_LICENSES.md). Source code is under the [MIT License](LICENSE), excluding third-party media and any material under separately stated terms.
 
-## Mellon 2.0 / GNOME 50 lab
+## Contribute
 
-An isolated, VM-only prototype lives in [`lab/gnome50-m1/`](lab/gnome50-m1/README.md). It observes changes to GNOME's native password buffer **length**, without global key event capture or replacing authentication. The original extension above is preserved unchanged. The lab README has deployment and rollback commands.
+Ideas, fixes, and carefully scoped experiments welcome. Check [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). If you touch GDM, bring a VM test and rollback story with the pull request. Don't put passwords, tokens, personal logs, or screenshots containing private information in issues.
 
-### M3: The Observatory (GNOME 50 VM lab)
-
-The first cinematic milestone is under [`lab/gnome50-m3/`](lab/gnome50-m3/README.md): layered deep-space scenery, Orion/Cygnus/Cassiopeia constellation formation and a subtle cockpit readout. It uses GNOME 50's `St.DrawingArea` and the native password buffer's **character count**; GNOME authentication and the original extension stay untouched. **VM-only; runtime validation still required.**
-
-## Starfield Atlas (image-aligned constellation catalog)
-
-The new [Starfield Atlas](tools/starfield/README.md) uses a NASA/ESA Hubble Messier 24 background and an offline detector to index **20,491 actual bright points** in the original image, with **92,734 nearby-node connection candidates**. The image, pixel-accurate coordinates, graph, provenance, and marked QA preview are in [`assets/starfield/`](assets/starfield/). Generated and independently validated by the [GitHub Actions pipeline](.github/workflows/build-starfield.yml). Any subset of these points may be used for invented constellations; their astronomical identity does not matter for Mellon.
+The name comes from the old riddle: *Speak, friend, and enter.* This time, the door has constellations.
