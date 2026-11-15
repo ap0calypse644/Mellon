@@ -1,6 +1,6 @@
 # Component reference
 
-This is a quick-reference map for **current G1.8/M8.4**, not every historical prototype. Source links below are relative to the repository root.
+This is a quick-reference map for **current M9**,  not every historical prototype. Source links below are relative to the repository root.
 
 ## Shared visual engine
 
@@ -12,8 +12,8 @@ This is a quick-reference map for **current G1.8/M8.4**, not every historical pr
 | `hud-progress.js` | Inverts the active-star mask into eight HUD stages; formats `MAPPING 01 / 08`; computes 560 ms stage pulse and completion sweep | Progress text, pulse envelope; eight stages are currently an enforced contract |
 | `hud-layout.js` | Pure rectangle placement and center-safe inset for four edge panels | Band spacing, size cutoffs, margins; test recovery/control collisions |
 | `observatory-hud.js` | Four `St` panels, progress rectangles, clock, and mapping pulse; owns intro/grid helper | CSS names, panel content, pulse scale, metadata |
-| `hud-intro-state.js` | Pure 5-second grid timing, geometry and opacity model | Grid duration and density without touching GDM |
-| `observatory-intro.js` | One `St.DrawingArea` for the sweeping grid; timer lifecycle and resize rearm | Scan rendering, cadence, foreground/background order |
+| `hud-intro-state.js` | Pure lattice geometry, 1.85s / 5s timing and legacy scan math | Grid geometry and duration; live movement uses Clutter instead of the legacy tick |
+| `observatory-intro.js` | Static `St.DrawingArea` grid + refresh-synchronized `St.Widget` scanning beam; bounded 5s start cadence | Gradient/beam styling, duration, startup and teardown |
 | `failure-tracker.js` | Read-only GNOME verifier counter deltas | Keep counter observation only; never read credential buffers |
 | `stylesheet.css` | Existing St/CSS styles for photo overlays, HUD, warning, and recovery | Typography, borders, spacing, glows; verify compatibility with GNOME Shell St CSS |
 
@@ -28,7 +28,7 @@ This is the GNOME-facing entrypoint for `unlock-dialog`. It:
 1. Loads `library.json` and `scene-config.json`, verifying that all twelve photos and all selected source sprites exist.
 2. Watches the active native unlock prompt and its password-buffer **length**.
 3. Keeps a randomly selected binary mask of real source stars, then updates glow, connections, and HUD on changes.
-4. Hosts `MVPScene` visuals and the **SHOW LOGIN** recovery control.
+4. Hosts `MellonMonitorViews` with a clipped `MVPScene` per monitor and shared **SHOW LOGIN** recovery.
 5. Observes failed attempts without replacing verification.
 6. Tears down old timers, signals, and actors when the dialog changes or the extension is disabled.
 
