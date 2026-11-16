@@ -56,10 +56,28 @@ Alternatively, monitor live Logcat via `adb -s 192.168.68.105:5555 logcat -s Mel
 
 **Note:** Background microphone capture is not guaranteed by Android. The persistent log is specifically designed to retain the last evidence before Assistant steals focus, Android silences capture or the process exits.
 
+## M2: offline word-recognition experiment
+
+The **VOICE_RECOGNITION** audio source showed a clear level increase during a controlled silence → speaking → silence test (2026-11-16, muted TV). This is evidence that speech-correlated sound reaches the virtual `remote-submix` input, **not yet evidence that it contains intelligible words**.
+
+A deliberately opt-in, offline speech-recognition experiment now lets us test this without saving raw audio:
+
+1. Pull the latest `feature/android-tv-mic-probe` branch, then deploy with `bash scripts/build-and-deploy.sh`.
+2. Run `bash scripts/install-vosk-model.sh` once to download an official, SHA-256-verified Vosk small US English model (~40 MB compressed) and transfer it into the debug app's private files directory over ADB. **No root or Sony system changes.**
+3. On the TV, mute playback, then select **START OFFLINE WORD TEST**. It automatically selects `VOICE_RECOGNITION`; the source selector is only for the older microphone diagnostic mode.
+4. After the model loads, speak a short known phrase such as "one two three four five", then "open the door" and "Mellon" without pressing the remote microphone button. Continue for at most 30 seconds; it will stop itself.
+5. Run `bash scripts/fetch-logs.sh` and inspect `OFFLINE PARTIAL TEXT:` / `OFFLINE FINAL TEXT:` entries, including any failure reasons.
+
+**Privacy:** the explicit offline word test *does* save recognized text to the private diagnostic log; it does **not** save audio, send voice to a network service, or contact Google Assistant. The model is downloaded on BlackPearl once and used fully offline on the TV after installation. Do not speak private information during this test. No word recognition runs when the test is idle. Debug files can be read with `adb exec-out run-as`.
+
+**Performance:** Vosk's small models use roughly 300 MB of RAM at runtime; Sony's ARMv7 chipset is memory-constrained, so loading/decoding may be slow. The test is bounded to 30 seconds and the model is released when it stops.
+
+**Limitations:** this is a proof of audio intelligibility, not the production "Mellon" unlock system. A generic English recognizer may spell the name as "melon" or a similar word. Validate basic phrases first, then test the Tolkien name. Do not use raw transcript matches as a security gate.
+
 ## Interpretation and limitations
 
 AudioDeviceInfo entries, MIC routes, or a successful AudioRecord initialization **do not** establish that the Sony remote delivers audio to third-party apps. Confirm non-zero signal during the intended test and rule out TV built-in microphone pickup. Google Assistant may interrupt or silence the probe. Some remotes require button-held activation, or route capture exclusively to vendor software.
 
-Initial MIC-only version compiled and deployed successfully on the Sony BRAVIA BF1. A test on 2026-11-16 returned zero audio samples throughout: at first Android reported `silenced=false`, then `silenced=true`. That does not prove third-party microphone access is prohibited, because the Bluetooth remote may transmit only during Assistant sessions and the app may lose foreground priority. The persistent-log/30-second auto-stop update has **not yet been compiled or tested** on the TV.
+Initial MIC-only version compiled and deployed successfully on the Sony BRAVIA BF1. A test on 2026-11-16 returned zero audio samples throughout: at first Android reported `silenced=false`, then `silenced=true`. That does not prove third-party microphone access is prohibited, because the Bluetooth remote may transmit only during Assistant sessions and the app may lose foreground priority. The persistent-log/30-second auto-stop update compiled, deployed, and recorded the 09:50–09:51 controlled experiment on the TV. The new **M2 offline Vosk word-recognition code has not yet been compiled or tested** on this device.
 
 The Ubuntu Mellon implementation is unchanged; this branch isolates the TV experiment.
