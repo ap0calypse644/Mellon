@@ -94,22 +94,35 @@ The 2026-11-16 M2.1 test produced seven out of seven exact `melon` candidates fo
 
 The next milestone is **dream lifecycle and audio**. A new `.MellonDreamService` is registered in `AndroidManifest.xml`, but installing the APK **does not** select it as Sony's screensaver. The service uses the already-installed Vosk model and the same `VOICE_RECOGNITION` input, writes diagnostics to `files/mellon-tv-dream.log`, and displays a simple Doors of Durin text placeholder rather than the final artwork. Keyword recognition only changes test status; it **does not dismiss the dream**. Back or OK is a deliberate emergency exit (Home/Power remain system-controlled).
 
-**Before enabling the dream**, deploy the updated APK and run this read-only registration audit:
+**Hardware baseline verified:** The M3 APK built and deployed to Sony BRAVIA BF1 (Android TV 12); the service resolver lists `dev.mellon.tvprobe/.MellonDreamService` with the required `BIND_DREAM_SERVICE` permission. `cmd dreams help` reports `No shell command implementation`, but SystemUI exports `com.android.systemui/.Somnambulator`. The stock baseline keys both read `com.google.android.apps.tv.dreamx/.service.Backdrop`. No dream was active during the audit.
+
+### Time-bounded preview with automatic rollback
+
+Run the provided script on BlackPearl after verifying the app is installed and the Vosk model is present:
 
 ```bash
-bash scripts/build-and-deploy.sh
-bash scripts/dream-status.sh
+bash scripts/preview-dream.sh
 ```
 
-Check the service is present and note the existing `screensaver_components` and `screensaver_default_component`. The known baseline is `com.google.android.apps.tv.dreamx/.service.Backdrop`. No script in this milestone changes those settings, calls `cmd dreams` or disables Sony's screensaver.
+The script:
+1. Checks the TV is authorized, `screensaver_enabled=1`, and **both** Sony selection keys still match the verified stock baseline. If not, it refuses to modify anything.
+2. Saves a timestamped backup under `~/mellon-tv-audit/sony-dream-before-preview-*.txt`.
+3. **Temporarily writes only** `settings secure screensaver_components` to `dev.mellon.tvprobe/.MellonDreamService`. It does not change the stock `screensaver_default_component`.
+4. Starts the exported SystemUI `Somnambulator` activity; this may request the selected dream, depending on Sony's implementation.
+5. Gives the tester about 45 seconds to see the dream, say Mellon, and press Back/OK for a manual exit. Captures `dumpsys dreams` and the private dream log via `fetch-dream-logs.sh`.
+6. Uses an EXIT/signal trap to **restore the original Sony `screensaver_components` setting and press Home**. It checks the result.
 
-In the next controlled step, configure a **temporary preview** only after verifying that this Sony build permits it and preparing an exact rollback to the previous setting. Avoid making a permanent default-selection change before testing. On some Android TV implementations, finishing a dream returns to the launcher; on others it may permit the TV to sleep. This must be measured on the actual hardware.
-
-After a controlled dream test, fetch diagnostics with:
+The automatic rollback is a best-effort script-level safety net: it cannot run after `SIGKILL`, BlackPearl power loss, or ADB/network loss. In those cases, **independent recovery** is:
 
 ```bash
-bash scripts/fetch-dream-logs.sh
+bash scripts/restore-sony-dream.sh
 ```
+
+This standalone script is safe to re-run; it checks that the current selection is either Mellon or the known Sony default, then restores Sony Backdrop and returns Home. Do **not** reset the TV. If ADB becomes unavailable, wake the TV and reconnect before using it.
+
+**Manual recovery:** Back/OK should request `wakeUp()` from the interactive dream. Home on the Sony remote, the TV power button, or `adb shell input keyevent 3` provides a fallback independent of the app. The preview script does *not* modify `screensaver_enabled`, the stock default component, Google Assistant, or other Sony settings.
+
+Afterward, the result should include either `DREAM onDreamingStarted` / `DREAM FINAL...` entries or an explicit start failure. The Activity's successful speech recognition does **not** guarantee the dream can access microphones: the real TV result must establish that. The timed preview scripts have **not been run on the TV yet**.
 
 The goal is to confirm that a visible `DreamService` can initialize `AudioRecord`, access `remote-submix`, and recognize `melon` without being silenced or killed. The Activity's success does **not** guarantee microphone access from a dream service. The M3 code is source-reviewed but **not yet compiled or tested on the TV**.
 
