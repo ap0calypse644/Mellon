@@ -252,10 +252,6 @@ class MainActivity : Activity() {
                     event("AudioRecord.read error=$count")
                     break
                 }
-                if (count == 0) {
-                    Thread.sleep(40)
-                    continue
-                }
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastUiMs >= 500) {
                     lastUiMs = now
@@ -266,15 +262,17 @@ class MainActivity : Activity() {
                         sumSquares += sample * sample
                         if (data[index] != 0.toShort()) nonZero++
                     }
-                    val rms = sqrt(sumSquares / count)
+                    // Continue logging route/silencing even when read() returns zero.
+                    val rms = if (count > 0) sqrt(sumSquares / count) else 0.0
                     val dbfs = if (rms > 0.0) 20.0 * log10(rms) else -120.0
                     val routed = record.routedDevice?.let { "${it.productName} (type=${it.type})" } ?: "none"
                     // Distinguish an unsilenced recording from unavailable configuration.
                     val silenced = record.activeRecordingConfiguration?.isClientSilenced?.toString() ?: "unknown"
-                    val state = "source=${captureSources[sourceIndex].first} RMS=${"%.4f".format(rms)} dBFS=${"%.1f".format(dbfs)} nonzero=$nonZero/$count silenced=$silenced routed=$routed"
+                    val state = "source=${captureSources[sourceIndex].first} read=$count RMS=${"%.4f".format(rms)} dBFS=${"%.1f".format(dbfs)} nonzero=$nonZero/$count silenced=$silenced routed=$routed"
                     runOnUiThread { status.text = state }
                     event(state)
                 }
+                if (count == 0) Thread.sleep(40)
             }
         } catch (e: Exception) {
             event("Capture stopped with ${e.javaClass.simpleName}: ${e.message}")
