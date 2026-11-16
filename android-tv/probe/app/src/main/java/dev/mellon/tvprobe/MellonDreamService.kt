@@ -122,7 +122,7 @@ class MellonDreamService : DreamService() {
         event("DREAM onDreamingStarted PID=${android.os.Process.myPid()}")
         val processInfo = ActivityManager.RunningAppProcessInfo()
         ActivityManager.getMyMemoryState(processInfo)
-        event("DREAM PROCESS importance=${processInfo.importance} (100=foreground, 125=visible, 200=FGS, 400=cached)")
+        event("DREAM PROCESS importance=${processInfo.importance} (100=foreground, 125=FGS, 200=visible, 400=cached)")
         showStatus("Loading offline recognition model...")
         worker = Thread({ captureWords() }, "mellon-dream-audio").apply { start() }
     }
