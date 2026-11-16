@@ -1,5 +1,9 @@
 package dev.mellon.tvprobe
 
+import android.app.ActivityManager
+import android.content.Context
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -116,6 +120,9 @@ class MellonDreamService : DreamService() {
         if (active) return
         active = true
         event("DREAM onDreamingStarted PID=${android.os.Process.myPid()}")
+        val processInfo = ActivityManager.RunningAppProcessInfo()
+        ActivityManager.getMyMemoryState(processInfo)
+        event("DREAM PROCESS importance=${processInfo.importance} (100=foreground, 125=visible, 200=FGS, 400=cached)")
         showStatus("Loading offline recognition model...")
         worker = Thread({ captureWords() }, "mellon-dream-audio").apply { start() }
     }
@@ -143,6 +150,11 @@ class MellonDreamService : DreamService() {
                 event("DREAM FAILURE: invalid AudioRecord buffer size=$minimum")
                 return
             }
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+            inputDevices.forEach { dev ->
+                event("DREAM INPUT id=${dev.id} type=${dev.type} name=${dev.productName} address=${dev.address}")
+            }
             record = AudioRecord.Builder()
                 .setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
                 .setAudioFormat(
@@ -158,13 +170,23 @@ class MellonDreamService : DreamService() {
                 event("DREAM FAILURE: AudioRecord not initialized")
                 return
             }
+            // Diagnostic request only: Android may refuse or route elsewhere.
+            // This is not a Bluetooth-remote microphone; type 25 is a virtual
+            // remote-submix input that worked during foreground Activity tests.
+            val submix = inputDevices.firstOrNull { it.type == AudioDeviceInfo.TYPE_REMOTE_SUBMIX }
+            if (submix != null) {
+                val accepted = record.setPreferredDevice(submix)
+                event("DREAM PREFERRED ROUTE requested type=25 id=${submix.id} accepted=$accepted")
+            } else {
+                event("DREAM PREFERRED ROUTE unavailable: no type=25 input")
+            }
             record.startRecording()
             if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
                 event("DREAM FAILURE: recording did not start")
                 return
             }
             audioRecord = record
-            event("DREAM AudioRecord STARTED source=VOICE_RECOGNITION session=${record.audioSessionId}")
+            event("DREAM AudioRecord STARTED source=VOICE_RECOGNITION session=${record.audioSessionId} preferred=${record.preferredDevice?.type} routed=${record.routedDevice?.type}")
             showStatus("Listening locally. Say: Mellon")
 
             val samples = ShortArray(2048)
