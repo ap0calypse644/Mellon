@@ -222,14 +222,18 @@ class MellonDreamService : DreamService() {
         // Non-blocking reads ensure this does not hold the UI thread.
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+    override fun dispatchKeyEvent(keyEvent: KeyEvent): Boolean {
+        val keyCode = keyEvent.keyCode
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
-            this.event("DREAM emergency exit key=${KeyEvent.keyCodeToString(keyCode)}")
-            finish()
+            // Consume both halves of the keypress. Finish on ACTION_UP only so
+            // a long press cannot repeatedly request dismissal.
+            if (keyEvent.action == KeyEvent.ACTION_UP) {
+                event("DREAM emergency exit key=${KeyEvent.keyCodeToString(keyCode)}")
+                wakeUp()
+            }
             return true
         }
-        this.event("DREAM key=${KeyEvent.keyCodeToString(keyCode)} consumed")
-        return true
+        return super.dispatchKeyEvent(keyEvent)
     }
 
     override fun onDreamingStopped() {
