@@ -21,6 +21,9 @@ if [[ ! -x "$CACHE/gradle-${VERSION}/bin/gradle" ]]; then
 fi
 TEMP="$(mktemp -d)"
 trap 'rm -rf "$TEMP"' EXIT
+# Gradle 8.13 requires a recognizable build root, even for the wrapper task.
+printf "rootProject.name = 'mellon-wrapper-bootstrap'\\n" > "$TEMP/settings.gradle"
+: > "$TEMP/build.gradle"
 "$CACHE/gradle-${VERSION}/bin/gradle" --no-daemon -p "$TEMP" wrapper --gradle-version "$VERSION" --distribution-type bin
 mkdir -p "$ROOT/gradle"
 cp -r "$TEMP/gradle/wrapper" "$ROOT/gradle/"
