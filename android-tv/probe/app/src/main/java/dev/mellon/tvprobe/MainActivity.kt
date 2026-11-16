@@ -12,6 +12,9 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import org.json.JSONObject
+import org.vosk.Model
+import org.vosk.Recognizer
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -45,6 +48,10 @@ class MainActivity : Activity() {
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
     private lateinit var modeButton: Button
+    private lateinit var wordButton: Button
+    private var requestingWordTest = false
+    private var loadingWordModel = false
+    private val modelDirectory = "vosk-model-small-en-us-0.15"
     private val captureSources = listOf(
         "MIC" to MediaRecorder.AudioSource.MIC,
         "VOICE_RECOGNITION" to MediaRecorder.AudioSource.VOICE_RECOGNITION,
@@ -74,7 +81,7 @@ class MainActivity : Activity() {
         root.addView(title)
 
         val instructions = TextView(this).apply {
-            text = "Start a 30-second microphone test, then speak or press the Sony remote mic button. Google Assistant may take over. Mellon writes diagnostic events immediately to a persistent file, even if the screen changes. No voice recordings are saved."
+            text = "START MIC TEST = metadata only. START OFFLINE WORD TEST = 30-second, on-TV recognition of spoken words, with transcripts saved to the private diagnostic log. No raw voice is saved or sent over the network. The word test automatically uses VOICE_RECOGNITION."
             textSize = 16f
             setTextColor(0xffe0e6f2.toInt())
             setPadding(0, 12, 0, 14)
@@ -94,10 +101,12 @@ class MainActivity : Activity() {
             }
         }
         startButton = Button(this).apply { text = "START MIC TEST"; setOnClickListener { requestOrStart() } }
+        wordButton = Button(this).apply { text = "START OFFLINE WORD TEST"; setOnClickListener { requestWordTest() } }
         stopButton = Button(this).apply { text = "STOP"; isEnabled = false; setOnClickListener { stopCapture() } }
         buttons.addView(refreshButton)
         buttons.addView(modeButton)
         buttons.addView(startButton)
+        buttons.addView(wordButton)
         buttons.addView(stopButton)
         root.addView(buttons)
 
@@ -122,6 +131,7 @@ class MainActivity : Activity() {
 
         event("===== NEW APP SESSION PID=${android.os.Process.myPid()} =====")
         event("Diagnostic file: ${File(filesDir, logFileName).absolutePath}")
+        event("Offline model installed: ${File(filesDir, modelDirectory).isDirectory}")
         event("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT} / ${Build.MANUFACTURER} ${Build.MODEL}")
         event("Microphone hardware feature advertised: ${packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)}")
         enumerateDevices()
@@ -170,10 +180,63 @@ class MainActivity : Activity() {
     }
 
     private fun requestOrStart() {
+        if (capturing || loadingWordModel) return
+        requestingWordTest = false
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             event("Requesting microphone permission")
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), permissionRequest)
         } else startCapture()
+    }
+
+    private fun requestWordTest() {
+        if (capturing || loadingWordModel) return
+        requestingWordTest = true
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            event("Requesting microphone permission for offline word test")
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), permissionRequest)
+        } else loadWordModelAndStart()
+    }
+
+    private fun loadWordModelAndStart() {
+        val dir = File(filesDir, modelDirectory)
+        if (!dir.isDirectory) {
+            event("WORD TEST UNAVAILABLE: model not installed. Run bash scripts/install-vosk-model.sh on BlackPearl.")
+            status.text = "Offline model missing: install it from BlackPearl."
+            return
+        }
+        loadingWordModel = true
+        wordButton.isEnabled = false
+        startButton.isEnabled = false
+        modeButton.isEnabled = false
+        status.text = "Loading offline language model..."
+        event("OFFLINE WORD TEST: loading model from local storage")
+        Thread({
+            var model: Model? = null
+            try {
+                model = Model(dir.absolutePath)
+                val recognizer = Recognizer(model, 16000.0f)
+                runOnUiThread {
+                    if (isFinishing || isDestroyed) {
+                        recognizer.close()
+                        model.close()
+                    } else {
+                        loadingWordModel = false
+                        event("OFFLINE WORD TEST: model loaded, starting VOICE_RECOGNITION capture")
+                        startCapture(recognizer, model)
+                    }
+                }
+            } catch (e: Exception) {
+                model?.close()
+                event("OFFLINE WORD TEST FAILED: ${e.javaClass.simpleName}: ${e.message}")
+                runOnUiThread {
+                    loadingWordModel = false
+                    status.text = "Offline model initialization failed"
+                    startButton.isEnabled = true
+                    wordButton.isEnabled = true
+                    modeButton.isEnabled = true
+                }
+            }
+        }, "mellon-vosk-model-loader").start()
     }
 
     override fun onRequestPermissionsResult(
@@ -183,13 +246,21 @@ class MainActivity : Activity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == permissionRequest) {
-            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) startCapture()
-            else event("RECORD_AUDIO denied")
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                if (requestingWordTest) loadWordModelAndStart() else startCapture()
+            } else event("RECORD_AUDIO denied")
         }
     }
 
-    private fun startCapture() {
-        if (capturing) return
+    private fun startCapture(wordRecognizer: Recognizer? = null, wordModel: Model? = null) {
+        if (capturing) {
+            wordRecognizer?.close()
+            wordModel?.close()
+            return
+        }
+        val wordMode = wordRecognizer != null
+        val sourceName = if (wordMode) "VOICE_RECOGNITION" else captureSources[sourceIndex].first
+        val audioSource = if (wordMode) MediaRecorder.AudioSource.VOICE_RECOGNITION else captureSources[sourceIndex].second
         val sampleRate = 16000
         val channelConfig = AudioFormat.CHANNEL_IN_MONO
         val encoding = AudioFormat.ENCODING_PCM_16BIT
@@ -200,7 +271,7 @@ class MainActivity : Activity() {
         }
         try {
             val record = AudioRecord.Builder()
-                .setAudioSource(captureSources[sourceIndex].second)
+                .setAudioSource(audioSource)
                 .setAudioFormat(
                     AudioFormat.Builder()
                         .setEncoding(encoding)
@@ -225,17 +296,31 @@ class MainActivity : Activity() {
             capturing = true
             startButton.isEnabled = false
             modeButton.isEnabled = false
+            wordButton.isEnabled = false
             stopButton.isEnabled = true
             status.text = "Recording for up to 30 seconds (metadata only)..."
-            event("AudioRecord STARTED: source=${captureSources[sourceIndex].first} rate=${sampleRate}Hz session=${record.audioSessionId}")
-            captureThread = Thread({ captureLoop(record) }, "mellon-probe-capture").apply { start() }
+            event("AudioRecord STARTED: source=$sourceName rate=${sampleRate}Hz session=${record.audioSessionId} offlineWordTest=$wordMode")
+            if (wordMode) event("WORD TEST CONSENT: local text transcripts will be saved; no raw audio persisted")
+            captureThread = Thread({ captureLoop(record, sourceName, wordRecognizer, wordModel) }, "mellon-probe-capture").apply { start() }
         } catch (e: Exception) {
             event("AudioRecord failed: ${e.javaClass.simpleName}: ${e.message}")
             status.text = "Microphone capture failed"
+        } finally {
+            // The capture thread owns the recognizer/model after successful start.
+            if (!capturing) {
+                wordRecognizer?.close()
+                wordModel?.close()
+                loadingWordModel = false
+                wordButton.isEnabled = true
+                startButton.isEnabled = true
+                modeButton.isEnabled = true
+            }
         }
     }
 
-    private fun captureLoop(record: AudioRecord) {
+    private fun captureLoop(record: AudioRecord, sourceName: String, wordRecognizer: Recognizer?, wordModel: Model?) {
+        var lastPartial = ""
+
         val data = ShortArray(2048)
         var lastUiMs = 0L
         val deadline = SystemClock.elapsedRealtime() + maxCaptureMs
@@ -251,6 +336,18 @@ class MainActivity : Activity() {
                 if (count < 0) {
                     event("AudioRecord.read error=$count")
                     break
+                }
+                if (count > 0 && wordRecognizer != null) {
+                    if (wordRecognizer.acceptWaveForm(data, count)) {
+                        val transcript = JSONObject(wordRecognizer.result).optString("text", "").trim()
+                        if (transcript.isNotEmpty()) event("OFFLINE FINAL TEXT: $transcript")
+                    } else {
+                        val partial = JSONObject(wordRecognizer.partialResult).optString("partial", "").trim()
+                        if (partial.isNotEmpty() && partial != lastPartial) {
+                            lastPartial = partial
+                            event("OFFLINE PARTIAL TEXT: $partial")
+                        }
+                    }
                 }
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastUiMs >= 500) {
@@ -268,7 +365,7 @@ class MainActivity : Activity() {
                     val routed = record.routedDevice?.let { "${it.productName} (type=${it.type})" } ?: "none"
                     // Distinguish an unsilenced recording from unavailable configuration.
                     val silenced = record.activeRecordingConfiguration?.isClientSilenced?.toString() ?: "unknown"
-                    val state = "source=${captureSources[sourceIndex].first} read=$count RMS=${"%.4f".format(rms)} dBFS=${"%.1f".format(dbfs)} nonzero=$nonZero/$count silenced=$silenced routed=$routed"
+                    val state = "source=$sourceName read=$count RMS=${"%.4f".format(rms)} dBFS=${"%.1f".format(dbfs)} nonzero=$nonZero/$count silenced=$silenced routed=$routed"
                     runOnUiThread { status.text = state }
                     event(state)
                 }
@@ -277,6 +374,16 @@ class MainActivity : Activity() {
         } catch (e: Exception) {
             event("Capture stopped with ${e.javaClass.simpleName}: ${e.message}")
         } finally {
+            if (wordRecognizer != null) {
+                try {
+                    val finalText = JSONObject(wordRecognizer.finalResult).optString("text", "").trim()
+                    if (finalText.isNotEmpty()) event("OFFLINE FINAL TEXT: $finalText")
+                } catch (e: Exception) {
+                    event("Offline recognition finalization failed: ${e.message}")
+                }
+                try { wordRecognizer.close() } catch (_: Exception) { }
+                try { wordModel?.close() } catch (_: Exception) { }
+            }
             try { record.stop() } catch (_: Exception) { }
             record.release()
             if (recorder === record) recorder = null
@@ -285,6 +392,7 @@ class MainActivity : Activity() {
                 status.text = "Status: stopped"
                 startButton.isEnabled = true
                 modeButton.isEnabled = true
+                wordButton.isEnabled = true
                 stopButton.isEnabled = false
             }
             event("AudioRecord STOPPED")
