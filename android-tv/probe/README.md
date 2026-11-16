@@ -6,7 +6,9 @@ An isolated Android TV diagnostic application built for the Sony BRAVIA BF1 (And
 
 - Lists audio input devices and microphone descriptors visible to a normal application.
 - Requests RECORD_AUDIO permission when START MIC TEST is selected.
-- Attempts 16 kHz mono PCM AudioRecord capture and shows live RMS / dBFS levels, the active route and whether the client is silenced.
+- Attempts 16 kHz mono PCM AudioRecord capture and shows live RMS / dBFS levels, nonzero sample counts, the active route and whether the client is silenced.
+- Supports MIC, VOICE_RECOGNITION, VOICE_COMMUNICATION and UNPROCESSED audio sources. Switch sources while stopped.
+- Logs Activity onResume/onPause and window focus, to help identify when Google Assistant preempts the foreground app.
 - Logs remote key events **only when Android delivers them to the activity**.
 - Never saves samples, transcribes speech, sends network requests, or changes TV system configuration.
 
@@ -35,11 +37,12 @@ Override the serial with `TV=192.168.x.y:5555 bash scripts/build-and-deploy.sh`.
 ## Test procedure
 
 1. Open Mellon TV Probe and choose REFRESH DEVICES.
-2. Select START MIC TEST and grant permission.
+2. Select START MIC TEST and grant permission, using the default MIC source.
 3. Speak towards the TV without pressing any remote button; note the signal.
 4. Hold the remote's microphone button and speak; watch whether Assistant opens or recording is silenced.
-5. Select STOP.
-6. Collect metadata-only logs:
+5. Select STOP. Select SOURCE until VOICE_RECOGNITION is selected; repeat steps 2–4.
+6. Optionally repeat with VOICE_COMMUNICATION and UNPROCESSED. Stop before switching sources.
+7. Collect metadata-only logs:
 
 ```bash
 adb -s 192.168.68.105:5555 logcat -d -s MellonMicProbe:I '*:S' > mellon-tv-mic-probe.log
@@ -49,6 +52,6 @@ adb -s 192.168.68.105:5555 logcat -d -s MellonMicProbe:I '*:S' > mellon-tv-mic-p
 
 AudioDeviceInfo entries, MIC routes, or a successful AudioRecord initialization **do not** establish that the Sony remote delivers audio to third-party apps. Confirm non-zero signal during the intended test and rule out TV built-in microphone pickup. Google Assistant may interrupt or silence the probe. Some remotes require button-held activation, or route capture exclusively to vendor software.
 
-This first commit is source-reviewed but **has not been compiled or run on the user's TV**. Do not assume the APK builds until the first device-side build test passes.
+Initial MIC-only version compiled and deployed successfully on the Sony BRAVIA BF1. A test on 2026-11-16 returned zero audio samples throughout: at first Android reported `silenced=false`, then `silenced=true`. That does not prove third-party microphone access is prohibited, because the Bluetooth remote may transmit only during Assistant sessions and the app may lose foreground priority. The multi-source/lifecycle diagnostic update has **not yet been compiled or tested** on the TV.
 
 The Ubuntu Mellon implementation is unchanged; this branch isolates the TV experiment.
