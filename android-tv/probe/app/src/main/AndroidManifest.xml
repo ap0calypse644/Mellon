@@ -16,5 +16,15 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Registered but NOT activated as the system screensaver by installation. -->
+        <service
+            android:name=".MellonDreamService"
+            android:label="Mellon TV Dream Lab"
+            android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
