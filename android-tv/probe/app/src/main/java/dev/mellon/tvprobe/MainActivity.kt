@@ -236,7 +236,8 @@ class MainActivity : Activity() {
                     val rms = sqrt(sumSquares / count)
                     val dbfs = if (rms > 0.0) 20.0 * log10(rms) else -120.0
                     val routed = record.routedDevice?.let { "${it.productName} (type=${it.type})" } ?: "none"
-                    val silenced = record.activeRecordingConfiguration?.isClientSilenced ?: false
+                    // Distinguish an unsilenced recording from unavailable configuration.
+                    val silenced = record.activeRecordingConfiguration?.isClientSilenced?.toString() ?: "unknown"
                     val state = "source=${captureSources[sourceIndex].first} RMS=${"%.4f".format(rms)} dBFS=${"%.1f".format(dbfs)} nonzero=$nonZero/$count silenced=$silenced routed=$routed"
                     runOnUiThread { status.text = state }
                     event(state)
