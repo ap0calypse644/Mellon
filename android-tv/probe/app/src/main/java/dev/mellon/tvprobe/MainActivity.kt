@@ -213,16 +213,17 @@ class MainActivity : Activity() {
         Thread({
             var model: Model? = null
             try {
-                model = Model(dir.absolutePath)
-                val recognizer = Recognizer(model, 16000.0f)
+                val loadedModel = Model(dir.absolutePath)
+                model = loadedModel
+                val recognizer = Recognizer(loadedModel, 16000.0f)
                 runOnUiThread {
                     if (isFinishing || isDestroyed) {
                         recognizer.close()
-                        model.close()
+                        loadedModel.close()
                     } else {
                         loadingWordModel = false
                         event("OFFLINE WORD TEST: model loaded, starting VOICE_RECOGNITION capture")
-                        startCapture(recognizer, model)
+                        startCapture(recognizer, loadedModel)
                     }
                 }
             } catch (e: Exception) {
@@ -267,6 +268,11 @@ class MainActivity : Activity() {
         val minBuffer = AudioRecord.getMinBufferSize(sampleRate, channelConfig, encoding)
         if (minBuffer <= 0) {
             event("Unsupported capture configuration: getMinBufferSize=$minBuffer")
+            wordRecognizer?.close()
+            wordModel?.close()
+            wordButton.isEnabled = true
+            startButton.isEnabled = true
+            modeButton.isEnabled = true
             return
         }
         try {
@@ -298,7 +304,7 @@ class MainActivity : Activity() {
             modeButton.isEnabled = false
             wordButton.isEnabled = false
             stopButton.isEnabled = true
-            status.text = "Recording for up to 30 seconds (metadata only)..."
+            status.text = if (wordMode) "Recognizing words offline for 30 seconds (no raw audio saved)..." else "Recording for up to 30 seconds (metadata only)..."
             event("AudioRecord STARTED: source=$sourceName rate=${sampleRate}Hz session=${record.audioSessionId} offlineWordTest=$wordMode")
             if (wordMode) event("WORD TEST CONSENT: local text transcripts will be saved; no raw audio persisted")
             captureThread = Thread({ captureLoop(record, sourceName, wordRecognizer, wordModel) }, "mellon-probe-capture").apply { start() }
