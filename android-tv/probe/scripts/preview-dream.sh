@@ -34,6 +34,15 @@ fi
 echo "========== VERIFY OFFLINE MODEL =========="
 adb -s "$TV" shell run-as dev.mellon.tvprobe ls files/vosk-model-small-en-us-0.15/am/final.mdl >/dev/null
 
+echo "========== OPTIONAL M3.1 MICROPHONE FOREGROUND LEASE =========="
+LEASE_STATUS="$(adb -s "$TV" shell dumpsys activity services dev.mellon.tvprobe 2>&1 || true)"
+if grep -q 'DreamMicLeaseService' <<< "$LEASE_STATUS"; then
+    echo "DreamMicLeaseService appears in the active-services dump."
+else
+    echo "NOTE: No active DreamMicLeaseService found. To test M3.1, arm the 2-minute lease from the visible Probe Activity first."
+fi
+adb -s "$TV" logcat -d -s MellonMicLease:I '*:S' | tail -n 12 || true
+
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$BACKUP_DIR/sony-dream-before-preview-$STAMP.txt"
 printf 'TV=%s\noriginal_enabled=%s\noriginal_components=%s\noriginal_default=%s\n' \
