@@ -21,6 +21,11 @@ import android.widget.ScrollView
 import android.widget.TextView
 import kotlin.math.log10
 import kotlin.math.sqrt
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
 /**
@@ -31,6 +36,9 @@ import kotlin.math.max
 class MainActivity : Activity() {
     private val logTag = "MellonMicProbe"
     private val permissionRequest = 101
+    private val maxCaptureMs = 30_000L
+    private val logFileName = "mellon-tv-probe.log"
+    private val fileLock = Any()
     private lateinit var audioManager: AudioManager
     private lateinit var status: TextView
     private lateinit var eventLog: TextView
@@ -66,7 +74,7 @@ class MainActivity : Activity() {
         root.addView(title)
 
         val instructions = TextView(this).apply {
-            text = "Diagnostic only. Start recording, speak normally, then try the Sony remote microphone button. No audio is saved. Google Assistant may interrupt or silence this app."
+            text = "Start a 30-second microphone test, then speak or press the Sony remote mic button. Google Assistant may take over. Mellon writes diagnostic events immediately to a persistent file, even if the screen changes. No voice recordings are saved."
             textSize = 16f
             setTextColor(0xffe0e6f2.toInt())
             setPadding(0, 12, 0, 14)
@@ -112,14 +120,29 @@ class MainActivity : Activity() {
         setContentView(root)
         refreshButton.requestFocus()
 
+        event("===== NEW APP SESSION PID=${android.os.Process.myPid()} =====")
+        event("Diagnostic file: ${File(filesDir, logFileName).absolutePath}")
         event("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT} / ${Build.MANUFACTURER} ${Build.MODEL}")
         event("Microphone hardware feature advertised: ${packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)}")
         enumerateDevices()
     }
 
     private fun event(message: String) {
-        val line = "${SystemClock.elapsedRealtime()}ms: $message"
+        val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z", Locale.US).format(Date())
+        val line = "$timestamp | ${SystemClock.elapsedRealtime()}ms | $message"
         Log.i(logTag, line)
+        // Flush every entry before updating the screen. This survives Assistant
+        // takeover and even abrupt process death (up to the last completed write).
+        synchronized(fileLock) {
+            try {
+                FileOutputStream(File(filesDir, logFileName), true).use { stream ->
+                    stream.write((line + "\n").toByteArray(Charsets.UTF_8))
+                    stream.flush()
+                }
+            } catch (e: Exception) {
+                Log.e(logTag, "Unable to persist diagnostic event", e)
+            }
+        }
         runOnUiThread {
             logLines.add(line)
             if (logLines.size > 100) logLines = logLines.takeLast(100).toMutableList()
@@ -203,7 +226,7 @@ class MainActivity : Activity() {
             startButton.isEnabled = false
             modeButton.isEnabled = false
             stopButton.isEnabled = true
-            status.text = "Recording levels (not saving audio)..."
+            status.text = "Recording for up to 30 seconds (metadata only)..."
             event("AudioRecord STARTED: source=${captureSources[sourceIndex].first} rate=${sampleRate}Hz session=${record.audioSessionId}")
             captureThread = Thread({ captureLoop(record) }, "mellon-probe-capture").apply { start() }
         } catch (e: Exception) {
@@ -215,14 +238,24 @@ class MainActivity : Activity() {
     private fun captureLoop(record: AudioRecord) {
         val data = ShortArray(2048)
         var lastUiMs = 0L
+        val deadline = SystemClock.elapsedRealtime() + maxCaptureMs
         try {
             while (capturing) {
-                val count = record.read(data, 0, data.size)
+                if (SystemClock.elapsedRealtime() >= deadline) {
+                    event("AUTO STOP: 30-second microphone test completed")
+                    break
+                }
+                // NON_BLOCKING ensures a silent/unavailable microphone cannot
+                // hold the thread in read() indefinitely after Assistant opens.
+                val count = record.read(data, 0, data.size, AudioRecord.READ_NON_BLOCKING)
                 if (count < 0) {
                     event("AudioRecord.read error=$count")
                     break
                 }
-                if (count == 0) continue
+                if (count == 0) {
+                    Thread.sleep(40)
+                    continue
+                }
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastUiMs >= 500) {
                     lastUiMs = now
@@ -282,12 +315,18 @@ class MainActivity : Activity() {
         super.onPause()
     }
 
+    override fun onStop() {
+        event("ACTIVITY onStop (Assistant may be foreground)")
+        super.onStop()
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         event("ACTIVITY windowFocus=$hasFocus")
     }
 
     override fun onDestroy() {
+        event("ACTIVITY onDestroy")
         stopCapture()
         super.onDestroy()
     }
