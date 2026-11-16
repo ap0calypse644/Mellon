@@ -126,6 +126,27 @@ Afterward, the result should include either `DREAM onDreamingStarted` / `DREAM F
 
 The goal is to confirm that a visible `DreamService` can initialize `AudioRecord`, access `remote-submix`, and recognize `melon` without being silenced or killed. The Activity's success does **not** guarantee microphone access from a dream service. The M3 code is source-reviewed but **not yet compiled or tested on the TV**.
 
+## M3.1: dream audio eligibility experiment (foreground microphone lease)
+
+**M3 observed on real Sony BRAVIA BF1, 2026-11-16:** The temporary preview successfully launched `dev.mellon.tvprobe/.MellonDreamService`; the Doors of Durin text placeholder rendered, Back exited, all lifecycle cleanup completed, and the rollback restored `com.google.android.apps.tv.dreamx/.service.Backdrop`. However, every DreamService audio sample was zero with `silenced=false`, routed to `BRAVIA BF1 type=15`, rather than the working Activity's virtual `remote-submix type=25`. Voice recognition did **not** work in the dream. Thus this is an audio/permission/routing problem, not a screensaver registration problem.
+
+Android allows microphone recording by a visible foreground app or a correctly declared microphone foreground service, but background clients can receive silence. M3.1 makes this hypothesis testable **without modifying Sony system defaults or enabling permanent recording**.
+
+The update adds `DreamMicLeaseService`:
+- A visible user must explicitly select **ARM DREAM MIC (2 MIN)** in the regular Mellon Probe Activity; it invokes a microphone-typed foreground service (Android's standard notification will be shown).
+- The service does **not** open or save microphone audio itself. It provides a temporary foreground-service execution context while the DreamService performs its own capture/recognition.
+- The lease automatically stops after **120 seconds** and is **not** restartable from boot or from the background. Select **STOP DREAM MIC LEASE** in the Activity if you want to end it earlier.
+- The DreamService also enumerates inputs and requests `TYPE_REMOTE_SUBMIX` with `AudioRecord.setPreferredDevice()`, logging whether the request was accepted, whether the actual route changed, and the process importance. A preferred-device request is just a request; it does not override Android's permission/policy restrictions.
+
+**Controlled test:**
+1. Pull this branch and rebuild/deploy the probe with `bash scripts/build-and-deploy.sh`. Existing Vosk model stays in application storage when the APK is updated.
+2. On the TV, with the regular **Mellon TV Probe** Activity visible, press **ARM DREAM MIC (2 MIN)** (not START MIC TEST). The FGS notification must be present. If starting the service fails, capture Logcat tag `MellonMicLease`.
+3. Immediately run `bash scripts/preview-dream.sh` on BlackPearl (the script uses the known Sony baseline and restores the original screen saver on exit).
+4. When the text-only DreamService appears, say `Mellon` clearly, without using the Sony remote's microphone button. Press Back or OK to exit after a few attempts.
+5. The script fetches `mellon-tv-dream-*.log` automatically; upload the **full file** to inspect `DREAM PROCESS importance`, `DREAM PREFERRED ROUTE`, `DREAM AUDIO`, and `DREAM FINAL` entries. To inspect the lease itself, run `adb -s 192.168.68.105:5555 logcat -d -s MellonMicLease:I '*:S'`.
+
+**Safety:** The stock screensaver remains the Sony default throughout, except during the 45-second preview. The user can press Home/Back and use `scripts/restore-sony-dream.sh` independently if needed. M3.1 does not implement auto-unlock, keep the microphone on indefinitely, or change Google Assistant. No raw recordings are saved; successful recognition writes text to the private dream log. A working FGS test does not prove continuous unattended operation is appropriate.
+
 ## Interpretation and limitations
 
 AudioDeviceInfo entries, MIC routes, or a successful AudioRecord initialization **do not** establish that the Sony remote delivers audio to third-party apps. Confirm non-zero signal during the intended test and rule out TV built-in microphone pickup. Google Assistant may interrupt or silence the probe. Some remotes require button-held activation, or route capture exclusively to vendor software.
