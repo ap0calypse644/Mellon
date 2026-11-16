@@ -36,6 +36,14 @@ class MainActivity : Activity() {
     private lateinit var eventLog: TextView
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
+    private lateinit var modeButton: Button
+    private val captureSources = listOf(
+        "MIC" to MediaRecorder.AudioSource.MIC,
+        "VOICE_RECOGNITION" to MediaRecorder.AudioSource.VOICE_RECOGNITION,
+        "VOICE_COMMUNICATION" to MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+        "UNPROCESSED" to MediaRecorder.AudioSource.UNPROCESSED
+    )
+    private var sourceIndex = 0
     private var recorder: AudioRecord? = null
     @Volatile private var capturing = false
     private var captureThread: Thread? = null
@@ -67,9 +75,20 @@ class MainActivity : Activity() {
 
         val buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val refreshButton = Button(this).apply { text = "REFRESH DEVICES"; setOnClickListener { enumerateDevices() } }
+        modeButton = Button(this).apply {
+            text = "SOURCE: MIC"
+            setOnClickListener {
+                if (!capturing) {
+                    sourceIndex = (sourceIndex + 1) % captureSources.size
+                    text = "SOURCE: ${captureSources[sourceIndex].first}"
+                    event("Selected source: ${captureSources[sourceIndex].first}")
+                }
+            }
+        }
         startButton = Button(this).apply { text = "START MIC TEST"; setOnClickListener { requestOrStart() } }
         stopButton = Button(this).apply { text = "STOP"; isEnabled = false; setOnClickListener { stopCapture() } }
         buttons.addView(refreshButton)
+        buttons.addView(modeButton)
         buttons.addView(startButton)
         buttons.addView(stopButton)
         root.addView(buttons)
@@ -158,7 +177,7 @@ class MainActivity : Activity() {
         }
         try {
             val record = AudioRecord.Builder()
-                .setAudioSource(MediaRecorder.AudioSource.MIC)
+                .setAudioSource(captureSources[sourceIndex].second)
                 .setAudioFormat(
                     AudioFormat.Builder()
                         .setEncoding(encoding)
@@ -182,9 +201,10 @@ class MainActivity : Activity() {
             recorder = record
             capturing = true
             startButton.isEnabled = false
+            modeButton.isEnabled = false
             stopButton.isEnabled = true
             status.text = "Recording levels (not saving audio)..."
-            event("AudioRecord STARTED: source=MIC rate=${sampleRate}Hz session=${record.audioSessionId}")
+            event("AudioRecord STARTED: source=${captureSources[sourceIndex].first} rate=${sampleRate}Hz session=${record.audioSessionId}")
             captureThread = Thread({ captureLoop(record) }, "mellon-probe-capture").apply { start() }
         } catch (e: Exception) {
             event("AudioRecord failed: ${e.javaClass.simpleName}: ${e.message}")
@@ -207,15 +227,17 @@ class MainActivity : Activity() {
                 if (now - lastUiMs >= 500) {
                     lastUiMs = now
                     var sumSquares = 0.0
+                    var nonZero = 0
                     for (index in 0 until count) {
                         val sample = data[index].toDouble() / 32768.0
                         sumSquares += sample * sample
+                        if (data[index] != 0.toShort()) nonZero++
                     }
                     val rms = sqrt(sumSquares / count)
                     val dbfs = if (rms > 0.0) 20.0 * log10(rms) else -120.0
                     val routed = record.routedDevice?.let { "${it.productName} (type=${it.type})" } ?: "none"
                     val silenced = record.activeRecordingConfiguration?.isClientSilenced ?: false
-                    val state = "RMS=${"%.4f".format(rms)}  dBFS=${"%.1f".format(dbfs)}  silenced=$silenced  routed=$routed"
+                    val state = "source=${captureSources[sourceIndex].first} RMS=${"%.4f".format(rms)} dBFS=${"%.1f".format(dbfs)} nonzero=$nonZero/$count silenced=$silenced routed=$routed"
                     runOnUiThread { status.text = state }
                     event(state)
                 }
@@ -230,6 +252,7 @@ class MainActivity : Activity() {
             runOnUiThread {
                 status.text = "Status: stopped"
                 startButton.isEnabled = true
+                modeButton.isEnabled = true
                 stopButton.isEnabled = false
             }
             event("AudioRecord STOPPED")
@@ -246,6 +269,21 @@ class MainActivity : Activity() {
             event("Remote key: ${KeyEvent.keyCodeToString(keyEvent.keyCode)}")
         }
         return super.dispatchKeyEvent(keyEvent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        event("ACTIVITY onResume (visible foreground)")
+    }
+
+    override fun onPause() {
+        event("ACTIVITY onPause (may lose microphone priority)")
+        super.onPause()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        event("ACTIVITY windowFocus=$hasFocus")
     }
 
     override fun onDestroy() {
