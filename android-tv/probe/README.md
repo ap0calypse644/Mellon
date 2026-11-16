@@ -74,10 +74,24 @@ A deliberately opt-in, offline speech-recognition experiment now lets us test th
 
 **Limitations:** this is a proof of audio intelligibility, not the production "Mellon" unlock system. A generic English recognizer may spell the name as "melon" or a similar word. Validate basic phrases first, then test the Tolkien name. Do not use raw transcript matches as a security gate.
 
+## M2.1: constrained keyword and false-positive test
+
+The M2 log from 2026-11-16 10:09 confirms working offline speech recognition:
+- `OFFLINE FINAL TEXT: one two` matched the spoken numbers.
+- `open the` was recognized as a partial phrase, but continuation was mistranscribed as `open the on milan`.
+- `huh` was reported near silence; treat this as evidence that false positives are possible.
+- These observations prove speech intelligibility through the Android audio path, but **not which physical microphone is active**.
+
+To evaluate the target word, select **START KEYWORD TEST**. This uses Vosk's grammar-constrained recognizer with `melon`, `mellon`, `hello`, `yellow`, `open the door`, and `[unk]`. It runs for 30 seconds, writes partial/final text plus `KEYWORD FINAL CHECK` lines to the normal private log, and performs **no automatic unlock**. Because `Mellon` is an uncommon word, Vosk may drop that spelling from its vocabulary and recognize the phonetic `melon` instead.
+
+**Recommended experiment:** Mute the TV. After selecting START KEYWORD TEST and after the model is loaded, say `Mellon` slowly five times, pausing between attempts, then say `hello`, `yellow`, `watermelon`, and a different ordinary sentence as negative controls. Remain silent for the last few seconds. Fetch logs with `bash scripts/fetch-logs.sh`. Do not press the Sony microphone button. This validates candidate recognition and false positives separately; results do not yet authorize a production unlock design.
+
+**Security and privacy:** This is a theatrical unlocking workflow, not a password mechanism. Production should debounce keyword matches, distinguish ambient TV audio, and provide a documented emergency exit. No raw audio is stored or sent; **recognized text is stored** in the debug app's private log for this explicit test.
+
 ## Interpretation and limitations
 
 AudioDeviceInfo entries, MIC routes, or a successful AudioRecord initialization **do not** establish that the Sony remote delivers audio to third-party apps. Confirm non-zero signal during the intended test and rule out TV built-in microphone pickup. Google Assistant may interrupt or silence the probe. Some remotes require button-held activation, or route capture exclusively to vendor software.
 
-Initial MIC-only version compiled and deployed successfully on the Sony BRAVIA BF1. A test on 2026-11-16 returned zero audio samples throughout: at first Android reported `silenced=false`, then `silenced=true`. That does not prove third-party microphone access is prohibited, because the Bluetooth remote may transmit only during Assistant sessions and the app may lose foreground priority. The persistent-log/30-second auto-stop update compiled, deployed, and recorded the 09:50–09:51 controlled experiment on the TV. The new **M2 offline Vosk word-recognition code has not yet been compiled or tested** on this device.
+Initial MIC-only version compiled and deployed successfully on the Sony BRAVIA BF1. A test on 2026-11-16 returned zero audio samples throughout: at first Android reported `silenced=false`, then `silenced=true`. That does not prove third-party microphone access is prohibited, because the Bluetooth remote may transmit only during Assistant sessions and the app may lose foreground priority. The persistent-log/30-second auto-stop update compiled, deployed, and recorded the 09:50–09:51 controlled experiment on the TV. M2 offline Vosk recognition was compiled and deployed and recognized `one two` on the Sony TV. The new **M2.1 constrained-keyword code has not yet been compiled or tested** on this device.
 
 The Ubuntu Mellon implementation is unchanged; this branch isolates the TV experiment.
