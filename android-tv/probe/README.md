@@ -88,6 +88,31 @@ To evaluate the target word, select **START KEYWORD TEST**. This uses Vosk's gra
 
 **Security and privacy:** This is a theatrical unlocking workflow, not a password mechanism. Production should debounce keyword matches, distinguish ambient TV audio, and provide a documented emergency exit. No raw audio is stored or sent; **recognized text is stored** in the debug app's private log for this explicit test.
 
+## M3: DreamService smoke test (NOT activated by default)
+
+The 2026-11-16 M2.1 test produced seven out of seven exact `melon` candidates for the target spoken words (`Mellon` ×5 and `melon` ×2); the deliberately tested `hello`, `yellow`, and `watermelon` negative controls did not produce exact final matches. `melon` is a phonetic homophone of `Mellon`; the recognizer cannot distinguish their pronunciation. This is encouraging but does not prove reliable unattended operation, TV-playback rejection or a secure lock.
+
+The next milestone is **dream lifecycle and audio**. A new `.MellonDreamService` is registered in `AndroidManifest.xml`, but installing the APK **does not** select it as Sony's screensaver. The service uses the already-installed Vosk model and the same `VOICE_RECOGNITION` input, writes diagnostics to `files/mellon-tv-dream.log`, and displays a simple Doors of Durin text placeholder rather than the final artwork. Keyword recognition only changes test status; it **does not dismiss the dream**. Back or OK is a deliberate emergency exit (Home/Power remain system-controlled).
+
+**Before enabling the dream**, deploy the updated APK and run this read-only registration audit:
+
+```bash
+bash scripts/build-and-deploy.sh
+bash scripts/dream-status.sh
+```
+
+Check the service is present and note the existing `screensaver_components` and `screensaver_default_component`. The known baseline is `com.google.android.apps.tv.dreamx/.service.Backdrop`. No script in this milestone changes those settings, calls `cmd dreams` or disables Sony's screensaver.
+
+In the next controlled step, configure a **temporary preview** only after verifying that this Sony build permits it and preparing an exact rollback to the previous setting. Avoid making a permanent default-selection change before testing. On some Android TV implementations, finishing a dream returns to the launcher; on others it may permit the TV to sleep. This must be measured on the actual hardware.
+
+After a controlled dream test, fetch diagnostics with:
+
+```bash
+bash scripts/fetch-dream-logs.sh
+```
+
+The goal is to confirm that a visible `DreamService` can initialize `AudioRecord`, access `remote-submix`, and recognize `melon` without being silenced or killed. The Activity's success does **not** guarantee microphone access from a dream service. The M3 code is source-reviewed but **not yet compiled or tested on the TV**.
+
 ## Interpretation and limitations
 
 AudioDeviceInfo entries, MIC routes, or a successful AudioRecord initialization **do not** establish that the Sony remote delivers audio to third-party apps. Confirm non-zero signal during the intended test and rule out TV built-in microphone pickup. Google Assistant may interrupt or silence the probe. Some remotes require button-held activation, or route capture exclusively to vendor software.
