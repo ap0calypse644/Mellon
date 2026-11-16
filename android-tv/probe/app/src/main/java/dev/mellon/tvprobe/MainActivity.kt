@@ -33,8 +33,9 @@ import kotlin.math.max
 
 /**
  * Read-only audio diagnostic for Android TV. Uses RECORD_AUDIO permission while the user
- * explicitly starts a test. Audio samples are analysed in RAM for signal level then discarded.
- * There is no networking, audio file recording, or speech transcription.
+ * explicitly starts a test. Audio samples are analysed in RAM then discarded.
+ * The optional offline word and keyword tests persist recognized text only.
+ * There is no networking or stored audio recording.
  */
 class MainActivity : Activity() {
     private val logTag = "MellonMicProbe"
@@ -208,7 +209,7 @@ class MainActivity : Activity() {
         if (capturing || loadingWordModel) return
         requestingWordTest = true
         keywordTestRequested = keywordMode
-        event("OFFLINE MODE REQUESTED: " + if (keywordMode) "KEYWORD" else "GENERAL WORD")
+        event("OFFLINE MODE REQUESTED: ${if (keywordMode) "KEYWORD" else "GENERAL WORD"}")
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             event("Requesting microphone permission for offline word test")
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), permissionRequest)
@@ -243,7 +244,7 @@ class MainActivity : Activity() {
                         loadedModel.close()
                     } else {
                         loadingWordModel = false
-                        event("OFFLINE WORD TEST: model loaded, mode=" + if (keywordMode) "KEYWORD" else "GENERAL")
+                        event("OFFLINE WORD TEST: model loaded, mode=${if (keywordMode) "KEYWORD" else "GENERAL"}")
                         if (keywordMode) event("KEYWORD GRAMMAR: $keywordGrammar")
                         startCapture(recognizer, loadedModel, keywordMode)
                     }
