@@ -49,7 +49,10 @@ class MainActivity : Activity() {
     private lateinit var stopButton: Button
     private lateinit var modeButton: Button
     private lateinit var wordButton: Button
+    private lateinit var keywordButton: Button
     private var requestingWordTest = false
+    private var keywordTestRequested = false
+    private val keywordGrammar = """["melon", "mellon", "hello", "yellow", "open the door", "[unk]"]"""
     private var loadingWordModel = false
     private val modelDirectory = "vosk-model-small-en-us-0.15"
     private val captureSources = listOf(
@@ -81,7 +84,7 @@ class MainActivity : Activity() {
         root.addView(title)
 
         val instructions = TextView(this).apply {
-            text = "START MIC TEST = metadata only. START OFFLINE WORD TEST = 30-second, on-TV recognition of spoken words, with transcripts saved to the private diagnostic log. No raw voice is saved or sent over the network. The word test automatically uses VOICE_RECOGNITION."
+            text = "30-second diagnostics. START OFFLINE WORD TEST listens for general speech. START KEYWORD TEST uses a small constrained vocabulary to test 'Mellon' and similar-sounding words. Only text is logged, never audio. Nothing unlocks the TV yet."
             textSize = 16f
             setTextColor(0xffe0e6f2.toInt())
             setPadding(0, 12, 0, 14)
@@ -102,13 +105,17 @@ class MainActivity : Activity() {
         }
         startButton = Button(this).apply { text = "START MIC TEST"; setOnClickListener { requestOrStart() } }
         wordButton = Button(this).apply { text = "START OFFLINE WORD TEST"; setOnClickListener { requestWordTest() } }
+        keywordButton = Button(this).apply { text = "START KEYWORD TEST"; setOnClickListener { requestKeywordTest() } }
         stopButton = Button(this).apply { text = "STOP"; isEnabled = false; setOnClickListener { stopCapture() } }
         buttons.addView(refreshButton)
         buttons.addView(modeButton)
         buttons.addView(startButton)
-        buttons.addView(wordButton)
         buttons.addView(stopButton)
         root.addView(buttons)
+        val offlineButtons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        offlineButtons.addView(wordButton)
+        offlineButtons.addView(keywordButton)
+        root.addView(offlineButtons)
 
         status = TextView(this).apply {
             textSize = 20f
@@ -182,6 +189,7 @@ class MainActivity : Activity() {
     private fun requestOrStart() {
         if (capturing || loadingWordModel) return
         requestingWordTest = false
+        keywordTestRequested = false
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             event("Requesting microphone permission")
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), permissionRequest)
@@ -189,8 +197,18 @@ class MainActivity : Activity() {
     }
 
     private fun requestWordTest() {
+        requestOfflineTest(false)
+    }
+
+    private fun requestKeywordTest() {
+        requestOfflineTest(true)
+    }
+
+    private fun requestOfflineTest(keywordMode: Boolean) {
         if (capturing || loadingWordModel) return
         requestingWordTest = true
+        keywordTestRequested = keywordMode
+        event("OFFLINE MODE REQUESTED: " + if (keywordMode) "KEYWORD" else "GENERAL WORD")
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             event("Requesting microphone permission for offline word test")
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), permissionRequest)
@@ -205,7 +223,9 @@ class MainActivity : Activity() {
             return
         }
         loadingWordModel = true
+        val keywordMode = keywordTestRequested
         wordButton.isEnabled = false
+        keywordButton.isEnabled = false
         startButton.isEnabled = false
         modeButton.isEnabled = false
         status.text = "Loading offline language model..."
@@ -215,15 +235,17 @@ class MainActivity : Activity() {
             try {
                 val loadedModel = Model(dir.absolutePath)
                 model = loadedModel
-                val recognizer = Recognizer(loadedModel, 16000.0f)
+                val recognizer = if (keywordMode) Recognizer(loadedModel, 16000.0f, keywordGrammar)
+                    else Recognizer(loadedModel, 16000.0f)
                 runOnUiThread {
                     if (isFinishing || isDestroyed) {
                         recognizer.close()
                         loadedModel.close()
                     } else {
                         loadingWordModel = false
-                        event("OFFLINE WORD TEST: model loaded, starting VOICE_RECOGNITION capture")
-                        startCapture(recognizer, loadedModel)
+                        event("OFFLINE WORD TEST: model loaded, mode=" + if (keywordMode) "KEYWORD" else "GENERAL")
+                        if (keywordMode) event("KEYWORD GRAMMAR: $keywordGrammar")
+                        startCapture(recognizer, loadedModel, keywordMode)
                     }
                 }
             } catch (e: Exception) {
@@ -234,6 +256,7 @@ class MainActivity : Activity() {
                     status.text = "Offline model initialization failed"
                     startButton.isEnabled = true
                     wordButton.isEnabled = true
+                    keywordButton.isEnabled = true
                     modeButton.isEnabled = true
                 }
             }
@@ -253,7 +276,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun startCapture(wordRecognizer: Recognizer? = null, wordModel: Model? = null) {
+    private fun startCapture(wordRecognizer: Recognizer? = null, wordModel: Model? = null, keywordMode: Boolean = false) {
         if (capturing) {
             wordRecognizer?.close()
             wordModel?.close()
@@ -271,6 +294,7 @@ class MainActivity : Activity() {
             wordRecognizer?.close()
             wordModel?.close()
             wordButton.isEnabled = true
+            keywordButton.isEnabled = true
             startButton.isEnabled = true
             modeButton.isEnabled = true
             return
@@ -303,11 +327,13 @@ class MainActivity : Activity() {
             startButton.isEnabled = false
             modeButton.isEnabled = false
             wordButton.isEnabled = false
+            keywordButton.isEnabled = false
             stopButton.isEnabled = true
             status.text = if (wordMode) "Recognizing words offline for 30 seconds (no raw audio saved)..." else "Recording for up to 30 seconds (metadata only)..."
             event("AudioRecord STARTED: source=$sourceName rate=${sampleRate}Hz session=${record.audioSessionId} offlineWordTest=$wordMode")
             if (wordMode) event("WORD TEST CONSENT: local text transcripts will be saved; no raw audio persisted")
-            captureThread = Thread({ captureLoop(record, sourceName, wordRecognizer, wordModel) }, "mellon-probe-capture").apply { start() }
+            if (keywordMode) event("KEYWORD TEST: diagnostic only, no unlock action")
+            captureThread = Thread({ captureLoop(record, sourceName, wordRecognizer, wordModel, keywordMode) }, "mellon-probe-capture").apply { start() }
         } catch (e: Exception) {
             event("AudioRecord failed: ${e.javaClass.simpleName}: ${e.message}")
             status.text = "Microphone capture failed"
@@ -318,13 +344,14 @@ class MainActivity : Activity() {
                 wordModel?.close()
                 loadingWordModel = false
                 wordButton.isEnabled = true
+                keywordButton.isEnabled = true
                 startButton.isEnabled = true
                 modeButton.isEnabled = true
             }
         }
     }
 
-    private fun captureLoop(record: AudioRecord, sourceName: String, wordRecognizer: Recognizer?, wordModel: Model?) {
+    private fun captureLoop(record: AudioRecord, sourceName: String, wordRecognizer: Recognizer?, wordModel: Model?, keywordMode: Boolean) {
         var lastPartial = ""
 
         val data = ShortArray(2048)
@@ -346,7 +373,10 @@ class MainActivity : Activity() {
                 if (count > 0 && wordRecognizer != null) {
                     if (wordRecognizer.acceptWaveForm(data, count)) {
                         val transcript = JSONObject(wordRecognizer.result).optString("text", "").trim()
-                        if (transcript.isNotEmpty()) event("OFFLINE FINAL TEXT: $transcript")
+                        if (transcript.isNotEmpty()) {
+                            event("OFFLINE FINAL TEXT: $transcript")
+                            if (keywordMode) event("KEYWORD FINAL CHECK: text=$transcript match=${isCandidateWord(transcript)}")
+                        }
                     } else {
                         val partial = JSONObject(wordRecognizer.partialResult).optString("partial", "").trim()
                         if (partial.isNotEmpty() && partial != lastPartial) {
@@ -383,7 +413,10 @@ class MainActivity : Activity() {
             if (wordRecognizer != null) {
                 try {
                     val finalText = JSONObject(wordRecognizer.finalResult).optString("text", "").trim()
-                    if (finalText.isNotEmpty()) event("OFFLINE FINAL TEXT: $finalText")
+                    if (finalText.isNotEmpty()) {
+                        event("OFFLINE FINAL TEXT: $finalText")
+                        if (keywordMode) event("KEYWORD FINAL CHECK: text=$finalText match=${isCandidateWord(finalText)}")
+                    }
                 } catch (e: Exception) {
                     event("Offline recognition finalization failed: ${e.message}")
                 }
@@ -399,10 +432,17 @@ class MainActivity : Activity() {
                 startButton.isEnabled = true
                 modeButton.isEnabled = true
                 wordButton.isEnabled = true
+                keywordButton.isEnabled = true
                 stopButton.isEnabled = false
             }
             event("AudioRecord STOPPED")
         }
+    }
+
+    // Diagnostic candidate, deliberately not an authorization decision.
+    private fun isCandidateWord(text: String): Boolean {
+        val normalized = text.trim().lowercase(Locale.US)
+        return normalized == "melon" || normalized == "mellon"
     }
 
     private fun stopCapture() {
