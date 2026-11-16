@@ -3,6 +3,7 @@ package dev.mellon.tvprobe
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioDeviceInfo
 import android.media.AudioFormat
@@ -40,6 +41,7 @@ import kotlin.math.max
 class MainActivity : Activity() {
     private val logTag = "MellonMicProbe"
     private val permissionRequest = 101
+    private val leasePermissionRequest = 102
     private val maxCaptureMs = 30_000L
     private val logFileName = "mellon-tv-probe.log"
     private val fileLock = Any()
@@ -51,6 +53,8 @@ class MainActivity : Activity() {
     private lateinit var modeButton: Button
     private lateinit var wordButton: Button
     private lateinit var keywordButton: Button
+    private lateinit var startLeaseButton: Button
+    private lateinit var stopLeaseButton: Button
     private var requestingWordTest = false
     private var keywordTestRequested = false
     private val keywordGrammar = """["melon", "mellon", "hello", "yellow", "open the door", "[unk]"]"""
@@ -85,7 +89,7 @@ class MainActivity : Activity() {
         root.addView(title)
 
         val instructions = TextView(this).apply {
-            text = "30-second diagnostics. START OFFLINE WORD TEST listens for general speech. START KEYWORD TEST uses a small constrained vocabulary to test 'Mellon' and similar-sounding words. Only text is logged, never audio. Nothing unlocks the TV yet."
+            text = "30-second word/keyword tests remain available. For M3.1 DreamService audio, select ARM DREAM MIC (2 MIN), then start the controlled dream preview from BlackPearl. The temporary notification ends after two minutes; STOP DREAM MIC LEASE cancels early. No audio files are stored."
             textSize = 16f
             setTextColor(0xffe0e6f2.toInt())
             setPadding(0, 12, 0, 14)
@@ -113,6 +117,18 @@ class MainActivity : Activity() {
         buttons.addView(startButton)
         buttons.addView(stopButton)
         root.addView(buttons)
+        val leaseButtons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        startLeaseButton = Button(this).apply {
+            text = "ARM DREAM MIC (2 MIN)"
+            setOnClickListener { armDreamMicLease() }
+        }
+        stopLeaseButton = Button(this).apply {
+            text = "STOP DREAM MIC LEASE"
+            setOnClickListener { stopDreamMicLease() }
+        }
+        leaseButtons.addView(startLeaseButton)
+        leaseButtons.addView(stopLeaseButton)
+        root.addView(leaseButtons)
         val offlineButtons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         offlineButtons.addView(wordButton)
         offlineButtons.addView(keywordButton)
@@ -185,6 +201,25 @@ class MainActivity : Activity() {
             event("getMicrophones failed: ${e.javaClass.simpleName}: ${e.message}")
         }
         event("RECORD_AUDIO granted: ${checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED}")
+    }
+
+    private fun armDreamMicLease() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            event("Dream microphone lease requires RECORD_AUDIO permission")
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), leasePermissionRequest)
+            return
+        }
+        try {
+            startForegroundService(Intent(this, DreamMicLeaseService::class.java))
+            event("DREAM MIC LEASE requested from visible activity (expires after 120 seconds)")
+        } catch (e: Exception) {
+            event("DREAM MIC LEASE request failed: ${e.javaClass.simpleName}: ${e.message}")
+        }
+    }
+
+    private fun stopDreamMicLease() {
+        val stopped = stopService(Intent(this, DreamMicLeaseService::class.java))
+        event("DREAM MIC LEASE stop requested, serviceWasRunning=$stopped")
     }
 
     private fun requestOrStart() {
@@ -270,6 +305,14 @@ class MainActivity : Activity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == leasePermissionRequest) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                armDreamMicLease()
+            } else {
+                event("Dream microphone lease RECORD_AUDIO denied")
+            }
+            return
+        }
         if (requestCode == permissionRequest) {
             if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
                 if (requestingWordTest) loadWordModelAndStart() else startCapture()
